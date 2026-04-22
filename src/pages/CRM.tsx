@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { SEO } from "@/components/seo/SEO";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -162,6 +163,10 @@ export default function CRM() {
 
   return (
     <AppLayout>
+      <SEO
+        title="Buyer CRM | Pitch Generator | Flipper OS"
+        description="Track acquisition agencies, generate AI cold-email pitches, and close deals faster with the built-in PWA buyer CRM."
+      />
       <div className="mx-auto w-full max-w-[1400px] space-y-6">
         <motion.header
           initial={{ opacity: 0, y: 10 }}
