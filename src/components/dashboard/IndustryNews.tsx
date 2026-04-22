@@ -100,14 +100,14 @@ export function IndustryNews() {
         <div className="flex items-center gap-2">
           <Newspaper className="h-4 w-4 text-primary" />
           <h2 className="text-lg font-semibold tracking-tight text-foreground">
-            {t("dashboard.newsTitle")}
+            {t(NEWS_I18N_KEYS.title)}
           </h2>
         </div>
         <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground">{t("dashboard.newsSource")}</span>
+          <span className="text-xs text-muted-foreground">{t(NEWS_I18N_KEYS.source)}</span>
           <span className="inline-flex items-center gap-1 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-primary">
             <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-            {t("dashboard.newsLiveBadge")}
+            {t(NEWS_I18N_KEYS.liveBadge)}
           </span>
         </div>
       </div>
@@ -126,7 +126,7 @@ export function IndustryNews() {
 
         {error && (
           <Card className="glass col-span-full p-6 text-center text-sm text-muted-foreground">
-            {t("dashboard.newsError")}
+            {t(NEWS_I18N_KEYS.error)}
           </Card>
         )}
 
@@ -163,7 +163,7 @@ export function IndustryNews() {
                           {a.user.name}
                         </span>
                         <span className="inline-flex shrink-0 items-center gap-1 text-[11px] font-medium text-primary">
-                          {t("dashboard.readArticle")} <ExternalLink className="h-3 w-3" />
+                          {t(NEWS_I18N_KEYS.readArticle)} <ExternalLink className="h-3 w-3" />
                         </span>
                       </div>
                     </div>
@@ -185,11 +185,11 @@ export function IndustryNews() {
           >
             {expanded ? (
               <>
-                {t("dashboard.newsShowLess")} <ChevronUp className="h-4 w-4" />
+                {t(NEWS_I18N_KEYS.showLess)} <ChevronUp className="h-4 w-4" />
               </>
             ) : (
               <>
-                {t("dashboard.newsShowMore")} ({articles.length}){" "}
+                {t(NEWS_I18N_KEYS.showMore)} ({articles.length}){" "}
                 <ChevronDown className="h-4 w-4" />
               </>
             )}
