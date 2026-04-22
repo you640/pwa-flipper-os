@@ -1,5 +1,5 @@
-import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { toast } from "sonner";
 import { Sparkles, TrendingUp, Calculator, Building2 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
@@ -23,7 +23,7 @@ const NICHES: { id: Niche; label: string; multiplier: number }[] = [
   { id: "b2b", label: "B2B SaaS", multiplier: 36 },
   { id: "ecommerce", label: "E-commerce", multiplier: 30 },
   { id: "booking", label: "Booking / Scheduling", multiplier: 40 },
-  { id: "devtool", label: "Developer Tool", multiplier: 24 },
+  { id: "devtool", label: "Micro-Tool", multiplier: 24 },
 ];
 
 const formatUSD = (n: number) =>
@@ -226,31 +226,29 @@ export default function Valuation() {
                     Estimated Asking Price
                   </div>
 
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={askingPrice + (isAssetOnly ? "-asset" : "-mult")}
-                      initial={{ opacity: 0, y: 8, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
-                      transition={{ duration: 0.35, ease: "easeOut" }}
-                      className="mt-2"
-                    >
-                      <div className="text-gradient text-5xl font-bold tracking-tight md:text-6xl drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]">
-                        {formatUSD(askingPrice)}
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
+                  <motion.div
+                    initial={{ opacity: 0, y: 8, scale: 0.98 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    transition={{ duration: 0.35, ease: "easeOut" }}
+                    className="mt-2"
+                  >
+                    <CountUpPrice value={askingPrice} />
+                  </motion.div>
 
-                  {isAssetOnly && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 4 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-3 flex justify-center"
-                    >
-                      <Badge className="border-0 bg-warning/15 text-warning ring-1 ring-warning/30">
-                        Asset Value Only
-                      </Badge>
-                    </motion.div>
-                  )}
+                  <AnimatePresence>
+                    {isAssetOnly && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -4 }}
+                        className="mt-3 flex justify-center"
+                      >
+                        <Badge className="border-0 bg-warning/15 text-warning ring-1 ring-warning/30">
+                          Asset Value Only
+                        </Badge>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                 </div>
 
                 {/* CTA */}
@@ -262,7 +260,7 @@ export default function Valuation() {
                   >
                     <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                     <Sparkles className="mr-1 h-4 w-4" />
-                    Add to Portfolio
+                    Save to Portfolio
                   </Button>
                   <p className="mt-2 text-center text-[11px] text-muted-foreground">
                     Estimate is indicative. Actual sale price depends on buyer demand and due diligence.
@@ -354,5 +352,28 @@ function ReportRow({
       </span>
       <span className={cn("font-mono tabular-nums text-foreground", valueClass)}>{value}</span>
     </div>
+  );
+}
+
+function CountUpPrice({ value }: { value: number }) {
+  const motionVal = useMotionValue(0);
+  const rounded = useTransform(motionVal, (v) => formatUSD(Math.round(v)));
+  const prevRef = useRef(0);
+
+  useEffect(() => {
+    const controls = animate(motionVal, value, {
+      duration: 0.9,
+      ease: [0.22, 1, 0.36, 1], // easeOutQuint — smooth count-up
+      onComplete: () => {
+        prevRef.current = value;
+      },
+    });
+    return () => controls.stop();
+  }, [value, motionVal]);
+
+  return (
+    <motion.div className="text-gradient text-5xl font-bold tracking-tight md:text-6xl drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]">
+      {rounded}
+    </motion.div>
   );
 }
