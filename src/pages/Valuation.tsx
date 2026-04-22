@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 type Niche = "b2b" | "ecommerce" | "booking" | "devtool";
 
@@ -57,7 +58,24 @@ export default function Valuation() {
 
   const reportActive = mrrNum > 0 || expNum > 0 || form.name.length > 0;
 
-  const handleAdd = () => {
+  const [saving, setSaving] = useState(false);
+
+  const handleAdd = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("portfolio").insert({
+      name: form.name || "Untitled Project",
+      mrr: mrrNum,
+      expenses: expNum,
+      asking_price: askingPrice,
+      status: "Building",
+    });
+    setSaving(false);
+
+    if (error) {
+      toast.error("Failed to save", { description: error.message });
+      return;
+    }
+
     toast.success("App added to your pipeline!", {
       description: form.name
         ? `${form.name} valued at ${formatUSD(askingPrice)}`
