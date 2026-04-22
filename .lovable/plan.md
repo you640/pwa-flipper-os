@@ -1,72 +1,53 @@
 
 
-# Slovak Localization + EN/SK Switcher
+# Industry News upgrade
 
-Translate the entire app to Slovak as the default and add an EN/SK language switcher. Language is auto-detected from the user's browser/region on first visit, then remembered and synced to their profile when signed in.
+Refresh the Dashboard's Industry News section with more articles, a denser responsive grid, robust image fallbacks, uniform card heights, full i18n, and a compact "Show More" UX so the dashboard stays short by default.
 
 ## What you'll get
 
-**1. Auto language detection**
-- First-time visitors with browser locale `sk-*` see the app in Slovak; everyone else gets English.
-- Detected language is saved to `localStorage` so subsequent visits are instant.
-- Signed-in users get their language persisted to their profile and synced across devices.
+**1. More articles, smarter fetch**
+- Endpoint switched to `https://dev.to/api/articles?tag=pwa&per_page=24`.
+- Up to 24 articles loaded; gracefully handles fewer results.
 
-**2. EN / SK switcher in the Topbar**
-- Compact toggle (🇬🇧 EN / 🇸🇰 SK) next to the notification bell.
-- Also exposed in `Settings → Appearance` as a labeled "Language / Jazyk" selector.
-- Switching is instant — no reload — and updates `<html lang="…">` for SEO and screen readers.
+**2. Responsive 4-column grid with staggered animation**
+- Grid: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`.
+- Cards animate in with a Framer Motion stagger (parent `staggerChildren`, child fade + lift), capped so later cards still feel snappy.
 
-**3. Full Slovak translation coverage**
-Every user-facing string across the app:
-- Sidebar (Overview → Prehľad, Portfolio Kanban → Portfólio Kanban, Valuation Engine → Oceňovací nástroj, Market Intel → Trhové dáta, Buyer CRM → CRM kupujúcich, Settings → Nastavenia)
-- Topbar (search placeholder, Profile/Billing/Settings/Sign out menu, role labels)
-- Auth / Login (sign in, sign up, Google, validation messages, toasts)
-- Dashboard / Index (metric cards, activity feed, industry news, projection chart)
-- Portfolio Kanban (column names, card actions, empty states)
-- Valuation Engine (form labels, results, tooltips)
-- Market Intel (filters, table headers, chart legends)
-- CRM (pipeline stages, lead form, pitch generator)
-- Profile, Settings, Billing pages (tabs, labels, danger zone, all toasts)
-- Common UI: confirm dialogs, error toasts, "Loading…", empty states, NotFound, ComingSoon
-- SEO `<title>` / `<description>` per page (localized)
+**3. Premium image fallback (no broken icons)**
+- A new `<NewsCover>` subcomponent owns image state (`loading | loaded | error`).
+- If `cover_image` is missing OR `onError` fires, it renders a branded gradient (using existing `bg-gradient-primary` / purple→cyan tokens) with a centered `Globe` icon (subtle, 30% opacity) plus a faint radial sheen.
+- Skeleton shown while the image is still loading so we never flash a half-loaded picture.
 
-**4. Number, date & currency formatting**
-- Dates rendered via `Intl.DateTimeFormat` with the active locale (`sk-SK` / `en-US`).
-- Currency stays EUR but formatted per locale (e.g. `1 250,00 €` in SK vs `€1,250.00` in EN).
+**4. Uniform card heights**
+- Titles forced to `line-clamp-2` with a fixed `min-h` so 1-line and 2-line titles produce identical card heights.
+- Cover area fixed height (`h-36`), meta row pinned to the bottom via `flex flex-col` + `mt-auto`.
+
+**5. Full i18n**
+- All visible strings go through `t()`:
+  - `dashboard.newsTitle` → "Industry News" / "Novinky z odvetvia"
+  - `dashboard.newsSource` → "via dev.to" / "cez dev.to"
+  - `dashboard.readArticle` → "Read Article" / "Čítať článok"
+  - `dashboard.newsError` (existing)
+  - New: `dashboard.newsShowMore` ("Show more") / `dashboard.newsShowLess` ("Show less")
+  - New: `dashboard.newsLiveBadge` ("live" / "naživo") rendered as a small badge next to the source
+- EN and SK locale files updated; existing keys kept as-is, just retuned to drop the trailing "· live" since it becomes a separate badge.
+
+**6. Compact-by-default UX**
+- Show the first **8** articles (2 rows on desktop) by default.
+- A centered ghost button toggles between "Show more (24)" and "Show less", animating the extra rows in/out via Framer Motion's `AnimatePresence` with a height + fade transition.
+- No extra scroll container — the page stays compact, and expansion is opt-in.
 
 ## Technical approach
 
-**Library:** `react-i18next` + `i18next` + `i18next-browser-languagedetector`. Industry standard, tiny bundle, supports interpolation and plurals. No backend needed — translations bundled.
+**File edited:** `src/components/dashboard/IndustryNews.tsx` — rewritten to:
+- Fetch 24 articles, store full list, derive `visible = expanded ? all : all.slice(0, 8)`.
+- Replace the inline `<img>` block with `<NewsCover article={a} />` (defined in the same file) handling `error` state and rendering the gradient + `Globe` fallback.
+- Wrap the grid in a `motion.div` with `variants` for staggered children; each card uses a child variant (`opacity 0 → 1`, `y 12 → 0`, 0.35s ease-out, stagger 0.04s).
+- Add `<AnimatePresence>` around the overflow rows so collapsing animates smoothly.
+- Add `Show more / Show less` button (shadcn `Button variant="ghost"`) below the grid, hidden when `articles.length <= 8`.
 
-**Structure (consolidated to avoid token limits):**
-```text
-src/i18n/
-  index.ts                  // i18n init + detector config
-  locales/
-    en.ts                   // single export with all namespaces (common, auth, dashboard, portfolio, valuation, market, crm, profile, settings, billing, seo)
-    sk.ts                   // mirror of en.ts in Slovak
-src/components/LanguageSwitcher.tsx
-src/hooks/useLocale.ts       // wraps useTranslation + Intl formatters (date, currency, number)
-```
+**Files edited:** `src/i18n/locales/en.ts`, `src/i18n/locales/sk.ts` — add `newsShowMore`, `newsShowLess`, `newsLiveBadge`; trim `newsSource` to just "via dev.to" / "cez dev.to".
 
-Using `.ts` modules (not JSON) lets us use TS typing for keys and keeps both locales in two files total, well within a single generation pass.
-
-**Detection order** (configured in `i18next-browser-languagedetector`):
-1. `localStorage` key `lang`
-2. User profile column `profiles.locale` once session loads
-3. `navigator.language` → `sk*` maps to `sk`, everything else to `en`
-
-**Database:** migration adds `locale text default 'en'` to `public.profiles`; existing rows backfilled to `en`. The switcher updates this column for signed-in users so the choice follows them across devices.
-
-**App wiring:**
-- `src/main.tsx` imports `./i18n` before `<App />` renders.
-- `App.tsx` syncs `<html lang>` whenever the language changes.
-- `Topbar.tsx` renders `<LanguageSwitcher />` next to the bell.
-- `Settings.tsx` Appearance tab gets a Language section.
-- `SEO.tsx` reads localized title/description from the `seo` namespace.
-- All hardcoded strings across pages/components replaced with `t('namespace.key')`.
-
-**Files**
-- Created: `src/i18n/index.ts`, `src/i18n/locales/en.ts`, `src/i18n/locales/sk.ts`, `src/components/LanguageSwitcher.tsx`, `src/hooks/useLocale.ts`, migration adding `profiles.locale`.
-- Edited: `src/main.tsx`, `src/App.tsx`, `src/components/seo/SEO.tsx`, `src/components/layout/Topbar.tsx`, `src/components/layout/AppSidebar.tsx`, `src/components/layout/InstallPWA.tsx`, all pages in `src/pages/`, dashboard widgets in `src/components/dashboard/`, kanban components in `src/components/kanban/`, `src/components/auth/AuthGuard.tsx`, `index.html` (default `<html lang="sk">`).
+**No other files** need to change — `Index.tsx` already renders `<IndustryNews />` and doesn't need updates.
 
