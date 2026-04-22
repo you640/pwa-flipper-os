@@ -62,9 +62,47 @@ export default function Profile() {
       if (updErr) throw updErr;
       toast.success("Avatar updated");
       refresh();
-    } catch (err) {
-      console.error(err);
-      toast.error("Avatar upload failed");
+    } catch (err: any) {
+      console.error("Avatar upload error:", err);
+      const msg = (err?.message || "").toLowerCase();
+      const status = err?.statusCode || err?.status;
+
+      if (msg.includes("bucket not found") || status === 404) {
+        toast.error("Avatar storage not configured", {
+          description:
+            "The 'avatars' bucket is missing. Ask an admin to create a public 'avatars' storage bucket, then try again.",
+        });
+      } else if (
+        msg.includes("row-level security") ||
+        msg.includes("rls") ||
+        msg.includes("not authorized") ||
+        msg.includes("permission") ||
+        status === 403
+      ) {
+        toast.error("Permission denied", {
+          description:
+            "You don't have permission to upload to this bucket. Make sure you're signed in and that storage policies allow uploads to your own folder (auth.uid()/...).",
+        });
+      } else if (msg.includes("payload too large") || status === 413) {
+        toast.error("File too large", {
+          description: "Pick an image under the bucket's size limit (try < 2 MB) and upload again.",
+        });
+      } else if (msg.includes("mime") || msg.includes("content type")) {
+        toast.error("Unsupported file type", {
+          description: "Use a standard image format (PNG, JPG, or WEBP) and try again.",
+        });
+      } else if (msg.includes("network") || msg.includes("failed to fetch")) {
+        toast.error("Network error", {
+          description: "Check your internet connection and try the upload again.",
+        });
+      } else {
+        toast.error("Avatar upload failed", {
+          description:
+            err?.message
+              ? `${err.message}. Try a smaller image or sign out and back in.`
+              : "Try a smaller image, refresh the page, or sign out and back in.",
+        });
+      }
     } finally {
       setUploading(false);
       if (fileRef.current) fileRef.current.value = "";
