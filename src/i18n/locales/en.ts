@@ -43,6 +43,7 @@ const en = {
     market: "Market Intel",
     crm: "Buyer CRM",
     settings: "Settings",
+    docs: "Documentation",
     commandOS: "Command OS",
     brand: "PWA Flipper",
     installApp: "Install App",

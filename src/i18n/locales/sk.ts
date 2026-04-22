@@ -45,6 +45,7 @@ const sk: Translations = {
     market: "Trhové dáta",
     crm: "CRM kupujúcich",
     settings: "Nastavenia",
+    docs: "Dokumentácia",
     commandOS: "Command OS",
     brand: "PWA Flipper",
     installApp: "Inštalovať aplikáciu",
