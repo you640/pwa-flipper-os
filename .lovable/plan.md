@@ -1,85 +1,72 @@
 
 
-# Rebrand to RUBBERDUCK.SPACE + 3 new Docs features
+# Wire Overview page to Supabase
 
-Four bundled changes: full app rebrand, prefilled "Contact support" action, localized Changelog tab, and "Download as PDF" for User Manual + FAQ — with proper Slovak diacritics support in the PDFs.
+Replace mock data and the bare-minimum portfolio query on the Overview (Index) page with real, fully-typed Supabase queries against `portfolio`, `market_intel`, and `crm_leads`, with proper loading skeletons, empty states, and error toasts. Also hook the greeting to the signed-in user.
 
 ## What you'll get
 
-**1. Rebrand: Flipper OS → RUBBERDUCK.SPACE**
-- Replace every visible "Flipper OS", "FlippOS", "PWA Flipper" string with **RUBBERDUCK.SPACE** across:
-  - `index.html` — `<title>`, `meta description`, `meta author`, `apple-mobile-web-app-title`, OG/Twitter tags.
-  - `vite.config.ts` — PWA manifest `name` ("RUBBERDUCK.SPACE"), `short_name` ("Rubberduck"), description.
-  - `src/i18n/locales/en.ts` and `sk.ts` — `auth.title`, `sidebar.brand`, `sidebar.installing`, all `seo.*` titles, `docs.subtitle/seoTitle/seoDesc`, manual step 4, FAQ items 6–7, About mission, CEO header.
-- All support email refs → **support@rubberduck.space**. Web link → `https://rubberduck.space`.
-- Presentation-only change. No DB, auth, or domain config touched.
+**1. New data hook: `src/hooks/useOverviewData.ts`**
+- Single hook that fires three queries in parallel via `Promise.all`:
+  - `portfolio` → `select("asking_price, mrr, expenses, status, name, created_at")`
+  - `market_intel` → `select("name, niche, source, mrr, price, created_at").order("created_at", { ascending: false }).limit(20)`
+  - `crm_leads` → `select("agency_name, status, contact_email, notes, created_at").order("created_at", { ascending: false }).limit(20)`
+- Returns `{ portfolio, market, leads, loading, error, refetch }`. Each list is `null` until first load, `[]` when empty.
+- Logs and surfaces errors via `useToast` (one toast per failed source, localized via `t("overview.loadError", { source })`).
+- Re-runs on auth state change so the page repopulates after login (subscribes to `supabase.auth.onAuthStateChange`).
 
-**2. Contact Support — prefilled email**
-- Replace the static `mailto:` anchor in About & Contact with a **"Contact support"** primary Button.
-- Click builds a `mailto:` URL with `encodeURIComponent`:
-  - **to**: `support@rubberduck.space`
-  - **subject** (localized): `[RUBBERDUCK.SPACE] Support — {displayName}`
-  - **body** (localized template) prefilled from `useProfile()` + `useLocale()`:
-    ```
-    Hello RUBBERDUCK.SPACE team,
+**2. Overview page (`src/pages/Index.tsx`) wired to live data**
+- Replaces the inline `useEffect` with `useOverviewData()`.
+- Greeting uses `useProfile().displayName` instead of hardcoded "Alex".
+- Metric cards now derived from real rows:
+  - **Total Portfolio Value** — sum of `asking_price` for non-Sold portfolio rows.
+  - **Combined MRR** — sum of `mrr` for non-Sold portfolio rows.
+  - **Active Apps** — count of non-Sold portfolio rows.
+  - **Total Exits** — sum of `asking_price` for `status = "Sold"` portfolio rows.
+- New small **Market Pulse** strip under the metric cards (3 mini-stats from `market_intel`):
+  - Avg market price, avg market MRR, deals tracked. Shown only when `market.length > 0`; otherwise an empty-state line "No market intel yet — add comparables in Market".
+- Replaces the `IndustryNews` slot with a two-column row on `xl`: keeps `IndustryNews` left, adds a real `<ActivityFeed />` on the right.
 
-    — Account ID: {user.id}
-    — Email: {user.email}
-    — Display name: {profile.display_name}
-    — Locale: {i18n.language}
-    — Page: /docs
+**3. Real `ActivityFeed.tsx` driven by `crm_leads` + recent `portfolio` changes**
+- Component now accepts `{ leads, portfolio, loading }` props (no more hardcoded array).
+- Builds a unified, time-sorted activity list (newest 8):
+  - For each lead: actor = `agency_name`, message = localized `t("overview.activity.lead", { status })` with `notes` snippet, status badge = mapped from `lead_status` enum (`Lead`, `Contacted`, `Qualified`, `Won`, `Lost`).
+  - For each portfolio row: actor = "Portfolio", message = `${name} — ${status}`, status mapped to `valuation`/`listed`/`sold`.
+- `time` rendered with `Intl.RelativeTimeFormat` via `useLocale().intlLocale` ("12m ago", "Pred 3 h").
+- States:
+  - Loading → 5 skeleton rows.
+  - Empty → glass empty card with `Inbox` icon + `t("overview.activity.empty")` and a "Add a lead" link to `/crm`.
+- Initials derived from first letters of `agency_name`/`name`; gradient `hue` picked deterministically from a small palette by hashing the id.
 
-    Describe your issue below:
-    ```
-- Fallback: when `user` is null, profile lines are omitted but subject/body still prefill.
-- Plain email text stays visible below the button so users can copy it manually.
+**4. Loading & error UX**
+- All four `MetricCard`s already accept `loading` — keep using it; values fall back to `0` while loading so the count-up animation runs once data arrives.
+- `ProjectionChart` keeps receiving `combinedMRR`; when `loading` it renders with 0 (existing behavior is fine — chart curve is generated).
+- Errors: red inline banner above the metric grid `t("overview.errorBanner")` with a "Retry" button calling `refetch()`. Banner only shows if `error` is set after first attempt.
 
-**3. New "Changelog" tab in Docs**
-- Add a 5th tab between **FAQ** and **CEO**. `TabsList` becomes `grid-cols-2 sm:grid-cols-5`.
-- Label: `t("docs.tabs.changelog")` ("Changelog" / "Zmeny").
-- Vertical timeline of glass cards (newest first). Each card shows:
-  - `Calendar` icon + locale-formatted date (`useLocale().formatDate`)
-  - Version `Badge` (e.g. `v1.3.0`)
-  - Title + bulleted highlights, each prefixed with `Sparkles` / `Zap` / `Bug` icon.
-- Seed 4 entries: **v1.3.0** Rebrand to RUBBERDUCK.SPACE, **v1.2.0** Docs Center, **v1.1.0** Industry News upgrade, **v1.0.0** Launch. Stored under `docs.changelog.entries.{1..4}.{version,date,title,highlights}` so EN/SK stay in sync via the `Translations` type.
-
-**4. "Download as PDF" for User Manual & FAQ**
-- Ghost `Button` with `Download` icon at the top-right of the Manual and FAQ tab panels: `t("docs.downloadPdf")`.
-- Client-side PDF using **jsPDF**. Helper `src/lib/exportDocsPdf.ts` exports `exportManualPdf(t, locale)` and `exportFaqPdf(t, locale)`:
-  - Header: "RUBBERDUCK.SPACE — User Manual / FAQ", date, footer with page numbers.
-  - Manual: 4 numbered steps (title, description, tip).
-  - FAQ: 8 Q/A pairs (Q bold, A wrapped via `doc.splitTextToSize`).
-  - Filenames: `rubberduck-manual-{lang}.pdf`, `rubberduck-faq-{lang}.pdf`.
-- Toast confirms success / failure (`t("docs.downloadSuccess")` / `t("docs.downloadFailed")`).
-
-**Important — Slovak diacritics in jsPDF**
-Standard jsPDF fonts (Helvetica/Arial) do not support Central European characters (ľ, š, č, ť, ž, ý, á, í, ô, ä). Generated SK PDFs would render empty boxes.
-Fix: bundle a lightweight UTF-8 font (Roboto Regular + Bold, ~80 KB each, base64) under `src/assets/fonts/` and register it in the helper before drawing any text:
-```ts
-import RobotoRegular from "@/assets/fonts/Roboto-Regular-base64";
-doc.addFileToVFS("Roboto-Regular.ttf", RobotoRegular);
-doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
-doc.setFont("Roboto", "normal");
-```
-Both EN and SK PDFs will use Roboto so output is consistent and all Slovak accents render correctly. Font loading is lazy — only when a download is triggered, so it doesn't bloat the app bundle.
+**5. i18n additions** (`src/i18n/locales/en.ts` + `sk.ts`)
+- `overview.loadError`, `overview.errorBanner`, `overview.retry`
+- `overview.marketPulse.title`, `.avgPrice`, `.avgMrr`, `.deals`, `.empty`
+- `overview.activity.title`, `.live`, `.empty`, `.emptyCta`, `.lead.{Lead,Contacted,Qualified,Won,Lost}`, `.portfolio.{Building,Listed,Negotiating,Sold}`
+- `overview.relativeTime.{justNow}` (used as fallback)
 
 ## Technical details
 
-**Files edited**
-- `index.html` — brand strings & meta tags.
-- `vite.config.ts` — PWA manifest name/short_name/description.
-- `src/i18n/locales/en.ts` + `src/i18n/locales/sk.ts` — rebrand all strings; add `docs.tabs.changelog`, `docs.changelog.{title,subtitle,entries.*}`, `docs.contact.{button,subject,bodyTemplate}`, `docs.downloadPdf`, `docs.downloadSuccess`, `docs.downloadFailed`. SK stays type-safe via the `Translations` shape from EN.
-- `src/pages/Docs.tsx` — add Changelog tab, Download buttons + handlers, replace mailto anchor with prefilled Contact Support button, widen `TabsList` to 5 cols on `sm+`.
-
 **Files created**
-- `src/lib/exportDocsPdf.ts` — `exportManualPdf` / `exportFaqPdf` with lazy font loader.
-- `src/assets/fonts/Roboto-Regular-base64.ts` + `Roboto-Bold-base64.ts` — base64-encoded TTFs (Apache 2.0 licensed) re-exported as `default` strings.
+- `src/hooks/useOverviewData.ts`
 
-**Dependencies**
-- Add `jspdf` (~50 KB gz, no peer deps). No `jspdf-autotable` needed — manual layout.
+**Files edited**
+- `src/pages/Index.tsx` — swap inline query for hook, render `<ActivityFeed leads={...} portfolio={...} loading={...} />`, add Market Pulse + error banner, use `displayName`.
+- `src/components/dashboard/ActivityFeed.tsx` — convert to props-driven, add loading/empty states, integrate `Intl.RelativeTimeFormat`.
+- `src/i18n/locales/en.ts`, `src/i18n/locales/sk.ts` — new keys above.
+
+**Type safety**
+- Reuse the generated row types from `@/integrations/supabase/types` via `Database["public"]["Tables"][T]["Row"]` — no hand-typed interfaces that can drift from the schema.
+
+**RLS**
+- All three tables already have `auth.uid() = user_id` SELECT policies, so authenticated users see only their own rows. No schema or policy changes required.
 
 **Out of scope**
-- No backend, RLS, schema, or auth-config changes.
-- No DNS / mailbox setup — `support@rubberduck.space` is just a string until MX is configured.
-- Logo / favicon assets unchanged (still `/icons/icon-192.png`); image rebrand is a follow-up.
+- No DB migrations.
+- No new tables, no realtime subscriptions (can be a follow-up — current pattern is fetch-on-mount + auth change).
+- `ProjectionChart` keeps its synthetic forecast curve; turning it into a real time series belongs to a separate task.
 
