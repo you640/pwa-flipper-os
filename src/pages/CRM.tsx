@@ -1,16 +1,14 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { toast } from "sonner";
 import {
-  ArrowLeft,
   Building2,
   Copy,
-  Globe,
   Loader2,
   Mail,
+  Plus,
   Search,
   Sparkles,
-  User2,
 } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
@@ -18,9 +16,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import {
   Select,
   SelectContent,
@@ -28,123 +40,123 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
-type Status = "lead" | "contacted" | "demo" | "rejected";
+type LeadStatus = "Lead" | "Contacted" | "Demo" | "Rejected";
 
 interface Lead {
   id: string;
-  agency: string;
-  contact: string;
-  email: string;
-  website: string;
-  status: Status;
-  hue: string;
-  initials: string;
+  agency_name: string;
+  contact_email: string | null;
+  status: LeadStatus;
+  notes: string | null;
 }
 
-const STATUS_META: Record<Status, { label: string; className: string }> = {
-  lead: { label: "Lead", className: "bg-accent/15 text-accent ring-accent/30" },
-  contacted: {
-    label: "Contacted",
-    className: "bg-primary/15 text-primary-glow ring-primary/30",
-  },
-  demo: { label: "Demo", className: "bg-warning/15 text-warning ring-warning/30" },
-  rejected: {
-    label: "Rejected",
-    className: "bg-destructive/15 text-destructive ring-destructive/30",
-  },
+interface PortfolioApp {
+  id: string;
+  name: string;
+  mrr: number;
+  asking_price: number;
+}
+
+const STATUS_META: Record<LeadStatus, string> = {
+  Lead: "bg-accent/15 text-accent ring-accent/30",
+  Contacted: "bg-primary/15 text-primary-glow ring-primary/30",
+  Demo: "bg-warning/15 text-warning ring-warning/30",
+  Rejected: "bg-destructive/15 text-destructive ring-destructive/30",
 };
 
-const SEED: Lead[] = [
-  {
-    id: "l1",
-    agency: "Helix Marketing",
-    contact: "Marcus Chen",
-    email: "marcus@helixmarketing.com",
-    website: "helixmarketing.com",
-    status: "demo",
-    hue: "from-emerald-500 to-teal-500",
-    initials: "HM",
-  },
-  {
-    id: "l2",
-    agency: "Brightpath Agency",
-    contact: "Sara Kovacs",
-    email: "sara@brightpath.io",
-    website: "brightpath.io",
-    status: "lead",
-    hue: "from-pink-500 to-rose-500",
-    initials: "BA",
-  },
-  {
-    id: "l3",
-    agency: "SK Beauty Distributors",
-    contact: "Lena Park",
-    email: "lena@skbeauty.co",
-    website: "skbeauty.co",
-    status: "contacted",
-    hue: "from-fuchsia-500 to-violet-500",
-    initials: "SK",
-  },
-  {
-    id: "l4",
-    agency: "Northbeam Digital",
-    contact: "Diego Alvarez",
-    email: "diego@northbeam.digital",
-    website: "northbeam.digital",
-    status: "demo",
-    hue: "from-violet-500 to-cyan-500",
-    initials: "ND",
-  },
-  {
-    id: "l5",
-    agency: "Rivertown Studios",
-    contact: "Priya Desai",
-    email: "priya@rivertown.studio",
-    website: "rivertown.studio",
-    status: "contacted",
-    hue: "from-cyan-500 to-sky-500",
-    initials: "RS",
-  },
-  {
-    id: "l6",
-    agency: "Acme Local Group",
-    contact: "Tom Becker",
-    email: "tom@acmelocal.com",
-    website: "acmelocal.com",
-    status: "rejected",
-    hue: "from-amber-500 to-orange-500",
-    initials: "AL",
-  },
-];
-
-const PITCH_APPS = [
-  { id: "invoiceflow", name: "InvoiceFlow PWA", mrr: 1240 },
-  { id: "bookingbuddy", name: "BookingBuddy", mrr: 760 },
-  { id: "menumate", name: "MenuMate", mrr: 980 },
-];
+const formatUSD = (n: number) =>
+  new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(n);
 
 export default function CRM() {
-  const [leads, setLeads] = useState<Lead[]>(SEED);
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [apps, setApps] = useState<PortfolioApp[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
-  const [selectedId, setSelectedId] = useState<string | null>(SEED[0].id);
+  const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [addOpen, setAddOpen] = useState(false);
 
-  const filtered = leads.filter(
-    (l) =>
-      l.agency.toLowerCase().includes(query.toLowerCase()) ||
-      l.contact.toLowerCase().includes(query.toLowerCase()),
-  );
+  // Initial fetch
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const [leadsRes, appsRes] = await Promise.all([
+        supabase.from("crm_leads").select("*").order("created_at", { ascending: false }),
+        supabase.from("portfolio").select("id,name,mrr,asking_price").order("created_at", { ascending: false }),
+      ]);
 
-  const selected = leads.find((l) => l.id === selectedId) ?? null;
+      if (cancelled) return;
 
-  const updateStatus = (id: string, status: Status) => {
-    setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
+      if (leadsRes.error) {
+        toast.error("Failed to load leads", { description: leadsRes.error.message });
+      } else {
+        setLeads((leadsRes.data ?? []) as Lead[]);
+      }
+      if (appsRes.error) {
+        toast.error("Failed to load portfolio", { description: appsRes.error.message });
+      } else {
+        setApps((appsRes.data ?? []) as PortfolioApp[]);
+      }
+      setLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return leads;
+    return leads.filter(
+      (l) =>
+        l.agency_name.toLowerCase().includes(q) ||
+        (l.contact_email ?? "").toLowerCase().includes(q),
+    );
+  }, [leads, query]);
+
+  const handleAddLead = async (data: {
+    agency_name: string;
+    contact_email: string;
+    notes: string;
+  }) => {
+    const { data: row, error } = await supabase
+      .from("crm_leads")
+      .insert({
+        agency_name: data.agency_name,
+        contact_email: data.contact_email || null,
+        notes: data.notes || null,
+        status: "Lead",
+      })
+      .select()
+      .single();
+
+    if (error) {
+      toast.error("Failed to add lead", { description: error.message });
+      return;
+    }
+    setLeads((prev) => [row as Lead, ...prev]);
+    toast.success("Lead added!");
+    setAddOpen(false);
   };
 
   return (
     <AppLayout>
-      <div className="mx-auto w-full max-w-[1500px] space-y-6">
+      <div className="mx-auto w-full max-w-[1400px] space-y-6">
         <motion.header
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
@@ -160,346 +172,375 @@ export default function CRM() {
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-xs text-muted-foreground">
-            {leads.length} leads · {leads.filter((l) => l.status === "demo").length} in demo
+            <Building2 className="h-3.5 w-3.5 text-primary" />
+            {loading ? "Loading…" : `${leads.length} leads tracked`}
           </div>
         </motion.header>
 
-        <div
-          className={cn(
-            "grid gap-5",
-            "lg:grid-cols-[minmax(280px,32%)_1fr]",
-          )}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.45, delay: 0.05, ease: "easeOut" }}
         >
-          {/* LEFT — Lead list */}
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4, delay: 0.05, ease: "easeOut" }}
-            className={cn(
-              "lg:block",
-              selected && "hidden", // mobile: hide list when a lead is open
-            )}
-          >
-            <Card className="glass flex h-full flex-col overflow-hidden p-4 shadow-elegant">
-              <div className="relative">
+          <Card className="glass overflow-hidden p-5 shadow-elegant md:p-6">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="relative w-full max-w-xs">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search leads…"
+                  placeholder="Search by agency or email…"
                   className="h-10 bg-card/40 pl-9"
                 />
               </div>
 
-              <ScrollArea className="-mx-2 mt-3 max-h-[calc(100vh-280px)] flex-1 pr-2">
-                <ul className="space-y-1.5 px-2">
-                  {filtered.map((lead, i) => {
-                    const active = lead.id === selectedId;
-                    return (
-                      <motion.li
-                        key={lead.id}
-                        initial={{ opacity: 0, x: -6 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ duration: 0.25, delay: i * 0.04 }}
-                      >
-                        <button
-                          onClick={() => setSelectedId(lead.id)}
-                          className={cn(
-                            "group flex w-full items-center gap-3 rounded-lg border border-transparent p-3 text-left transition-all",
-                            active
-                              ? "border-primary/40 bg-primary/10 shadow-glow"
-                              : "hover:border-border hover:bg-card/60",
-                          )}
-                        >
-                          <Avatar className="h-9 w-9 shrink-0 ring-1 ring-border/60">
-                            <AvatarFallback
-                              className={cn(
-                                "bg-gradient-to-br text-[11px] font-semibold text-white",
-                                lead.hue,
-                              )}
-                            >
-                              {lead.initials}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center justify-between gap-2">
-                              <span className="truncate text-sm font-medium text-foreground">
-                                {lead.agency}
-                              </span>
-                            </div>
-                            <div className="mt-0.5 flex items-center justify-between gap-2">
-                              <span className="truncate text-xs text-muted-foreground">
-                                {lead.contact}
-                              </span>
-                              <Badge
-                                variant="outline"
-                                className={cn(
-                                  "shrink-0 border-0 text-[10px] uppercase tracking-wider ring-1",
-                                  STATUS_META[lead.status].className,
-                                )}
-                              >
-                                {STATUS_META[lead.status].label}
-                              </Badge>
-                            </div>
-                          </div>
-                        </button>
-                      </motion.li>
-                    );
-                  })}
-                  {filtered.length === 0 && (
-                    <li className="py-10 text-center text-xs text-muted-foreground">
-                      No leads match your search.
-                    </li>
+              <Dialog open={addOpen} onOpenChange={setAddOpen}>
+                <DialogTrigger asChild>
+                  <Button className="group relative h-10 overflow-hidden bg-gradient-primary font-semibold text-primary-foreground shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-[0_0_40px_-8px_hsl(var(--primary)/0.7)]">
+                    <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+                    <Plus className="mr-1 h-4 w-4" />
+                    Add Lead
+                  </Button>
+                </DialogTrigger>
+                <AddLeadDialog onSubmit={handleAddLead} />
+              </Dialog>
+            </div>
+
+            <div className="mt-5 overflow-x-auto rounded-xl border border-border/50">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-border/60 hover:bg-transparent">
+                    <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">
+                      Agency
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">
+                      Contact
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">
+                      Status
+                    </TableHead>
+                    <TableHead className="text-xs uppercase tracking-wider text-muted-foreground">
+                      Notes
+                    </TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading &&
+                    Array.from({ length: 5 }).map((_, i) => (
+                      <TableRow key={`sk-${i}`} className="border-b border-border/40 hover:bg-transparent">
+                        <TableCell><Skeleton className="h-4 w-40" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-48" /></TableCell>
+                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-64" /></TableCell>
+                      </TableRow>
+                    ))}
+
+                  {!loading && filtered.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="py-12 text-center text-sm text-muted-foreground">
+                        {leads.length === 0
+                          ? "No leads yet. Add your first agency above."
+                          : "No leads match your search."}
+                      </TableCell>
+                    </TableRow>
                   )}
-                </ul>
-              </ScrollArea>
-            </Card>
-          </motion.div>
 
-          {/* RIGHT — Detail */}
-          <div
-            className={cn(
-              "lg:block",
-              !selected && "hidden",
-            )}
-          >
-            <AnimatePresence mode="wait">
-              {selected && (
-                <motion.div
-                  key={selected.id}
-                  initial={{ opacity: 0, x: 24 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  exit={{ opacity: 0, x: -12 }}
-                  transition={{ duration: 0.4, ease: "easeOut" }}
-                  className="space-y-5"
-                >
-                  {/* Mobile back */}
-                  <button
-                    onClick={() => setSelectedId(null)}
-                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground lg:hidden"
-                  >
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                    Back to leads
-                  </button>
-
-                  <ContactCard lead={selected} onStatusChange={(s) => updateStatus(selected.id, s)} />
-                  <PitchGenerator lead={selected} />
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </div>
+                  {!loading &&
+                    filtered.map((lead, i) => (
+                      <motion.tr
+                        key={lead.id}
+                        initial={{ opacity: 0, y: 6 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.4), ease: "easeOut" }}
+                        onClick={() => setSelectedLead(lead)}
+                        className="cursor-pointer border-b border-border/40 transition-colors hover:bg-card/40"
+                      >
+                        <TableCell className="py-3.5 font-semibold text-foreground">
+                          {lead.agency_name}
+                        </TableCell>
+                        <TableCell className="text-sm text-muted-foreground">
+                          {lead.contact_email || "—"}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            className={cn(
+                              "border-0 text-[10px] uppercase tracking-wider ring-1",
+                              STATUS_META[lead.status],
+                            )}
+                          >
+                            {lead.status}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="max-w-xs truncate text-sm text-muted-foreground">
+                          {lead.notes || "—"}
+                        </TableCell>
+                      </motion.tr>
+                    ))}
+                </TableBody>
+              </Table>
+            </div>
+          </Card>
+        </motion.div>
       </div>
+
+      {/* Pitch Generator Sheet */}
+      <Sheet open={!!selectedLead} onOpenChange={(o) => !o && setSelectedLead(null)}>
+        <SheetContent
+          side="right"
+          className="glass w-full overflow-y-auto border-border/60 sm:max-w-xl"
+        >
+          {selectedLead && (
+            <PitchPanel lead={selectedLead} apps={apps} />
+          )}
+        </SheetContent>
+      </Sheet>
     </AppLayout>
   );
 }
 
-function ContactCard({
-  lead,
-  onStatusChange,
+// ---------------------------------------------------------------
+// Add lead dialog
+// ---------------------------------------------------------------
+function AddLeadDialog({
+  onSubmit,
 }: {
-  lead: Lead;
-  onStatusChange: (s: Status) => void;
+  onSubmit: (data: { agency_name: string; contact_email: string; notes: string }) => void;
 }) {
+  const [agency, setAgency] = useState("");
+  const [email, setEmail] = useState("");
+  const [notes, setNotes] = useState("");
+  const valid = agency.trim().length > 0;
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!valid) return;
+    onSubmit({ agency_name: agency.trim(), contact_email: email.trim(), notes: notes.trim() });
+    setAgency("");
+    setEmail("");
+    setNotes("");
+  };
+
   return (
-    <Card className="glass relative overflow-hidden p-6 shadow-elegant">
-      <div className="absolute -top-20 -right-20 h-40 w-40 rounded-full bg-primary/15 blur-3xl" />
-
-      <div className="relative flex flex-wrap items-start justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Avatar className="h-14 w-14 ring-1 ring-border/60">
-            <AvatarFallback
-              className={cn("bg-gradient-to-br text-base font-semibold text-white", lead.hue)}
-            >
-              {lead.initials}
-            </AvatarFallback>
-          </Avatar>
-          <div>
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">
-              {lead.agency}
-            </h2>
-            <p className="mt-0.5 flex items-center gap-1.5 text-sm text-muted-foreground">
-              <User2 className="h-3.5 w-3.5" />
-              {lead.contact}
-            </p>
-          </div>
+    <DialogContent className="glass border-border/60 sm:max-w-md">
+      <DialogHeader>
+        <DialogTitle>Add a new lead</DialogTitle>
+        <DialogDescription>Track a potential buyer agency.</DialogDescription>
+      </DialogHeader>
+      <form onSubmit={submit} className="space-y-4">
+        <div className="space-y-1.5">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Agency Name</Label>
+          <Input
+            value={agency}
+            onChange={(e) => setAgency(e.target.value)}
+            placeholder="e.g. Pixel Forge Studios"
+            className="h-10 bg-card/40"
+          />
         </div>
-
-        <div className="flex flex-col items-end gap-1.5">
-          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">
-            Status
-          </Label>
-          <Select value={lead.status} onValueChange={(v) => onStatusChange(v as Status)}>
-            <SelectTrigger className="h-9 w-36 bg-card/40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {(Object.keys(STATUS_META) as Status[]).map((s) => (
-                <SelectItem key={s} value={s}>
-                  {STATUS_META[s].label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        <div className="space-y-1.5">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Contact Email</Label>
+          <Input
+            type="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            placeholder="hello@agency.com"
+            className="h-10 bg-card/40"
+          />
         </div>
-      </div>
-
-      <div className="relative mt-6 grid grid-cols-1 gap-3 sm:grid-cols-2">
-        <InfoTile icon={<Mail className="h-4 w-4" />} label="Email" value={lead.email} />
-        <InfoTile icon={<Globe className="h-4 w-4" />} label="Website" value={lead.website} />
-      </div>
-    </Card>
+        <div className="space-y-1.5">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
+          <Textarea
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            placeholder="Anything worth remembering…"
+            className="min-h-[88px] resize-none bg-card/40"
+          />
+        </div>
+        <DialogFooter className="pt-2">
+          <Button
+            type="submit"
+            disabled={!valid}
+            className="bg-gradient-primary font-semibold text-primary-foreground shadow-glow disabled:opacity-50"
+          >
+            Save Lead
+          </Button>
+        </DialogFooter>
+      </form>
+    </DialogContent>
   );
 }
 
-function InfoTile({
-  icon,
-  label,
-  value,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="flex items-center gap-3 rounded-xl border border-border/50 bg-card/40 p-3">
-      <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/60 text-primary ring-1 ring-border/60">
-        {icon}
-      </div>
-      <div className="min-w-0">
-        <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
-        <div className="truncate text-sm text-foreground">{value}</div>
-      </div>
-    </div>
-  );
-}
-
-function PitchGenerator({ lead }: { lead: Lead }) {
-  const [appId, setAppId] = useState(PITCH_APPS[0].id);
-  const [loading, setLoading] = useState(false);
+// ---------------------------------------------------------------
+// Pitch generator panel (in Sheet)
+// ---------------------------------------------------------------
+function PitchPanel({ lead, apps }: { lead: Lead; apps: PortfolioApp[] }) {
+  const [appId, setAppId] = useState<string>(apps[0]?.id ?? "");
+  const [generating, setGenerating] = useState(false);
   const [pitch, setPitch] = useState("");
 
-  const handleGenerate = () => {
-    setLoading(true);
-    setPitch("");
-    const app = PITCH_APPS.find((a) => a.id === appId)!;
-    setTimeout(() => {
-      const text = `Hi ${lead.contact.split(" ")[0]},
+  const selectedApp = useMemo(
+    () => apps.find((a) => a.id === appId) ?? null,
+    [appId, apps],
+  );
 
-I run a micro-SaaS studio focused on lightweight PWAs for service businesses. I saw ${lead.agency} works with local businesses and thought this might be relevant.
-
-I've built ${app.name}, a production PWA currently doing $${app.mrr.toLocaleString()} MRR with retention above 90%. It's stable, well-documented, and could plug straight into your client portfolio — either as an acquisition or as a white-label solution.
-
-Would you be open to a 15-minute call this week to explore whether it's a fit?
-
-Best,
-Alex
-PWA Flipper OS`;
-      setPitch(text);
-      setLoading(false);
-    }, 1500);
-  };
+  // Auto-generate pitch when app changes
+  useEffect(() => {
+    if (!selectedApp) {
+      setPitch("");
+      return;
+    }
+    setGenerating(true);
+    const timer = setTimeout(() => {
+      setPitch(buildPitch(lead, selectedApp));
+      setGenerating(false);
+    }, 600);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [appId, lead.id]);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(pitch);
-      toast.success("Pitch copied!");
+      toast.success("Pitch copied to clipboard!");
     } catch {
       toast.error("Could not access clipboard");
     }
   };
 
   return (
-    <Card className="glow-border relative overflow-hidden bg-gradient-card p-6 shadow-elegant">
-      <div className="absolute -top-24 -right-24 h-56 w-56 rounded-full bg-primary/20 blur-3xl animate-pulse-glow" />
-      <div className="absolute -bottom-20 -left-16 h-48 w-48 rounded-full bg-accent/15 blur-3xl" />
-
-      <div className="relative flex items-start justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-            <Sparkles className="h-3 w-3 text-primary" />
-            AI Pitch Generator
-          </div>
-          <h3 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
-            Craft a cold email in seconds
-          </h3>
+    <div className="flex h-full flex-col">
+      <SheetHeader className="space-y-2 text-left">
+        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <Sparkles className="h-3 w-3 text-primary" />
+          AI Pitch Generator
         </div>
-        <Building2 className="h-5 w-5 text-muted-foreground" />
-      </div>
+        <SheetTitle className="text-2xl font-semibold tracking-tight">
+          {lead.agency_name}
+        </SheetTitle>
+        <SheetDescription className="flex items-center gap-1.5 text-sm">
+          <Mail className="h-3.5 w-3.5" />
+          {lead.contact_email || "No email on file"}
+        </SheetDescription>
+      </SheetHeader>
 
-      <div className="relative mt-6 grid grid-cols-1 gap-3 sm:grid-cols-[1fr_auto] sm:items-end">
+      <div className="mt-6 flex-1 space-y-5">
+        {/* App selector */}
         <div className="space-y-1.5">
           <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-            Select App to Pitch
+            Select an app from your portfolio
           </Label>
-          <Select value={appId} onValueChange={setAppId}>
-            <SelectTrigger className="h-11 bg-card/40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PITCH_APPS.map((a) => (
-                <SelectItem key={a.id} value={a.id}>
-                  <div className="flex items-center justify-between gap-6">
-                    <span>{a.name}</span>
-                    <span className="text-xs text-muted-foreground">
-                      ${a.mrr.toLocaleString()} MRR
-                    </span>
-                  </div>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {apps.length === 0 ? (
+            <div className="rounded-xl border border-dashed border-border/60 bg-card/30 p-4 text-center text-sm text-muted-foreground">
+              No portfolio apps yet. Add one from the Valuation Engine.
+            </div>
+          ) : (
+            <Select value={appId} onValueChange={setAppId}>
+              <SelectTrigger className="h-11 bg-card/40">
+                <SelectValue placeholder="Pick an app to pitch" />
+              </SelectTrigger>
+              <SelectContent>
+                {apps.map((a) => (
+                  <SelectItem key={a.id} value={a.id}>
+                    <div className="flex items-center justify-between gap-6">
+                      <span>{a.name}</span>
+                      <span className="text-xs text-muted-foreground">
+                        {formatUSD(a.mrr)} MRR
+                      </span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          )}
         </div>
 
-        <Button
-          onClick={handleGenerate}
-          disabled={loading}
-          className="group relative h-11 overflow-hidden bg-gradient-primary font-semibold text-primary-foreground shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-[0_0_40px_-8px_hsl(var(--primary)/0.7)] disabled:opacity-80 disabled:hover:translate-y-0"
-        >
-          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-          {loading ? (
-            <>
-              <Loader2 className="mr-1 h-4 w-4 animate-spin" />
-              Generating…
-            </>
-          ) : (
-            <>
-              <Sparkles className="mr-1 h-4 w-4" />
-              Generate AI Pitch
-            </>
-          )}
-        </Button>
-      </div>
-
-      <div className="relative mt-5">
-        <Textarea
-          value={pitch}
-          readOnly
-          placeholder="Your AI-generated pitch will appear here…"
-          className="min-h-[260px] resize-none border-border/60 bg-card/40 font-mono text-[13px] leading-relaxed text-foreground placeholder:text-muted-foreground/60"
-        />
-
-        <AnimatePresence>
-          {pitch && (
+        {/* App stats */}
+        <AnimatePresence mode="wait">
+          {selectedApp && (
             <motion.div
+              key={selectedApp.id}
               initial={{ opacity: 0, y: 6 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
+              exit={{ opacity: 0, y: -6 }}
               transition={{ duration: 0.25 }}
-              className="mt-3 flex justify-end"
+              className="grid grid-cols-2 gap-3"
             >
-              <Button
-                variant="outline"
-                onClick={handleCopy}
-                className="border-border/60 bg-card/40 hover:bg-secondary"
-              >
-                <Copy className="mr-1 h-4 w-4" />
-                Copy to Clipboard
-              </Button>
+              <Stat label="MRR" value={formatUSD(selectedApp.mrr)} />
+              <Stat label="Asking Price" value={formatUSD(selectedApp.asking_price)} highlight />
             </motion.div>
           )}
         </AnimatePresence>
+
+        {/* Pitch textarea */}
+        <div className="space-y-1.5">
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+            Cold email
+          </Label>
+          <div className="relative">
+            <Textarea
+              value={pitch}
+              onChange={(e) => setPitch(e.target.value)}
+              placeholder={selectedApp ? "Generating…" : "Pick an app to generate a pitch."}
+              className="min-h-[280px] resize-none border-border/60 bg-card/40 font-mono text-[13px] leading-relaxed"
+            />
+            {generating && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md bg-background/40 backdrop-blur-sm">
+                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-    </Card>
+
+      <div className="mt-6 border-t border-border/50 pt-5">
+        <Button
+          onClick={handleCopy}
+          disabled={!pitch || generating}
+          className="group relative h-12 w-full overflow-hidden bg-gradient-primary font-semibold text-primary-foreground shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-[0_0_50px_-10px_hsl(var(--primary)/0.7)] disabled:opacity-50 disabled:hover:translate-y-0"
+        >
+          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+          <Copy className="mr-1.5 h-4 w-4" />
+          Copy to Clipboard
+        </Button>
+      </div>
+    </div>
   );
+}
+
+function Stat({ label, value, highlight }: { label: string; value: string; highlight?: boolean }) {
+  return (
+    <div className="rounded-xl border border-border/50 bg-card/40 p-3">
+      <div className="text-[10px] uppercase tracking-wider text-muted-foreground">{label}</div>
+      <div
+        className={cn(
+          "mt-1 font-mono text-base font-semibold tabular-nums",
+          highlight ? "text-gradient" : "text-foreground",
+        )}
+      >
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function buildPitch(lead: Lead, app: PortfolioApp): string {
+  const firstName = (lead.agency_name.split(/\s+/)[0] || "there").replace(/[^A-Za-z]/g, "") || "team";
+  return `Subject: Quick idea for ${lead.agency_name} — acquiring ${app.name}
+
+Hi ${firstName} team,
+
+I run a small studio building lightweight PWAs for service businesses, and I came across ${lead.agency_name} while researching agencies that work with growing brands.
+
+I wanted to put one of my apps on your radar:
+
+  • ${app.name}
+  • Current MRR: ${formatUSD(app.mrr)}
+  • Asking price: ${formatUSD(app.asking_price)}
+
+It's stable, fully documented, and ready to plug into your client portfolio — either as a direct acquisition or a white-label offering. Customers stick around (>90% retention), and the codebase is clean enough to hand off in a single afternoon.
+
+Would you be open to a 15-minute call this week to see if it's a fit?
+
+Best,
+Alex
+PWA Flipper OS`;
 }
