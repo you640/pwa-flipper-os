@@ -111,7 +111,12 @@ export type Database = {
     Enums: {
       lead_status: "Lead" | "Contacted" | "Demo" | "Rejected"
       market_source: "acquire" | "flippa"
-      portfolio_status: "Building" | "For Sale" | "Sold"
+      portfolio_status:
+        | "Building"
+        | "For Sale"
+        | "Sold"
+        | "Listed"
+        | "Negotiating"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -241,7 +246,13 @@ export const Constants = {
     Enums: {
       lead_status: ["Lead", "Contacted", "Demo", "Rejected"],
       market_source: ["acquire", "flippa"],
-      portfolio_status: ["Building", "For Sale", "Sold"],
+      portfolio_status: [
+        "Building",
+        "For Sale",
+        "Sold",
+        "Listed",
+        "Negotiating",
+      ],
     },
   },
 } as const
