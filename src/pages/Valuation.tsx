@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { SEO } from "@/components/seo/SEO";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { toast } from "sonner";
 import { Sparkles, TrendingUp, Calculator, Building2 } from "lucide-react";
@@ -93,6 +94,10 @@ export default function Valuation() {
 
   return (
     <AppLayout>
+      <SEO
+        title="Valuation Engine | Flipper OS"
+        description="Instantly value any micro-SaaS or PWA with niche-aware multipliers. Real-time pricing, professional reports, magical UX."
+      />
       <div className="mx-auto w-full max-w-[1400px] space-y-6">
         <motion.header
           initial={{ opacity: 0, y: 10 }}

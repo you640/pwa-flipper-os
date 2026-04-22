@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { SEO } from "@/components/seo/SEO";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { ProjectionChart } from "@/components/dashboard/ProjectionChart";
@@ -40,6 +41,10 @@ const Index = () => {
 
   return (
     <AppLayout>
+      <SEO
+        title="Command Center | Flipper OS"
+        description="Track portfolio value, MRR, and live deal flow across your PWA empire from one premium command center."
+      />
       <div className="mx-auto w-full max-w-[1400px] space-y-6">
         <motion.header
           initial={{ opacity: 0, y: 10 }}

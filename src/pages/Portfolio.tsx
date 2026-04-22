@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { SEO } from "@/components/seo/SEO";
 import {
   DndContext,
   DragOverlay,
@@ -36,6 +37,7 @@ interface PortfolioRow {
 }
 
 export default function Portfolio() {
+  // SEO injected in render below
   const [projects, setProjects] = useState<PwaProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -185,6 +187,10 @@ export default function Portfolio() {
 
   return (
     <AppLayout>
+      <SEO
+        title="Portfolio Kanban | Flipper OS"
+        description="Drag-and-drop your PWA portfolio through Building, Listed, Negotiating, and Sold. Optimistic, real-time, beautiful."
+      />
       <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-6">
         <motion.header
           initial={{ opacity: 0, y: 10 }}

@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { SEO } from "@/components/seo/SEO";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -199,6 +200,10 @@ export default function Market() {
 
   return (
     <AppLayout>
+      <SEO
+        title="Market Intel | Flipper OS"
+        description="Live deal-flow intelligence from Acquire and Flippa. Find undervalued micro-SaaS and PWAs before anyone else."
+      />
       <div className="mx-auto w-full max-w-[1400px] space-y-6">
         <motion.header
           initial={{ opacity: 0, y: 10 }}
