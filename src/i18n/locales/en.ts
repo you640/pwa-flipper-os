@@ -300,6 +300,110 @@ const en = {
     loginTitle: "Sign In | Flipper OS",
     loginDesc: "Access your PWA acquisition command center. Valuation engine, buyer CRM, market intel, and portfolio kanban — in one place.",
   },
+  docs: {
+    title: "Help &",
+    titleAccent: "Documentation",
+    subtitle: "Manuals, FAQs, and the playbook behind Flipper OS.",
+    seoTitle: "Documentation | Flipper OS",
+    seoDesc: "Onboarding manual, FAQ and contact for the PWA Flipper OS command center.",
+    tabs: {
+      manual: "User Manual",
+      faq: "FAQ",
+      ceo: "CEO Manual",
+      about: "About",
+    },
+    manual: {
+      stepLabel: "Step {{n}}",
+      steps: {
+        "1": {
+          title: "Value your first app",
+          desc: "Open the Valuation Engine, enter MRR, expenses, and the niche. The asking price updates live based on industry multipliers.",
+          tip: "Aim for a 30–40× monthly profit on premium B2B PWAs; 20–24× on micro-tools.",
+        },
+        "2": {
+          title: "Manage the pipeline",
+          desc: "Drag projects across Building → Listed → Negotiating → Sold on the Portfolio Kanban. Status saves automatically.",
+          tip: "Move to Listed only when revenue, churn and tech docs are buyer-ready.",
+        },
+        "3": {
+          title: "Close deals with CRM",
+          desc: "Add agencies in Buyer CRM, then generate AI cold pitches tailored to one of your apps. Copy, send, follow up.",
+          tip: "Personalize the first line. Generic openers tank reply rates.",
+        },
+        "4": {
+          title: "Install Flipper OS",
+          desc: "On iPhone: Share → Add to Home Screen. On Android: Chrome menu → Install app. The Sidebar also exposes a one-tap installer.",
+          tip: "Installed PWAs get push notifications and offline-ready dashboards.",
+        },
+      },
+    },
+    faq: {
+      items: {
+        "1": {
+          q: "How is the valuation calculated?",
+          a: "We multiply monthly net profit (MRR − expenses) by an industry-specific multiplier. Pre-revenue apps fall back to an asset-only estimate.",
+        },
+        "2": {
+          q: "Which industry multipliers do you use?",
+          a: "B2B SaaS: ~36×, E-commerce: ~28×, Booking/Scheduling: ~30×, Micro-tool: ~22×. Multipliers reflect 2024–2026 micro-SaaS comps.",
+        },
+        "3": {
+          q: "Can I use my own email for CRM outreach?",
+          a: "Yes. The CRM stores contacts; pitches are copied to your clipboard so you can send them from your own inbox (Gmail, Superhuman, Outlook).",
+        },
+        "4": {
+          q: "Is my data encrypted?",
+          a: "Yes. Data is stored in an encrypted Postgres database with row-level security so you only ever see your own portfolio, leads and intel.",
+        },
+        "5": {
+          q: "How do I export my portfolio?",
+          a: "Export is in beta. For now, you can copy values from any table or contact support to receive a full CSV dump within 24 hours.",
+        },
+        "6": {
+          q: "How do I update the PWA?",
+          a: "Updates auto-install on next refresh. If you've installed Flipper OS to your home screen, fully close the app and reopen it to fetch the latest build.",
+        },
+        "7": {
+          q: "Does Flipper OS work offline?",
+          a: "Cached pages render offline, but live data (news, prices, pitches) requires a connection. The Service Worker syncs in the background once you're back online.",
+        },
+        "8": {
+          q: "How do I delete my account?",
+          a: "Settings → Danger → Delete account. This permanently erases your portfolio, leads, market intel and profile.",
+        },
+      },
+    },
+    ceo: {
+      headerTitle: "Internal playbook",
+      confidential: "Confidential",
+      restrictedTitle: "Restricted area",
+      restricted: "This section is reserved for the founder. Sign in with an admin account to view the internal playbook.",
+      sections: {
+        market: {
+          title: "Manage market_intel",
+          body: "Log every Acquire/Flippa listing within 24h of spotting it. Tag the niche, MRR, asking price, and source. Aim for 5+ new entries per week — pattern matching is the moat.",
+        },
+        leads: {
+          title: "Source SK/CZ agencies",
+          body: "Hunt on Clutch.co (filter Slovakia & Czechia, 10–50 employees, web/mobile dev). Cross-reference with LinkedIn for founder emails. Prioritize agencies with white-label SaaS history.",
+        },
+        scale: {
+          title: "Scale the portfolio",
+          body: "Hold no more than 6 active builds. Listed should always be 2–3. Reinvest 40% of every exit into the next acquisition. Sell when revenue plateaus for 2+ months.",
+        },
+        ops: {
+          title: "Weekly ops checklist",
+          body: "Mon: market_intel sweep.\nWed: pitch 5 leads.\nFri: review portfolio metrics & close cards in Sold.\nSun: update this playbook.",
+        },
+      },
+    },
+    about: {
+      missionTitle: "About Flipper OS",
+      missionBody: "Flipper OS exists to dominate the micro-SaaS exit market. We turn solo builders into serial acquirers with one command center: valuation, kanban, market intel and AI-driven outreach — all in a single premium workspace.",
+      contactTitle: "Contact",
+      contactBody: "Need help, partnership, or press? Reach the founder directly. Replies within 24h on weekdays.",
+    },
+  },
 };
 
 export default en;
