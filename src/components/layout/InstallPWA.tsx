@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Download } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { useSidebar } from "@/components/ui/sidebar";
 import { toast } from "sonner";
@@ -11,6 +12,7 @@ interface BeforeInstallPromptEvent extends Event {
 
 export function InstallPWA() {
   const { state } = useSidebar();
+  const { t } = useTranslation();
   const collapsed = state === "collapsed";
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [installed, setInstalled] = useState(false);
@@ -23,7 +25,7 @@ export function InstallPWA() {
     const installedHandler = () => {
       setInstalled(true);
       setDeferredPrompt(null);
-      toast.success("App installed!");
+      toast.success(t("sidebar.installed"));
     };
 
     window.addEventListener("beforeinstallprompt", handler);
@@ -42,13 +44,13 @@ export function InstallPWA() {
 
   const handleInstall = async () => {
     if (!deferredPrompt) {
-      toast.info("Use your browser's 'Add to Home Screen' option to install.");
+      toast.info(t("sidebar.installInstruction"));
       return;
     }
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") {
-      toast.success("Installing Flipper OS...");
+      toast.success(t("sidebar.installing"));
     }
     setDeferredPrompt(null);
   };
@@ -64,7 +66,7 @@ export function InstallPWA() {
     >
       <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-[shimmer_2.5s_infinite]" />
       <Download className="h-4 w-4" />
-      {!collapsed && <span>Install App</span>}
+      {!collapsed && <span>{t("sidebar.installApp")}</span>}
     </Button>
   );
 }

@@ -1,6 +1,7 @@
 import { Bell, LogOut, Search, User as UserIcon, CreditCard, Settings as SettingsIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { useTranslation } from "react-i18next";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
@@ -14,18 +15,20 @@ import {
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 
 export function Topbar() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { user, profile, isAdmin, displayName, initials } = useProfile();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
-    toast.success("Signed out");
+    toast.success(t("topbar.signedOut"));
     navigate("/login", { replace: true });
   };
 
-  const roleLabel = isAdmin ? "Admin" : "Member";
+  const roleLabel = isAdmin ? t("common.admin") : t("common.member");
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-3 backdrop-blur-xl md:px-6">
@@ -35,7 +38,7 @@ export function Topbar() {
         <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
         <input
           type="text"
-          placeholder="Search apps, leads, valuations…"
+          placeholder={t("topbar.searchPlaceholder")}
           className="h-10 w-full rounded-lg border border-border/60 bg-card/50 pl-9 pr-16 text-sm text-foreground placeholder:text-muted-foreground/70 outline-none transition-colors focus:border-primary/50 focus:bg-card"
         />
         <kbd className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 rounded border border-border/60 bg-muted/50 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
@@ -44,6 +47,8 @@ export function Topbar() {
       </div>
 
       <div className="ml-auto flex items-center gap-2">
+        <LanguageSwitcher />
+
         <Button variant="ghost" size="icon" className="relative text-muted-foreground hover:text-foreground">
           <Bell className="h-4.5 w-4.5" />
           <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-primary shadow-glow animate-pulse-glow" />
@@ -73,18 +78,18 @@ export function Topbar() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={() => navigate("/profile")}>
-              <UserIcon className="mr-2 h-4 w-4" /> Profile
+              <UserIcon className="mr-2 h-4 w-4" /> {t("topbar.profile")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/billing")}>
-              <CreditCard className="mr-2 h-4 w-4" /> Billing
+              <CreditCard className="mr-2 h-4 w-4" /> {t("topbar.billing")}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate("/settings")}>
-              <SettingsIcon className="mr-2 h-4 w-4" /> Settings
+              <SettingsIcon className="mr-2 h-4 w-4" /> {t("topbar.settings")}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />
-              Sign out
+              {t("topbar.signOut")}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>

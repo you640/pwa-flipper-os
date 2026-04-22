@@ -1,5 +1,6 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { LayoutDashboard, Kanban, Calculator, Radar, Users, Settings, Sparkles } from "lucide-react";
 import { InstallPWA } from "./InstallPWA";
 import {
@@ -16,18 +17,19 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 
-const items = [
-  { title: "Overview", url: "/", icon: LayoutDashboard },
-  { title: "Portfolio Kanban", url: "/portfolio", icon: Kanban },
-  { title: "Valuation Engine", url: "/valuation", icon: Calculator },
-  { title: "Market Intel", url: "/market", icon: Radar },
-  { title: "Buyer CRM", url: "/crm", icon: Users },
-];
-
 export function AppSidebar() {
   const { state } = useSidebar();
+  const { t } = useTranslation();
   const collapsed = state === "collapsed";
   const location = useLocation();
+
+  const items = [
+    { title: t("sidebar.overview"), url: "/", icon: LayoutDashboard },
+    { title: t("sidebar.portfolio"), url: "/portfolio", icon: Kanban },
+    { title: t("sidebar.valuation"), url: "/valuation", icon: Calculator },
+    { title: t("sidebar.market"), url: "/market", icon: Radar },
+    { title: t("sidebar.crm"), url: "/crm", icon: Users },
+  ];
 
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
@@ -39,10 +41,10 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="flex flex-col leading-tight">
               <span className="text-sm font-semibold tracking-tight text-sidebar-foreground">
-                PWA Flipper
+                {t("sidebar.brand")}
               </span>
               <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                Command OS
+                {t("sidebar.commandOS")}
               </span>
             </div>
           )}
@@ -53,7 +55,7 @@ export function AppSidebar() {
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupLabel className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground/70">
-              Workspace
+              {t("sidebar.workspace")}
             </SidebarGroupLabel>
           )}
           <SidebarGroupContent>
@@ -61,7 +63,7 @@ export function AppSidebar() {
               {items.map((item) => {
                 const active = location.pathname === item.url;
                 return (
-                  <SidebarMenuItem key={item.title}>
+                  <SidebarMenuItem key={item.url}>
                     <SidebarMenuButton asChild className="h-10">
                       <NavLink
                         to={item.url}
@@ -92,7 +94,7 @@ export function AppSidebar() {
             className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
           >
             <Settings className="h-4 w-4" />
-            {!collapsed && <span>Settings</span>}
+            {!collapsed && <span>{t("sidebar.settings")}</span>}
           </NavLink>
           {!collapsed && <span className="text-[10px] tracking-wider">v0.1.0</span>}
         </div>
