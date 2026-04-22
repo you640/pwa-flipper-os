@@ -1,4 +1,4 @@
-import { Bell, LogOut, Search } from "lucide-react";
+import { Bell, LogOut, Search, User as UserIcon, CreditCard, Settings as SettingsIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { SidebarTrigger } from "@/components/ui/sidebar";
@@ -13,15 +13,19 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/hooks/useProfile";
 
 export function Topbar() {
   const navigate = useNavigate();
+  const { user, profile, isAdmin, displayName, initials } = useProfile();
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
     toast.success("Signed out");
     navigate("/login", { replace: true });
   };
+
+  const roleLabel = isAdmin ? "Admin" : "Member";
 
   return (
     <header className="sticky top-0 z-30 flex h-16 items-center gap-3 border-b border-border/60 bg-background/70 px-3 backdrop-blur-xl md:px-6">
@@ -49,23 +53,34 @@ export function Topbar() {
           <DropdownMenuTrigger asChild>
             <button className="flex items-center gap-2.5 rounded-lg p-1 pr-3 transition-colors hover:bg-card/60">
               <Avatar className="h-8 w-8 border border-border/60">
-                <AvatarImage src="" alt="Alex" />
+                <AvatarImage src={profile?.avatar_url ?? ""} alt={displayName} />
                 <AvatarFallback className="bg-gradient-primary text-xs font-semibold text-primary-foreground">
-                  AK
+                  {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="hidden text-left leading-tight md:block">
-                <div className="text-sm font-medium text-foreground">Alex Kovács</div>
-                <div className="text-[11px] text-muted-foreground">Founder</div>
+                <div className="text-sm font-medium text-foreground truncate max-w-[140px]">{displayName}</div>
+                <div className="text-[11px] text-muted-foreground">{roleLabel}</div>
               </div>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-52">
-            <DropdownMenuLabel>My account</DropdownMenuLabel>
+          <DropdownMenuContent align="end" className="w-60">
+            <DropdownMenuLabel>
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-foreground truncate">{displayName}</span>
+                <span className="text-[11px] font-normal text-muted-foreground truncate">{user?.email}</span>
+              </div>
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Billing</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/profile")}>
+              <UserIcon className="mr-2 h-4 w-4" /> Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/billing")}>
+              <CreditCard className="mr-2 h-4 w-4" /> Billing
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate("/settings")}>
+              <SettingsIcon className="mr-2 h-4 w-4" /> Settings
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleSignOut} className="text-destructive focus:text-destructive">
               <LogOut className="mr-2 h-4 w-4" />

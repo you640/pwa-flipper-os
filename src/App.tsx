@@ -12,6 +12,9 @@ import Valuation from "./pages/Valuation.tsx";
 import Market from "./pages/Market.tsx";
 import CRM from "./pages/CRM.tsx";
 import Login from "./pages/Login.tsx";
+import Profile from "./pages/Profile.tsx";
+import Settings from "./pages/Settings.tsx";
+import Billing from "./pages/Billing.tsx";
 import { AuthGuard } from "./components/auth/AuthGuard.tsx";
 
 const queryClient = new QueryClient();
@@ -35,6 +38,9 @@ const App = () => (
                     <Route path="/valuation" element={<Valuation />} />
                     <Route path="/market" element={<Market />} />
                     <Route path="/crm" element={<CRM />} />
+                    <Route path="/profile" element={<Profile />} />
+                    <Route path="/settings" element={<Settings />} />
+                    <Route path="/billing" element={<Billing />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
