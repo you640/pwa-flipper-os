@@ -1,7 +1,7 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LayoutDashboard, Kanban, Calculator, Radar, Users, Settings, Sparkles } from "lucide-react";
+import { LayoutDashboard, Kanban, Calculator, Radar, Users, Settings, Sparkles, BookOpen } from "lucide-react";
 import { InstallPWA } from "./InstallPWA";
 import {
   Sidebar,
@@ -88,6 +88,14 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-sidebar-border px-3 py-3 gap-2">
         <InstallPWA />
+        <NavLink
+          to="/docs"
+          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+          activeClassName="!bg-sidebar-accent !text-sidebar-foreground font-medium"
+        >
+          <BookOpen className="h-4 w-4" />
+          {!collapsed && <span>{t("sidebar.docs")}</span>}
+        </NavLink>
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <NavLink
             to="/settings"
