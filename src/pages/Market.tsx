@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 import {
@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
   TableBody,
@@ -48,6 +49,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 type Source = "acquire" | "flippa";
 
@@ -59,19 +61,6 @@ interface IntelRow {
   mrr: number;
   price: number;
 }
-
-const SEED: IntelRow[] = [
-  { id: "i1", name: "SalonSync", niche: "Booking", source: "acquire", mrr: 1840, price: 64500 },
-  { id: "i2", name: "MenuMaker PWA", niche: "Restaurants", source: "flippa", mrr: 920, price: 24900 },
-  { id: "i3", name: "InvoiceNimbus", niche: "B2B SaaS", source: "acquire", mrr: 2310, price: 82500 },
-  { id: "i4", name: "PetPaw CRM", niche: "Vertical SaaS", source: "flippa", mrr: 480, price: 14200 },
-  { id: "i5", name: "DevPing", niche: "Developer Tool", source: "acquire", mrr: 1120, price: 28000 },
-  { id: "i6", name: "GymQueue", niche: "Booking", source: "flippa", mrr: 760, price: 27500 },
-  { id: "i7", name: "ShipSnap", niche: "E-commerce", source: "acquire", mrr: 410, price: 9800 },
-  { id: "i8", name: "FormForge", niche: "B2B SaaS", source: "acquire", mrr: 0, price: 6500 },
-  { id: "i9", name: "ClinicQueue PWA", niche: "Healthcare", source: "flippa", mrr: 980, price: 32100 },
-  { id: "i10", name: "TaskPilot", niche: "Productivity", source: "acquire", mrr: 1420, price: 31200 },
-];
 
 type SortKey = "price" | "mrr" | null;
 type SortDir = "asc" | "desc";
@@ -87,11 +76,45 @@ const calcMultiplier = (price: number, mrr: number) =>
   mrr > 0 ? +(price / mrr).toFixed(1) : null;
 
 export default function Market() {
-  const [rows, setRows] = useState<IntelRow[]>(SEED);
+  const [rows, setRows] = useState<IntelRow[]>([]);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("price");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [open, setOpen] = useState(false);
+
+  // Fetch from Supabase on mount
+  useEffect(() => {
+    let cancelled = false;
+    const fetchRows = async () => {
+      const { data, error } = await supabase
+        .from("market_intel")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (cancelled) return;
+      if (error) {
+        toast.error("Failed to load market intel", { description: error.message });
+        setLoading(false);
+        return;
+      }
+      setRows(
+        (data ?? []).map((r) => ({
+          id: r.id,
+          name: r.name,
+          niche: r.niche,
+          source: r.source as Source,
+          mrr: r.mrr,
+          price: r.price,
+        })),
+      );
+      setLoading(false);
+    };
+    fetchRows();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -113,17 +136,65 @@ export default function Market() {
     }
   };
 
-  const handleAdd = (row: Omit<IntelRow, "id" | "niche">) => {
-    const newRow: IntelRow = {
+  const handleAdd = async (row: Omit<IntelRow, "id" | "niche">) => {
+    // Optimistic insert
+    const tempId = `temp-${Date.now()}`;
+    const optimistic: IntelRow = {
       ...row,
-      id: `i${Date.now()}`,
+      id: tempId,
       niche: "B2B SaaS",
     };
-    setRows((prev) => [newRow, ...prev]);
+    setRows((prev) => [optimistic, ...prev]);
+    setOpen(false);
+
+    const { data, error } = await supabase
+      .from("market_intel")
+      .insert({
+        name: row.name,
+        source: row.source,
+        mrr: row.mrr,
+        price: row.price,
+      })
+      .select()
+      .single();
+
+    if (error) {
+      // Roll back optimistic update
+      setRows((prev) => prev.filter((r) => r.id !== tempId));
+      toast.error("Failed to add intel", { description: error.message });
+      return;
+    }
+
+    // Replace temp row with real one
+    setRows((prev) =>
+      prev.map((r) =>
+        r.id === tempId
+          ? {
+              id: data.id,
+              name: data.name,
+              niche: data.niche,
+              source: data.source as Source,
+              mrr: data.mrr,
+              price: data.price,
+            }
+          : r,
+      ),
+    );
     toast.success("Market intel added!", {
       description: `${row.name} · ${formatUSD(row.price)}`,
     });
-    setOpen(false);
+  };
+
+  const handleDelete = async (id: string) => {
+    const prev = rows;
+    setRows((p) => p.filter((r) => r.id !== id)); // optimistic
+    const { error } = await supabase.from("market_intel").delete().eq("id", id);
+    if (error) {
+      setRows(prev); // rollback
+      toast.error("Failed to delete", { description: error.message });
+      return;
+    }
+    toast.success("Listing deleted");
   };
 
   return (
@@ -145,7 +216,7 @@ export default function Market() {
           </div>
           <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-xs text-muted-foreground">
             <Radar className="h-3.5 w-3.5 text-primary" />
-            {rows.length} listings tracked
+            {loading ? "Loading…" : `${rows.length} listings tracked`}
           </div>
         </motion.header>
 
@@ -215,76 +286,93 @@ export default function Market() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.length === 0 && (
+                  {loading &&
+                    Array.from({ length: 6 }).map((_, i) => (
+                      <TableRow key={`sk-${i}`} className="border-b border-border/40 hover:bg-transparent">
+                        <TableCell className="py-3.5">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="mt-2 h-3 w-16" />
+                        </TableCell>
+                        <TableCell><Skeleton className="h-5 w-20" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-16" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-20" /></TableCell>
+                        <TableCell className="text-right"><Skeleton className="ml-auto h-4 w-10" /></TableCell>
+                        <TableCell />
+                      </TableRow>
+                    ))}
+
+                  {!loading && filtered.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={6} className="py-12 text-center text-sm text-muted-foreground">
-                        No listings match your search.
+                        {rows.length === 0
+                          ? "No listings yet. Click \"Add Intel\" to log your first one."
+                          : "No listings match your search."}
                       </TableCell>
                     </TableRow>
                   )}
-                  {filtered.map((row, i) => {
-                    const mult = calcMultiplier(row.price, row.mrr);
-                    return (
-                      <motion.tr
-                        key={row.id}
-                        initial={{ opacity: 0, y: 6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.3, delay: i * 0.04, ease: "easeOut" }}
-                        className="border-b border-border/40 transition-colors hover:bg-card/40"
-                      >
-                        <TableCell className="py-3.5">
-                          <div className="font-semibold text-foreground">{row.name}</div>
-                          <Badge
-                            variant="outline"
-                            className="mt-1 border-border/60 bg-secondary/40 px-1.5 py-0 text-[10px] font-medium text-muted-foreground"
-                          >
-                            {row.niche}
-                          </Badge>
-                        </TableCell>
-                        <TableCell>
-                          <SourceBadge source={row.source} />
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm tabular-nums text-muted-foreground">
-                          {row.mrr > 0 ? formatUSD(row.mrr) : "—"}
-                        </TableCell>
-                        <TableCell className="text-right font-mono text-sm font-semibold tabular-nums text-foreground">
-                          {formatUSD(row.price)}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          {mult !== null ? (
-                            <span className="font-mono text-sm tabular-nums text-primary-glow">
-                              {mult}×
-                            </span>
-                          ) : (
-                            <Badge className="border-0 bg-warning/15 text-warning ring-1 ring-warning/30">
-                              Asset
+
+                  {!loading &&
+                    filtered.map((row, i) => {
+                      const mult = calcMultiplier(row.price, row.mrr);
+                      return (
+                        <motion.tr
+                          key={row.id}
+                          initial={{ opacity: 0, y: 6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.3, delay: Math.min(i * 0.04, 0.4), ease: "easeOut" }}
+                          className="border-b border-border/40 transition-colors hover:bg-card/40"
+                        >
+                          <TableCell className="py-3.5">
+                            <div className="font-semibold text-foreground">{row.name}</div>
+                            <Badge
+                              variant="outline"
+                              className="mt-1 border-border/60 bg-secondary/40 px-1.5 py-0 text-[10px] font-medium text-muted-foreground"
+                            >
+                              {row.niche}
                             </Badge>
-                          )}
-                        </TableCell>
-                        <TableCell className="text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <button className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
-                                <MoreHorizontal className="h-4 w-4" />
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-36">
-                              <DropdownMenuItem>Edit</DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                className="text-destructive focus:text-destructive"
-                                onClick={() =>
-                                  setRows((prev) => prev.filter((r) => r.id !== row.id))
-                                }
-                              >
-                                Delete
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </motion.tr>
-                    );
-                  })}
+                          </TableCell>
+                          <TableCell>
+                            <SourceBadge source={row.source} />
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm tabular-nums text-muted-foreground">
+                            {row.mrr > 0 ? formatUSD(row.mrr) : "—"}
+                          </TableCell>
+                          <TableCell className="text-right font-mono text-sm font-semibold tabular-nums text-foreground">
+                            {formatUSD(row.price)}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            {mult !== null ? (
+                              <span className="font-mono text-sm tabular-nums text-primary-glow">
+                                {mult}×
+                              </span>
+                            ) : (
+                              <Badge className="border-0 bg-warning/15 text-warning ring-1 ring-warning/30">
+                                Asset
+                              </Badge>
+                            )}
+                          </TableCell>
+                          <TableCell className="text-right">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <button className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground">
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-36">
+                                <DropdownMenuItem>Edit</DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                  className="text-destructive focus:text-destructive"
+                                  onClick={() => handleDelete(row.id)}
+                                >
+                                  Delete
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </TableCell>
+                        </motion.tr>
+                      );
+                    })}
                 </TableBody>
               </Table>
             </div>
