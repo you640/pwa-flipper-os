@@ -1,66 +1,72 @@
 
 
-# Functional Profile Button & Settings
+# Slovak Localization + EN/SK Switcher
 
-Make the topbar profile button (currently static "Alex Kovács / Founder") fully functional — load the real signed-in user, show their initials/avatar, and wire up working Profile, Billing, and Settings pages.
+Translate the entire app to Slovak as the default and add an EN/SK language switcher. Language is auto-detected from the user's browser/region on first visit, then remembered and synced to their profile when signed in.
 
 ## What you'll get
 
-**1. Real user identity in the Topbar**
-- Replace hardcoded "Alex Kovács / Founder" with the actual signed-in user.
-- Display name = `profiles.display_name` (fallback to email prefix).
-- Role chip = "Admin" if user has admin role, else "Member".
-- Avatar shows uploaded image (from Storage) or auto-generated initials.
-- Live updates via `onAuthStateChange` — no stale data after login/logout.
+**1. Auto language detection**
+- First-time visitors with browser locale `sk-*` see the app in Slovak; everyone else gets English.
+- Detected language is saved to `localStorage` so subsequent visits are instant.
+- Signed-in users get their language persisted to their profile and synced across devices.
 
-**2. Profile page (`/profile`)**
-- Glassmorphic card matching the dashboard aesthetic.
-- Editable: display name, avatar (upload to a new `avatars` storage bucket), bio.
-- Read-only: email, account created date, role badge.
-- Save button persists to a new `profiles` table.
+**2. EN / SK switcher in the Topbar**
+- Compact toggle (🇬🇧 EN / 🇸🇰 SK) next to the notification bell.
+- Also exposed in `Settings → Appearance` as a labeled "Language / Jazyk" selector.
+- Switching is instant — no reload — and updates `<html lang="…">` for SEO and screen readers.
 
-**3. Settings page (`/settings`)**
-- **Account**: change email, change password (via `supabase.auth.updateUser`).
-- **Appearance**: theme toggle (dark/light/system) persisted to localStorage.
-- **Notifications**: toggles for email alerts (stored in profiles table).
-- **Danger zone**: sign out everywhere, delete account (calls an edge function).
+**3. Full Slovak translation coverage**
+Every user-facing string across the app:
+- Sidebar (Overview → Prehľad, Portfolio Kanban → Portfólio Kanban, Valuation Engine → Oceňovací nástroj, Market Intel → Trhové dáta, Buyer CRM → CRM kupujúcich, Settings → Nastavenia)
+- Topbar (search placeholder, Profile/Billing/Settings/Sign out menu, role labels)
+- Auth / Login (sign in, sign up, Google, validation messages, toasts)
+- Dashboard / Index (metric cards, activity feed, industry news, projection chart)
+- Portfolio Kanban (column names, card actions, empty states)
+- Valuation Engine (form labels, results, tooltips)
+- Market Intel (filters, table headers, chart legends)
+- CRM (pipeline stages, lead form, pitch generator)
+- Profile, Settings, Billing pages (tabs, labels, danger zone, all toasts)
+- Common UI: confirm dialogs, error toasts, "Loading…", empty states, NotFound, ComingSoon
+- SEO `<title>` / `<description>` per page (localized)
 
-**4. Billing page (`/billing`)**
-- Placeholder with "Coming soon" state, current plan card ("Founder — Unlimited" for admin), and a CTA. Keeps the dropdown link functional.
+**4. Number, date & currency formatting**
+- Dates rendered via `Intl.DateTimeFormat` with the active locale (`sk-SK` / `en-US`).
+- Currency stays EUR but formatted per locale (e.g. `1 250,00 €` in SK vs `€1,250.00` in EN).
 
-**5. Wired dropdown menu**
-- Profile → `/profile`
-- Billing → `/billing`
-- Settings → `/settings`
-- Sign out → already works.
-- Sidebar "Settings" cog → `/settings` too.
+## Technical approach
 
-## Technical Details
+**Library:** `react-i18next` + `i18next` + `i18next-browser-languagedetector`. Industry standard, tiny bundle, supports interpolation and plurals. No backend needed — translations bundled.
 
-**Database (new migration)**
-- Create `public.profiles` table:
-  - `id uuid PK references auth.users(id) on delete cascade`
-  - `display_name text`, `avatar_url text`, `bio text`
-  - `email_notifications boolean default true`
-  - `created_at`, `updated_at`
-- Enable RLS:
-  - Users can SELECT/UPDATE their own row.
-  - Admins can SELECT all (uses existing `has_role`).
-- Trigger `handle_new_user()` on `auth.users` insert → auto-create profile row with `display_name = split_part(email, '@', 1)`.
-- Backfill profiles for existing users.
-- Create `avatars` storage bucket (public read), with RLS so users can only upload/update files under `{user_id}/...`.
+**Structure (consolidated to avoid token limits):**
+```text
+src/i18n/
+  index.ts                  // i18n init + detector config
+  locales/
+    en.ts                   // single export with all namespaces (common, auth, dashboard, portfolio, valuation, market, crm, profile, settings, billing, seo)
+    sk.ts                   // mirror of en.ts in Slovak
+src/components/LanguageSwitcher.tsx
+src/hooks/useLocale.ts       // wraps useTranslation + Intl formatters (date, currency, number)
+```
 
-**Edge function**
-- `delete-account` — uses service role to delete the calling user from `auth.users` (cascade removes profile, roles, portfolio, etc.).
+Using `.ts` modules (not JSON) lets us use TS typing for keys and keeps both locales in two files total, well within a single generation pass.
 
-**Frontend**
-- New hook `src/hooks/useProfile.ts` — fetches session + profile + admin role, exposes `{ user, profile, isAdmin, refresh }`. Subscribes to `onAuthStateChange`.
-- Update `src/components/layout/Topbar.tsx` to consume the hook, render real name/initials/avatar, and link dropdown items to the new routes.
-- Update sidebar Settings button to `<NavLink to="/settings">`.
-- New pages: `src/pages/Profile.tsx`, `src/pages/Settings.tsx`, `src/pages/Billing.tsx` (each with `<SEO />`, `<AppLayout>`, glass cards consistent with the existing design system).
-- Register the three routes inside the `<AuthGuard>` block in `src/App.tsx`.
+**Detection order** (configured in `i18next-browser-languagedetector`):
+1. `localStorage` key `lang`
+2. User profile column `profiles.locale` once session loads
+3. `navigator.language` → `sk*` maps to `sk`, everything else to `en`
+
+**Database:** migration adds `locale text default 'en'` to `public.profiles`; existing rows backfilled to `en`. The switcher updates this column for signed-in users so the choice follows them across devices.
+
+**App wiring:**
+- `src/main.tsx` imports `./i18n` before `<App />` renders.
+- `App.tsx` syncs `<html lang>` whenever the language changes.
+- `Topbar.tsx` renders `<LanguageSwitcher />` next to the bell.
+- `Settings.tsx` Appearance tab gets a Language section.
+- `SEO.tsx` reads localized title/description from the `seo` namespace.
+- All hardcoded strings across pages/components replaced with `t('namespace.key')`.
 
 **Files**
-- Created: migration SQL, edge function `delete-account/index.ts`, `src/hooks/useProfile.ts`, `src/pages/Profile.tsx`, `src/pages/Settings.tsx`, `src/pages/Billing.tsx`
-- Edited: `src/App.tsx`, `src/components/layout/Topbar.tsx`, `src/components/layout/AppSidebar.tsx`
+- Created: `src/i18n/index.ts`, `src/i18n/locales/en.ts`, `src/i18n/locales/sk.ts`, `src/components/LanguageSwitcher.tsx`, `src/hooks/useLocale.ts`, migration adding `profiles.locale`.
+- Edited: `src/main.tsx`, `src/App.tsx`, `src/components/seo/SEO.tsx`, `src/components/layout/Topbar.tsx`, `src/components/layout/AppSidebar.tsx`, `src/components/layout/InstallPWA.tsx`, all pages in `src/pages/`, dashboard widgets in `src/components/dashboard/`, kanban components in `src/components/kanban/`, `src/components/auth/AuthGuard.tsx`, `index.html` (default `<html lang="sk">`).
 
