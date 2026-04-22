@@ -67,7 +67,35 @@ export default function Profile() {
       const msg = (err?.message || "").toLowerCase();
       const status = err?.statusCode || err?.status;
 
-      if (msg.includes("bucket not found") || status === 404) {
+      let reason = "unknown";
+      if (msg.includes("bucket not found") || status === 404) reason = "bucket_not_found";
+      else if (
+        msg.includes("row-level security") ||
+        msg.includes("rls") ||
+        msg.includes("not authorized") ||
+        msg.includes("permission") ||
+        status === 403
+      ) reason = "permission_denied";
+      else if (msg.includes("payload too large") || status === 413) reason = "file_too_large";
+      else if (msg.includes("mime") || msg.includes("content type")) reason = "unsupported_mime";
+      else if (msg.includes("network") || msg.includes("failed to fetch")) reason = "network_error";
+
+      // Log failure to Supabase for later review (best-effort, don't block UX)
+      try {
+        await supabase.from("avatar_upload_errors").insert({
+          user_id: user.id,
+          reason,
+          status_code: typeof status === "number" ? status : null,
+          error_message: err?.message ?? null,
+          file_name: file.name,
+          file_size: file.size,
+          file_type: file.type,
+        });
+      } catch (logErr) {
+        console.error("Failed to log avatar upload error:", logErr);
+      }
+
+      if (reason === "bucket_not_found") {
         toast.error("Avatar storage not configured", {
           description:
             "The 'avatars' bucket is missing. Ask an admin to create a public 'avatars' storage bucket, then try again.",
