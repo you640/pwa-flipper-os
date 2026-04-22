@@ -3,24 +3,24 @@ import { SEO } from "@/components/seo/SEO";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Sparkles, Zap } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { useProfile } from "@/hooks/useProfile";
 
 export default function Billing() {
   const { isAdmin } = useProfile();
+  const { t } = useTranslation();
 
-  const planName = isAdmin ? "Founder — Unlimited" : "Starter";
-  const planDesc = isAdmin
-    ? "Unlimited credits, priority support, full admin access."
-    : "Free tier. Upgrade for higher limits and premium features.";
+  const planName = isAdmin ? t("billing.planFounder") : t("billing.planStarter");
+  const planDesc = isAdmin ? t("billing.planFounderDesc") : t("billing.planStarterDesc");
 
   return (
     <AppLayout>
-      <SEO title="Billing | Flipper OS" description="Manage your subscription, plan and invoices." />
+      <SEO title={t("seo.billingTitle")} description={t("seo.billingDesc")} />
 
       <div className="mx-auto max-w-3xl space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Billing</h1>
-          <p className="text-sm text-muted-foreground">Plan, invoices and usage.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("billing.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("billing.subtitle")}</p>
         </div>
 
         <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-xl shadow-xl">
@@ -33,22 +33,22 @@ export default function Billing() {
               <div>
                 <div className="flex items-center gap-2">
                   <h2 className="text-lg font-semibold text-foreground">{planName}</h2>
-                  <Badge variant={isAdmin ? "default" : "secondary"}>Current</Badge>
+                  <Badge variant={isAdmin ? "default" : "secondary"}>{t("common.current")}</Badge>
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">{planDesc}</p>
               </div>
             </div>
             {!isAdmin && (
               <Button className="bg-gradient-primary shadow-glow">
-                <Zap className="mr-2 h-4 w-4" /> Upgrade
+                <Zap className="mr-2 h-4 w-4" /> {t("billing.upgrade")}
               </Button>
             )}
           </div>
         </div>
 
         <div className="rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-xl">
-          <h3 className="text-sm font-semibold text-foreground">Invoices</h3>
-          <p className="mt-2 text-sm text-muted-foreground">No invoices yet. They will appear here once billing is enabled.</p>
+          <h3 className="text-sm font-semibold text-foreground">{t("billing.invoices")}</h3>
+          <p className="mt-2 text-sm text-muted-foreground">{t("billing.noInvoices")}</p>
         </div>
       </div>
     </AppLayout>

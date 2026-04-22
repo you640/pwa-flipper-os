@@ -1,8 +1,10 @@
 import { AppLayout } from "@/components/layout/AppLayout";
 import { motion } from "framer-motion";
 import { Construction } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 export default function ComingSoon({ title }: { title: string }) {
+  const { t } = useTranslation();
   return (
     <AppLayout>
       <motion.div
@@ -16,8 +18,7 @@ export default function ComingSoon({ title }: { title: string }) {
         </div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">{title}</h1>
         <p className="mt-2 max-w-md text-sm text-muted-foreground">
-          This module is queued for the next build phase. The app shell and routing are wired so it will
-          slot in seamlessly.
+          {t("common.comingSoonDesc")}
         </p>
       </motion.div>
     </AppLayout>
