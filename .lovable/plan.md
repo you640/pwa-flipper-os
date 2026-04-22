@@ -1,81 +1,85 @@
-# Help & Documentation Center
 
-A new `/docs` route with a 4-tab help center: User Manual, FAQ, CEO Manual (admin-only), and About & Contact. Fully localized in EN/SK and matched to the existing glassmorphic dark aesthetic.
+
+# Rebrand to RUBBERDUCK.SPACE + 3 new Docs features
+
+Four bundled changes: full app rebrand, prefilled "Contact support" action, localized Changelog tab, and "Download as PDF" for User Manual + FAQ — with proper Slovak diacritics support in the PDFs.
 
 ## What you'll get
 
-**1. New route + sidebar entry**
+**1. Rebrand: Flipper OS → RUBBERDUCK.SPACE**
+- Replace every visible "Flipper OS", "FlippOS", "PWA Flipper" string with **RUBBERDUCK.SPACE** across:
+  - `index.html` — `<title>`, `meta description`, `meta author`, `apple-mobile-web-app-title`, OG/Twitter tags.
+  - `vite.config.ts` — PWA manifest `name` ("RUBBERDUCK.SPACE"), `short_name` ("Rubberduck"), description.
+  - `src/i18n/locales/en.ts` and `sk.ts` — `auth.title`, `sidebar.brand`, `sidebar.installing`, all `seo.*` titles, `docs.subtitle/seoTitle/seoDesc`, manual step 4, FAQ items 6–7, About mission, CEO header.
+- All support email refs → **support@rubberduck.space**. Web link → `https://rubberduck.space`.
+- Presentation-only change. No DB, auth, or domain config touched.
 
-- Route `/docs` rendered through `AppLayout`, gated by `AuthGuard` like the other app pages.
-- Sidebar link **"Documentation"** with `BookOpen` icon, placed in the bottom footer area of `AppSidebar` next to **Settings**.
+**2. Contact Support — prefilled email**
+- Replace the static `mailto:` anchor in About & Contact with a **"Contact support"** primary Button.
+- Click builds a `mailto:` URL with `encodeURIComponent`:
+  - **to**: `support@rubberduck.space`
+  - **subject** (localized): `[RUBBERDUCK.SPACE] Support — {displayName}`
+  - **body** (localized template) prefilled from `useProfile()` + `useLocale()`:
+    ```
+    Hello RUBBERDUCK.SPACE team,
 
-**2. Docs page with 4 Shadcn Tabs**
-Header: gradient title "Help & Documentation" + subtitle, mirroring other pages (Portfolio/Valuation style).
+    — Account ID: {user.id}
+    — Email: {user.email}
+    — Display name: {profile.display_name}
+    — Locale: {i18n.language}
+    — Page: /docs
 
-- **Tab 1 — User Manual (Onboarding)**: 4 steps as numbered glass cards, each with a Lucide icon (Lightbulb, Kanban, Cpu, Zap), title, description, and a short "Tip" line.
-  1. Valuation – how to value your first app
-  2. Kanban – manage your pipeline
-  3. CRM – AI pitches & closing
-  4. PWA Install – Add Flipper OS to iPhone/Android
-- **Tab 2 — FAQ**: Shadcn `Accordion` (`type="single" collapsible`) with **8 entries**:
-  - How is the valuation calculated?
-  - Which industry multipliers do you use?
-  - Can I use my own email for CRM outreach?
-  - Is my data encrypted?
-  - How do I export my portfolio?
-  - How do I update the PWA?
-  - Does Flipper OS work offline?
-  - How do I delete my account?
-- **Tab 3 — CEO Manual (Private)**: Admin-only.
-  - Visible only to users with the `admin` role (via `has_role` check).
-  - Non-admin users see a locked card: `ShieldCheck` icon + "Restricted" message.
-  - Header has a red `Confidential` Shadcn `Badge`.
-  - Sections (each as a glass card with icon): managing `market_intel`, sourcing SK/CZ acquisition agencies, scaling the portfolio, ops checklist.
-- **Tab 4 — About & Contact**:
-  - "About Flipper OS" card — mission to dominate the micro-SaaS exit market.
-  - Contact card with `Mail` icon → `support@flipper-os.com`, plus social links (X / LinkedIn / GitHub) as icon buttons.
+    Describe your issue below:
+    ```
+- Fallback: when `user` is null, profile lines are omitted but subject/body still prefill.
+- Plain email text stays visible below the button so users can copy it manually.
 
-**3. Full i18n (EN + SK)**
+**3. New "Changelog" tab in Docs**
+- Add a 5th tab between **FAQ** and **CEO**. `TabsList` becomes `grid-cols-2 sm:grid-cols-5`.
+- Label: `t("docs.tabs.changelog")` ("Changelog" / "Zmeny").
+- Vertical timeline of glass cards (newest first). Each card shows:
+  - `Calendar` icon + locale-formatted date (`useLocale().formatDate`)
+  - Version `Badge` (e.g. `v1.3.0`)
+  - Title + bulleted highlights, each prefixed with `Sparkles` / `Zap` / `Bug` icon.
+- Seed 4 entries: **v1.3.0** Rebrand to RUBBERDUCK.SPACE, **v1.2.0** Docs Center, **v1.1.0** Industry News upgrade, **v1.0.0** Launch. Stored under `docs.changelog.entries.{1..4}.{version,date,title,highlights}` so EN/SK stay in sync via the `Translations` type.
 
-- New namespaces in `src/i18n/locales/en.ts` and `sk.ts`:
-  - `docs.title`, `docs.subtitle`, `docs.tabs.{manual,faq,ceo,about}`
-  - `docs.manual.steps[1..4].{title,desc,tip}`
-  - `docs.faq.items[1..8].{q,a}`
-  - `docs.ceo.{confidential,restricted,sections.{market,leads,scale,ops}.{title,body}}`
-  - `docs.about.{mission.title,mission.body,contact.title,contact.email,contact.social}`
-- `sk.ts` matches the `Translations` shape so TS stays happy.
-- Sidebar key `sidebar.docs` added.
+**4. "Download as PDF" for User Manual & FAQ**
+- Ghost `Button` with `Download` icon at the top-right of the Manual and FAQ tab panels: `t("docs.downloadPdf")`.
+- Client-side PDF using **jsPDF**. Helper `src/lib/exportDocsPdf.ts` exports `exportManualPdf(t, locale)` and `exportFaqPdf(t, locale)`:
+  - Header: "RUBBERDUCK.SPACE — User Manual / FAQ", date, footer with page numbers.
+  - Manual: 4 numbered steps (title, description, tip).
+  - FAQ: 8 Q/A pairs (Q bold, A wrapped via `doc.splitTextToSize`).
+  - Filenames: `rubberduck-manual-{lang}.pdf`, `rubberduck-faq-{lang}.pdf`.
+- Toast confirms success / failure (`t("docs.downloadSuccess")` / `t("docs.downloadFailed")`).
 
-**4. Visuals**
-
-- Glassmorphic cards (`glass` / `card` classes already used elsewhere), gradient header, Framer Motion fade-in on tab change.
-- Icons: `Lightbulb`, `ShieldCheck`, `Cpu`, `Zap`, `BookOpen`, `Kanban`, `Mail`, `Globe`.
+**Important — Slovak diacritics in jsPDF**
+Standard jsPDF fonts (Helvetica/Arial) do not support Central European characters (ľ, š, č, ť, ž, ý, á, í, ô, ä). Generated SK PDFs would render empty boxes.
+Fix: bundle a lightweight UTF-8 font (Roboto Regular + Bold, ~80 KB each, base64) under `src/assets/fonts/` and register it in the helper before drawing any text:
+```ts
+import RobotoRegular from "@/assets/fonts/Roboto-Regular-base64";
+doc.addFileToVFS("Roboto-Regular.ttf", RobotoRegular);
+doc.addFont("Roboto-Regular.ttf", "Roboto", "normal");
+doc.setFont("Roboto", "normal");
+```
+Both EN and SK PDFs will use Roboto so output is consistent and all Slovak accents render correctly. Font loading is lazy — only when a download is triggered, so it doesn't bloat the app bundle.
 
 ## Technical details
 
-**Files created**
-
-- `src/pages/Docs.tsx` — page with `<Tabs>` + 4 panels.
-- `src/components/docs/ManualTab.tsx`, `FaqTab.tsx`, `CeoTab.tsx`, `AboutTab.tsx` — keeps `Docs.tsx` small.
-- `src/hooks/useIsAdmin.ts` — calls `supabase.rpc('has_role', { _user_id, _role: 'admin' })`, returns `{ isAdmin, loading }`.
-- `supabase/migrations/<ts>_user_roles.sql` — only if `user_roles` table / `app_role` enum / `has_role()` function don't already exist (will check first; created exactly per the security pattern: enum `app_role`, table `public.user_roles`, RLS, `SECURITY DEFINER` `has_role` function). No admin is auto-assigned — you'll grant yourself admin via a one-line insert that the migration includes guarded by your `auth.uid()` (we'll ask for confirmation before assigning).
-
 **Files edited**
+- `index.html` — brand strings & meta tags.
+- `vite.config.ts` — PWA manifest name/short_name/description.
+- `src/i18n/locales/en.ts` + `src/i18n/locales/sk.ts` — rebrand all strings; add `docs.tabs.changelog`, `docs.changelog.{title,subtitle,entries.*}`, `docs.contact.{button,subject,bodyTemplate}`, `docs.downloadPdf`, `docs.downloadSuccess`, `docs.downloadFailed`. SK stays type-safe via the `Translations` shape from EN.
+- `src/pages/Docs.tsx` — add Changelog tab, Download buttons + handlers, replace mailto anchor with prefilled Contact Support button, widen `TabsList` to 5 cols on `sm+`.
 
-- `src/App.tsx` — add `<Route path="/docs" element={<Docs />} />` above the catch-all.
-- `src/components/layout/AppSidebar.tsx` — add Documentation link in the footer block (above Settings), using `BookOpen`. New i18n key `sidebar.docs`.
-- `src/i18n/locales/en.ts` + `sk.ts` — add `docs.*` namespace and `sidebar.docs`.
+**Files created**
+- `src/lib/exportDocsPdf.ts` — `exportManualPdf` / `exportFaqPdf` with lazy font loader.
+- `src/assets/fonts/Roboto-Regular-base64.ts` + `Roboto-Bold-base64.ts` — base64-encoded TTFs (Apache 2.0 licensed) re-exported as `default` strings.
 
-**Admin gating**
+**Dependencies**
+- Add `jspdf` (~50 KB gz, no peer deps). No `jspdf-autotable` needed — manual layout.
 
-```tsx
-const { isAdmin, loading } = useIsAdmin();
-if (loading) return <Skeleton/>;
-if (!isAdmin) return <RestrictedCard/>;
-```
+**Out of scope**
+- No backend, RLS, schema, or auth-config changes.
+- No DNS / mailbox setup — `support@rubberduck.space` is just a string until MX is configured.
+- Logo / favicon assets unchanged (still `/icons/icon-192.png`); image rebrand is a follow-up.
 
-Tab trigger stays visible to everyone (so the UI looks consistent), but the panel content is what's gated — no data leakage because nothing sensitive is fetched, just static localized copy.
-
-**No changes** to existing dashboard, kanban, valuation, CRM, or news code.  
-  
-*"Pravidlo č. 1: Nikdy nepredávaj pod 30-násobok mesačného zisku!"*
