@@ -154,6 +154,7 @@ export type Database = {
           display_name: string | null
           email_notifications: boolean
           id: string
+          locale: string
           updated_at: string
         }
         Insert: {
@@ -163,6 +164,7 @@ export type Database = {
           display_name?: string | null
           email_notifications?: boolean
           id: string
+          locale?: string
           updated_at?: string
         }
         Update: {
@@ -172,6 +174,7 @@ export type Database = {
           display_name?: string | null
           email_notifications?: boolean
           id?: string
+          locale?: string
           updated_at?: string
         }
         Relationships: []
