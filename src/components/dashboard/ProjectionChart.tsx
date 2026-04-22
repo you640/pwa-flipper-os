@@ -1,13 +1,12 @@
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { useLocale } from "@/hooks/useLocale";
 
 interface Props {
   currentMRR: number;
 }
-
-const formatUSD = (n: number) =>
-  n >= 1000 ? `$${(n / 1000).toFixed(1)}k` : `$${n}`;
 
 function CustomTooltip({ active, payload, label }: any) {
   if (!active || !payload?.length) return null;
@@ -21,18 +20,20 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-const monthLabels = (() => {
-  const now = new Date();
-  const out: string[] = [];
-  for (let i = 0; i < 6; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    out.push(d.toLocaleString("en-US", { month: "short" }));
-  }
-  return out;
-})();
 
 export function ProjectionChart({ currentMRR }: Props) {
-  // Realistic 6-month projection: ~18% compound monthly growth, slight noise
+  const { t, intlLocale } = useLocale();
+  const formatUSD = (n: number) =>
+    n >= 1000 ? `€${(n / 1000).toFixed(1)}k` : `€${n}`;
+  const monthLabels = (() => {
+    const now = new Date();
+    const out: string[] = [];
+    for (let i = 0; i < 6; i++) {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      out.push(d.toLocaleString(intlLocale, { month: "short" }));
+    }
+    return out;
+  })();
   const base = Math.max(currentMRR, 500);
   const data = monthLabels.map((month, i) => ({
     month,

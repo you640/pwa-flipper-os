@@ -2,6 +2,7 @@ import { CSS } from "@dnd-kit/utilities";
 import { useSortable } from "@dnd-kit/sortable";
 import { motion } from "framer-motion";
 import { MoreHorizontal, TrendingUp } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,7 +12,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { formatUSD, type PwaProject } from "./data";
+import { useLocale } from "@/hooks/useLocale";
+import { type PwaProject } from "./data";
 
 interface ProjectCardProps {
   project: PwaProject;
@@ -20,6 +22,8 @@ interface ProjectCardProps {
 }
 
 export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCardProps) {
+  const { t } = useTranslation();
+  const { formatCurrency } = useLocale();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: project.id,
     data: { type: "card", project },
@@ -47,7 +51,7 @@ export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCa
           {...attributes}
           {...listeners}
           className="flex-1 cursor-grab text-left active:cursor-grabbing focus:outline-none"
-          aria-label={`Drag ${project.name}`}
+          aria-label={`${t("common.edit")} ${project.name}`}
         >
           <h3 className="text-sm font-semibold tracking-tight text-foreground">
             {project.name}
@@ -59,13 +63,13 @@ export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCa
             <button
               onPointerDown={(e) => e.stopPropagation()}
               className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-              aria-label="Card actions"
+              aria-label={t("portfolio.cardActions")}
             >
               <MoreHorizontal className="h-4 w-4" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem>View details</DropdownMenuItem>
+            <DropdownMenuItem>{t("portfolio.viewDetails")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -78,7 +82,7 @@ export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCa
         <div className="mt-3 flex items-end justify-between">
           <div>
             <div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
-              Asking
+              {t("portfolio.asking")}
             </div>
             <div
               className={cn(
@@ -90,7 +94,7 @@ export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCa
                     : "text-foreground",
               )}
             >
-              {project.askingPrice > 0 ? formatUSD(project.askingPrice) : "—"}
+              {project.askingPrice > 0 ? formatCurrency(project.askingPrice) : "—"}
             </div>
           </div>
           <Badge
@@ -98,7 +102,7 @@ export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCa
             className="border-border/60 bg-secondary/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
           >
             <TrendingUp className="mr-1 h-3 w-3" />
-            {project.mrr > 0 ? `${formatUSD(project.mrr)}/mo` : "Pre-revenue"}
+            {project.mrr > 0 ? `${formatCurrency(project.mrr)}${t("portfolio.perMonth")}` : t("portfolio.preRevenue")}
           </Badge>
         </div>
       </div>

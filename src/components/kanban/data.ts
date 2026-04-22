@@ -47,9 +47,9 @@ export const COLUMNS: KanbanColumn[] = [
 
 export const COLUMN_IDS = COLUMNS.map((c) => c.id);
 
-export const formatUSD = (n: number) =>
-  new Intl.NumberFormat("en-US", {
+export const formatUSD = (n: number, locale = "en-US") =>
+  new Intl.NumberFormat(locale, {
     style: "currency",
-    currency: "USD",
+    currency: "EUR",
     maximumFractionDigits: 0,
   }).format(n);

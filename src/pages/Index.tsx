@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SEO } from "@/components/seo/SEO";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MetricCard } from "@/components/dashboard/MetricCard";
@@ -7,6 +8,7 @@ import { IndustryNews } from "@/components/dashboard/IndustryNews";
 import { motion } from "framer-motion";
 import { DollarSign, TrendingUp, Layers, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useLocale } from "@/hooks/useLocale";
 
 interface PortfolioRow {
   asking_price: number;
@@ -15,6 +17,8 @@ interface PortfolioRow {
 }
 
 const Index = () => {
+  const { t } = useTranslation();
+  const { intlLocale } = useLocale();
   const [rows, setRows] = useState<PortfolioRow[] | null>(null);
 
   useEffect(() => {
@@ -33,7 +37,7 @@ const Index = () => {
   const pipelineCount = active.length;
   const totalExits = sold.reduce((s, r) => s + (r.asking_price ?? 0), 0);
 
-  const today = new Date().toLocaleDateString("en-US", {
+  const today = new Date().toLocaleDateString(intlLocale, {
     weekday: "long",
     month: "long",
     day: "numeric",
@@ -41,10 +45,7 @@ const Index = () => {
 
   return (
     <AppLayout>
-      <SEO
-        title="Command Center | Flipper OS"
-        description="Track portfolio value, MRR, and live deal flow across your PWA empire from one premium command center."
-      />
+      <SEO title={t("seo.indexTitle")} description={t("seo.indexDesc")} />
       <div className="mx-auto w-full max-w-[1400px] space-y-6">
         <motion.header
           initial={{ opacity: 0, y: 10 }}
@@ -54,39 +55,39 @@ const Index = () => {
         >
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-              Welcome back, <span className="text-gradient">Alex</span>
+              {t("dashboard.welcome")} <span className="text-gradient">Alex</span>
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Here's the pulse of your PWA portfolio today — {today}.
+              {t("dashboard.pulse")} {today}.
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-xs text-muted-foreground">
             <span className="h-1.5 w-1.5 rounded-full bg-success animate-pulse-glow" />
-            All systems nominal
+            {t("dashboard.allSystems")}
           </div>
         </motion.header>
 
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
-            label="Total Portfolio Value"
+            label={t("dashboard.totalPortfolio")}
             value={portfolioValue}
-            prefix="$"
+            prefix="€"
             icon={DollarSign}
             accent="primary"
             index={0}
             loading={loading}
           />
           <MetricCard
-            label="Combined MRR"
+            label={t("dashboard.combinedMRR")}
             value={combinedMRR}
-            prefix="$"
+            prefix="€"
             icon={TrendingUp}
             accent="cyan"
             index={1}
             loading={loading}
           />
           <MetricCard
-            label="Apps in Pipeline"
+            label={t("dashboard.apps")}
             value={pipelineCount}
             icon={Layers}
             accent="warning"
@@ -94,9 +95,9 @@ const Index = () => {
             loading={loading}
           />
           <MetricCard
-            label="Total Exits"
+            label={t("dashboard.totalExits")}
             value={totalExits}
-            prefix="$"
+            prefix="€"
             icon={Trophy}
             accent="success"
             index={3}

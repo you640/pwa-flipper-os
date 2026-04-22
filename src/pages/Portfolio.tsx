@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SEO } from "@/components/seo/SEO";
 import {
   DndContext,
@@ -37,7 +38,7 @@ interface PortfolioRow {
 }
 
 export default function Portfolio() {
-  // SEO injected in render below
+  const { t } = useTranslation();
   const [projects, setProjects] = useState<PwaProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
@@ -59,7 +60,7 @@ export default function Portfolio() {
       if (cancelled) return;
       if (error) {
         console.error("Failed to load portfolio", error);
-        toast.error("Failed to load portfolio", { description: "Please try again." });
+        toast.error(t("portfolio.loadFailed"), { description: t("portfolio.tryAgain") });
         setLoading(false);
         return;
       }
@@ -116,10 +117,10 @@ export default function Portfolio() {
       setProjects((prev) =>
         prev.map((p) => (p.id === projectId ? { ...p, column: previousStatus } : p)),
       );
-      toast.error("Failed to update status", { description: error.message });
+      toast.error(t("portfolio.moveFailed"), { description: error.message });
       return;
     }
-    toast.success(`Moved to ${newStatus}`);
+    toast.success(t("portfolio.movedTo", { status: t(`portfolio.columns.${newStatus}` as const) }));
   };
 
   const handleDragStart = (event: DragStartEvent) => {
@@ -188,10 +189,7 @@ export default function Portfolio() {
 
   return (
     <AppLayout>
-      <SEO
-        title="Portfolio Kanban | Flipper OS"
-        description="Drag-and-drop your PWA portfolio through Building, Listed, Negotiating, and Sold. Optimistic, real-time, beautiful."
-      />
+      <SEO title={t("seo.portfolioTitle")} description={t("seo.portfolioDesc")} />
       <div className="mx-auto flex w-full max-w-[1500px] flex-col gap-6">
         <motion.header
           initial={{ opacity: 0, y: 10 }}
@@ -201,16 +199,19 @@ export default function Portfolio() {
         >
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-              Portfolio <span className="text-gradient">Kanban</span>
+              {t("portfolio.title")} <span className="text-gradient">{t("portfolio.titleAccent")}</span>
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Drag projects across stages — changes save automatically.
+              {t("portfolio.subtitle")}
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-xs text-muted-foreground">
             {loading
-              ? "Loading…"
-              : `${projects.length} projects · ${projects.filter((p) => p.column === "Sold").length} sold`}
+              ? t("common.loading")
+              : t("portfolio.counter", {
+                  count: projects.length,
+                  sold: projects.filter((p) => p.column === "Sold").length,
+                })}
           </div>
         </motion.header>
 
@@ -258,7 +259,7 @@ export default function Portfolio() {
 
         {!loading && projects.length === 0 && (
           <div className="rounded-2xl border border-dashed border-border/60 bg-card/30 p-10 text-center text-sm text-muted-foreground">
-            No projects yet. Save one from the <span className="text-foreground">Valuation Engine</span> to get started.
+            {t("portfolio.empty")}
           </div>
         )}
       </div>

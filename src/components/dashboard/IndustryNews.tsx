@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ExternalLink, Newspaper } from "lucide-react";
@@ -14,6 +15,7 @@ interface Article {
 }
 
 export function IndustryNews() {
+  const { t } = useTranslation();
   const [articles, setArticles] = useState<Article[] | null>(null);
   const [error, setError] = useState(false);
 
@@ -36,9 +38,9 @@ export function IndustryNews() {
       <div className="mb-4 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Newspaper className="h-4 w-4 text-primary" />
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">PWA Industry News</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-foreground">{t("dashboard.newsTitle")}</h2>
         </div>
-        <span className="text-xs text-muted-foreground">via dev.to · live</span>
+        <span className="text-xs text-muted-foreground">{t("dashboard.newsSource")}</span>
       </div>
 
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
@@ -55,7 +57,7 @@ export function IndustryNews() {
 
         {error && (
           <Card className="glass col-span-full p-6 text-center text-sm text-muted-foreground">
-            Couldn't reach the news feed right now.
+            {t("dashboard.newsError")}
           </Card>
         )}
 
@@ -99,7 +101,7 @@ export function IndustryNews() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-muted-foreground">{a.user.name}</span>
                   <span className="inline-flex items-center gap-1 text-[11px] font-medium text-primary">
-                    Read Article <ExternalLink className="h-3 w-3" />
+                    {t("dashboard.readArticle")} <ExternalLink className="h-3 w-3" />
                   </span>
                 </div>
               </div>
