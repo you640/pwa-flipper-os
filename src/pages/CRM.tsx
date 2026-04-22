@@ -134,6 +134,11 @@ export default function CRM() {
     contact_email: string;
     notes: string;
   }) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      toast.error("You must be signed in to add a lead");
+      return;
+    }
     const { data: row, error } = await supabase
       .from("crm_leads")
       .insert({
@@ -141,6 +146,7 @@ export default function CRM() {
         contact_email: data.contact_email || null,
         notes: data.notes || null,
         status: "Lead",
+        user_id: user.id,
       })
       .select()
       .single();

@@ -22,6 +22,7 @@ export type Database = {
           id: string
           notes: string | null
           status: Database["public"]["Enums"]["lead_status"]
+          user_id: string | null
         }
         Insert: {
           agency_name: string
@@ -30,6 +31,7 @@ export type Database = {
           id?: string
           notes?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          user_id?: string | null
         }
         Update: {
           agency_name?: string
@@ -38,6 +40,7 @@ export type Database = {
           id?: string
           notes?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -50,6 +53,7 @@ export type Database = {
           niche: string
           price: number
           source: Database["public"]["Enums"]["market_source"]
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -59,6 +63,7 @@ export type Database = {
           niche?: string
           price?: number
           source?: Database["public"]["Enums"]["market_source"]
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -68,6 +73,7 @@ export type Database = {
           niche?: string
           price?: number
           source?: Database["public"]["Enums"]["market_source"]
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -80,6 +86,7 @@ export type Database = {
           mrr: number
           name: string
           status: Database["public"]["Enums"]["portfolio_status"]
+          user_id: string | null
         }
         Insert: {
           asking_price?: number
@@ -89,6 +96,7 @@ export type Database = {
           mrr?: number
           name: string
           status?: Database["public"]["Enums"]["portfolio_status"]
+          user_id?: string | null
         }
         Update: {
           asking_price?: number
@@ -98,6 +106,7 @@ export type Database = {
           mrr?: number
           name?: string
           status?: Database["public"]["Enums"]["portfolio_status"]
+          user_id?: string | null
         }
         Relationships: []
       }

@@ -62,12 +62,19 @@ export default function Valuation() {
 
   const handleAdd = async () => {
     setSaving(true);
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      setSaving(false);
+      toast.error("You must be signed in to save");
+      return;
+    }
     const { error } = await supabase.from("portfolio").insert({
       name: form.name || "Untitled Project",
       mrr: mrrNum,
       expenses: expNum,
       asking_price: askingPrice,
       status: "Building",
+      user_id: user.id,
     });
     setSaving(false);
 
