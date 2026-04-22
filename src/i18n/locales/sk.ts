@@ -45,6 +45,7 @@ const sk: Translations = {
     market: "Trhové dáta",
     crm: "CRM kupujúcich",
     settings: "Nastavenia",
+    docs: "Dokumentácia",
     commandOS: "Command OS",
     brand: "PWA Flipper",
     installApp: "Inštalovať aplikáciu",
@@ -300,6 +301,110 @@ const sk: Translations = {
     billingDesc: "Spravujte predplatné, plán a faktúry.",
     loginTitle: "Prihlásenie | Flipper OS",
     loginDesc: "Prístup k vášmu PWA akvizičnému centru. Oceňovanie, CRM, trhové dáta a kanban — na jednom mieste.",
+  },
+  docs: {
+    title: "Pomoc a",
+    titleAccent: "dokumentácia",
+    subtitle: "Manuály, často kladené otázky a interný playbook Flipper OS.",
+    seoTitle: "Dokumentácia | Flipper OS",
+    seoDesc: "Onboarding manuál, FAQ a kontakt pre PWA Flipper OS command center.",
+    tabs: {
+      manual: "Manuál",
+      faq: "FAQ",
+      ceo: "CEO manuál",
+      about: "O nás",
+    },
+    manual: {
+      stepLabel: "Krok {{n}}",
+      steps: {
+        "1": {
+          title: "Oceňte svoju prvú aplikáciu",
+          desc: "Otvorte Oceňovací nástroj, zadajte MRR, výdavky a odvetvie. Predajná cena sa prepočíta naživo podľa násobiteľov odvetvia.",
+          tip: "Cieľte na 30–40× mesačný zisk pri prémiovom B2B PWA; 20–24× pri micro-tooloch.",
+        },
+        "2": {
+          title: "Riaďte pipeline",
+          desc: "Presúvajte projekty cez Vyvíjam → Inzerované → Vyjednáva sa → Predané v Portfólio Kanbane. Stav sa ukladá automaticky.",
+          tip: "Do Inzerované presuňte len ak sú tržby, churn a tech docs pripravené pre kupujúceho.",
+        },
+        "3": {
+          title: "Uzatvárajte obchody cez CRM",
+          desc: "Pridajte agentúry v CRM kupujúcich a generujte AI cold pitche šité na konkrétnu aplikáciu. Kopírujte, posielajte, follow-upujte.",
+          tip: "Personalizujte prvý riadok. Generické úvody zabíjajú reply rate.",
+        },
+        "4": {
+          title: "Inštalácia Flipper OS",
+          desc: "iPhone: Zdieľať → Pridať na plochu. Android: menu Chrome → Inštalovať aplikáciu. V Sidebare je aj jedno-klikový inštalátor.",
+          tip: "Nainštalované PWA majú push notifikácie a dashboard pripravený offline.",
+        },
+      },
+    },
+    faq: {
+      items: {
+        "1": {
+          q: "Ako sa počíta ocenenie?",
+          a: "Mesačný čistý zisk (MRR − výdavky) násobíme koeficientom podľa odvetvia. Pre pre-revenue apky používame odhad len na základe aktív.",
+        },
+        "2": {
+          q: "Aké násobiteľe podľa odvetvia používate?",
+          a: "B2B SaaS: ~36×, E-commerce: ~28×, Booking/Scheduling: ~30×, Micro-tool: ~22×. Hodnoty reflektujú micro-SaaS porovnania 2024–2026.",
+        },
+        "3": {
+          q: "Môžem použiť svoj vlastný email pre CRM oslovovanie?",
+          a: "Áno. CRM ukladá kontakty; pitche sa skopírujú do schránky, takže ich pošlete zo svojho inboxu (Gmail, Superhuman, Outlook).",
+        },
+        "4": {
+          q: "Sú moje dáta zašifrované?",
+          a: "Áno. Dáta sú v šifrovanej Postgres databáze s row-level security — vidíte vždy len svoje portfólio, leady a trhové dáta.",
+        },
+        "5": {
+          q: "Ako exportujem svoje portfólio?",
+          a: "Export je v beta verzii. Zatiaľ môžete hodnoty kopírovať z tabuliek, alebo požiadať podporu o plný CSV export do 24h.",
+        },
+        "6": {
+          q: "Ako aktualizujem PWA?",
+          a: "Aktualizácie sa nainštalujú pri ďalšom obnovení. Ak máte Flipper OS na ploche, plne zatvorte aplikáciu a znova otvorte pre načítanie najnovšieho buildu.",
+        },
+        "7": {
+          q: "Funguje Flipper OS offline?",
+          a: "Cachované stránky fungujú offline, ale živé dáta (news, ceny, pitche) vyžadujú pripojenie. Service Worker synchronizuje na pozadí po obnovení siete.",
+        },
+        "8": {
+          q: "Ako vymažem svoj účet?",
+          a: "Nastavenia → Nebezpečné → Vymazať účet. Trvalo zmaže vaše portfólio, leady, trhové dáta a profil.",
+        },
+      },
+    },
+    ceo: {
+      headerTitle: "Interný playbook",
+      confidential: "Dôverné",
+      restrictedTitle: "Obmedzená sekcia",
+      restricted: "Táto sekcia je vyhradená pre zakladateľa. Prihláste sa s admin účtom pre zobrazenie interného playbooku.",
+      sections: {
+        market: {
+          title: "Spravovanie market_intel",
+          body: "Každý Acquire/Flippa listing zaznamenajte do 24h od objavenia. Označte odvetvie, MRR, cenu a zdroj. Cieľte na 5+ nových záznamov týždenne — pattern matching je vaša výhoda.",
+        },
+        leads: {
+          title: "Hľadanie SK/CZ agentúr",
+          body: "Loví sa na Clutch.co (filter Slovensko a Česko, 10–50 zamestnancov, web/mobile dev). Krížovo overujte cez LinkedIn pre zakladateľské emaily. Priorita: agentúry s white-label SaaS históriou.",
+        },
+        scale: {
+          title: "Škálovanie portfólia",
+          body: "Maximálne 6 aktívnych buildov. Inzerované by mali byť vždy 2–3. Reinvestujte 40% každého exitu do ďalšej akvizície. Predávajte keď tržby stagnujú 2+ mesiace.",
+        },
+        ops: {
+          title: "Týždenný checklist",
+          body: "Po: prehľad market_intel.\nSt: oslovte 5 leadov.\nPi: revízia metrík portfólia & zatvorenie kariet v Predané.\nNe: aktualizácia tohto playbooku.",
+        },
+      },
+    },
+    about: {
+      missionTitle: "O Flipper OS",
+      missionBody: "Flipper OS existuje, aby ovládol micro-SaaS exit market. Premieňame solo builderov na sériových akvizítorov pomocou jedného command centra: oceňovanie, kanban, trhové dáta a AI outreach — všetko v jednom prémiovom workspace.",
+      contactTitle: "Kontakt",
+      contactBody: "Potrebujete pomoc, partnerstvo alebo press? Napíšte priamo zakladateľovi. Odpovedáme do 24h v pracovných dňoch.",
+    },
   },
 };
 

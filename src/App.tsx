@@ -18,6 +18,7 @@ import Login from "./pages/Login.tsx";
 import Profile from "./pages/Profile.tsx";
 import Settings from "./pages/Settings.tsx";
 import Billing from "./pages/Billing.tsx";
+import Docs from "./pages/Docs.tsx";
 import { AuthGuard } from "./components/auth/AuthGuard.tsx";
 
 const queryClient = new QueryClient();
@@ -74,6 +75,7 @@ const App = () => {
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/billing" element={<Billing />} />
+                    <Route path="/docs" element={<Docs />} />
                     {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
