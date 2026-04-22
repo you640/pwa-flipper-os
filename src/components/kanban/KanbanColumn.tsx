@@ -2,6 +2,7 @@ import { useDroppable } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { ProjectCard } from "./ProjectCard";
 import { cn } from "@/lib/utils";
 import type { KanbanColumn as KColumn, PwaProject } from "./data";
@@ -13,6 +14,7 @@ interface ColumnProps {
 }
 
 export function KanbanColumn({ column, projects, index }: ColumnProps) {
+  const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
     data: { type: "column", columnId: column.id },
@@ -34,7 +36,7 @@ export function KanbanColumn({ column, projects, index }: ColumnProps) {
           <div className="flex items-center gap-2">
             <span className={cn("h-2 w-2 rounded-full shadow-glow", column.dot)} />
             <h2 className="text-sm font-semibold tracking-tight text-foreground">
-              {column.title}
+              {t(`portfolio.columns.${column.id}` as const)}
             </h2>
             <span className="rounded-full bg-secondary/60 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground ring-1 ring-border/60">
               {projects.length}
@@ -42,7 +44,7 @@ export function KanbanColumn({ column, projects, index }: ColumnProps) {
           </div>
           <button
             className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
-            aria-label="Add project"
+            aria-label={t("portfolio.addProject")}
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -67,7 +69,7 @@ export function KanbanColumn({ column, projects, index }: ColumnProps) {
 
           {projects.length === 0 && (
             <div className="flex flex-1 items-center justify-center rounded-lg border border-dashed border-border/60 py-10 text-xs text-muted-foreground">
-              Drop here
+              {t("portfolio.dropHere")}
             </div>
           )}
         </div>
