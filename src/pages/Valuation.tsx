@@ -354,3 +354,26 @@ function ReportRow({
     </div>
   );
 }
+
+function CountUpPrice({ value }: { value: number }) {
+  const motionVal = useMotionValue(0);
+  const rounded = useTransform(motionVal, (v) => formatUSD(Math.round(v)));
+  const prevRef = useRef(0);
+
+  useEffect(() => {
+    const controls = animate(motionVal, value, {
+      duration: 0.9,
+      ease: [0.22, 1, 0.36, 1], // easeOutQuint — smooth count-up
+      onComplete: () => {
+        prevRef.current = value;
+      },
+    });
+    return () => controls.stop();
+  }, [value, motionVal]);
+
+  return (
+    <motion.div className="text-gradient text-5xl font-bold tracking-tight md:text-6xl drop-shadow-[0_0_30px_hsl(var(--primary)/0.4)]">
+      {rounded}
+    </motion.div>
+  );
+}
