@@ -1,41 +1,52 @@
-import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SEO } from "@/components/seo/SEO";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import { ProjectionChart } from "@/components/dashboard/ProjectionChart";
 import { IndustryNews } from "@/components/dashboard/IndustryNews";
+import { ActivityFeed } from "@/components/dashboard/ActivityFeed";
 import { motion } from "framer-motion";
-import { DollarSign, TrendingUp, Layers, Trophy } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  DollarSign,
+  TrendingUp,
+  Layers,
+  Trophy,
+  AlertTriangle,
+  BarChart3,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 import { useLocale } from "@/hooks/useLocale";
-
-interface PortfolioRow {
-  asking_price: number;
-  mrr: number;
-  status: "Building" | "Listed" | "Negotiating" | "Sold";
-}
+import { useProfile } from "@/hooks/useProfile";
+import { useOverviewData } from "@/hooks/useOverviewData";
 
 const Index = () => {
   const { t } = useTranslation();
-  const { intlLocale } = useLocale();
-  const [rows, setRows] = useState<PortfolioRow[] | null>(null);
+  const { intlLocale, formatCurrency } = useLocale();
+  const { displayName } = useProfile();
+  const { portfolio, market, leads, loading, error, refetch } =
+    useOverviewData();
 
-  useEffect(() => {
-    supabase
-      .from("portfolio")
-      .select("asking_price, mrr, status")
-      .then(({ data }) => setRows((data as PortfolioRow[]) ?? []));
-  }, []);
-
-  const loading = rows === null;
-  const active = rows?.filter((r) => r.status !== "Sold") ?? [];
-  const sold = rows?.filter((r) => r.status === "Sold") ?? [];
+  const rows = portfolio ?? [];
+  const active = rows.filter((r) => r.status !== "Sold");
+  const sold = rows.filter((r) => r.status === "Sold");
 
   const portfolioValue = active.reduce((s, r) => s + (r.asking_price ?? 0), 0);
   const combinedMRR = active.reduce((s, r) => s + (r.mrr ?? 0), 0);
   const pipelineCount = active.length;
   const totalExits = sold.reduce((s, r) => s + (r.asking_price ?? 0), 0);
+
+  const marketRows = market ?? [];
+  const avgPrice = marketRows.length
+    ? Math.round(
+        marketRows.reduce((s, r) => s + (r.price ?? 0), 0) / marketRows.length,
+      )
+    : 0;
+  const avgMrr = marketRows.length
+    ? Math.round(
+        marketRows.reduce((s, r) => s + (r.mrr ?? 0), 0) / marketRows.length,
+      )
+    : 0;
 
   const today = new Date().toLocaleDateString(intlLocale, {
     weekday: "long",
@@ -55,7 +66,8 @@ const Index = () => {
         >
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-              {t("dashboard.welcome")} <span className="text-gradient">Alex</span>
+              {t("dashboard.welcome")}{" "}
+              <span className="text-gradient">{displayName}</span>
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
               {t("dashboard.pulse")} {today}.
@@ -66,6 +78,23 @@ const Index = () => {
             {t("dashboard.allSystems")}
           </div>
         </motion.header>
+
+        {error && (
+          <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4" />
+              <span>{t("overview.errorBanner")}</span>
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => refetch()}
+              className="border-destructive/40 text-destructive hover:bg-destructive/15"
+            >
+              {t("overview.retry")}
+            </Button>
+          </div>
+        )}
 
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <MetricCard
@@ -105,9 +134,58 @@ const Index = () => {
           />
         </section>
 
+        <Card className="glass p-5 shadow-elegant md:p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-accent" />
+              <h2 className="text-sm font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+                {t("overview.marketPulse.title")}
+              </h2>
+            </div>
+            <span className="text-xs text-muted-foreground">
+              {t("overview.marketPulse.deals", { count: marketRows.length })}
+            </span>
+          </div>
+          {marketRows.length === 0 ? (
+            <p className="mt-3 text-sm text-muted-foreground">
+              {t("overview.marketPulse.empty")}
+            </p>
+          ) : (
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  {t("overview.marketPulse.avgPrice")}
+                </p>
+                <p className="mt-1 text-xl font-semibold text-foreground">
+                  {formatCurrency(avgPrice)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  {t("overview.marketPulse.avgMrr")}
+                </p>
+                <p className="mt-1 text-xl font-semibold text-foreground">
+                  {formatCurrency(avgMrr)}
+                </p>
+              </div>
+              <div>
+                <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                  {t("overview.marketPulse.deals", { count: marketRows.length })}
+                </p>
+                <p className="mt-1 text-xl font-semibold text-foreground">
+                  {marketRows.length}
+                </p>
+              </div>
+            </div>
+          )}
+        </Card>
+
         <ProjectionChart currentMRR={combinedMRR} />
 
-        <IndustryNews />
+        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+          <IndustryNews />
+          <ActivityFeed leads={leads} portfolio={portfolio} loading={loading} />
+        </div>
       </div>
     </AppLayout>
   );
