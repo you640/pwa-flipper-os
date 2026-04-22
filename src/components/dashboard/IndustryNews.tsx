@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { ExternalLink, Newspaper, Globe, ChevronDown, ChevronUp } from "lucide-react";
+import { NEWS_I18N_KEYS } from "@/i18n/newsKeys";
 
 interface Article {
   id: number;
@@ -18,18 +19,31 @@ interface Article {
 const INITIAL_COUNT = 8;
 
 function NewsCover({ article }: { article: Article }) {
+  const [attempt, setAttempt] = useState(0);
   const [errored, setErrored] = useState(false);
   const showFallback = !article.cover_image || errored;
 
+  // Append a cache-busting query param on retry so the browser actually re-requests.
+  const src = article.cover_image
+    ? attempt === 0
+      ? article.cover_image
+      : `${article.cover_image}${article.cover_image.includes("?") ? "&" : "?"}retry=${attempt}`
+    : null;
+
   return (
     <div className="relative h-36 w-full overflow-hidden">
-      {!showFallback && (
+      {!showFallback && src && (
         <img
-          src={article.cover_image as string}
+          key={attempt}
+          src={src}
           alt={article.title}
           loading="lazy"
           className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-          onError={() => setErrored(true)}
+          onError={() => {
+            // Retry once before giving up and showing the gradient placeholder.
+            if (attempt < 1) setAttempt((a) => a + 1);
+            else setErrored(true);
+          }}
         />
       )}
       {showFallback && (
