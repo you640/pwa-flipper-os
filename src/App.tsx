@@ -22,7 +22,37 @@ import { AuthGuard } from "./components/auth/AuthGuard.tsx";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = () => {
+  const { i18n } = useTranslation();
+
+  useEffect(() => {
+    document.documentElement.lang = i18n.language?.startsWith("sk") ? "sk" : "en";
+    const handler = (lng: string) => {
+      document.documentElement.lang = lng?.startsWith("sk") ? "sk" : "en";
+    };
+    i18n.on("languageChanged", handler);
+    return () => i18n.off("languageChanged", handler);
+  }, [i18n]);
+
+  // Sync language from user profile once signed in (one-shot on session)
+  useEffect(() => {
+    const sync = async (uid: string) => {
+      const { data } = await supabase.from("profiles").select("locale").eq("id", uid).maybeSingle();
+      const profileLng = (data as { locale?: string } | null)?.locale;
+      if (profileLng && profileLng !== i18n.language) {
+        void i18n.changeLanguage(profileLng);
+      }
+    };
+    supabase.auth.getSession().then(({ data }) => {
+      if (data.session?.user) void sync(data.session.user.id);
+    });
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
+      if (s?.user) setTimeout(() => void sync(s.user.id), 0);
+    });
+    return () => sub.subscription.unsubscribe();
+  }, [i18n]);
+
+  return (
   <HelmetProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
