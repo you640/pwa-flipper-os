@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+import { motion, type Variants } from "framer-motion";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SEO } from "@/components/seo/SEO";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -31,7 +31,7 @@ import {
   ClipboardList,
 } from "lucide-react";
 
-const fade = {
+const fade: Variants = {
   hidden: { opacity: 0, y: 8 },
   show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: "easeOut" } },
 };
