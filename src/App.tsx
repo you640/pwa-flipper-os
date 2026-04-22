@@ -6,6 +6,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import ComingSoon from "./pages/ComingSoon.tsx";
+import Portfolio from "./pages/Portfolio.tsx";
 
 const queryClient = new QueryClient();
 
@@ -17,7 +18,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
-          <Route path="/portfolio" element={<ComingSoon title="Portfolio Kanban" />} />
+          <Route path="/portfolio" element={<Portfolio />} />
           <Route path="/valuation" element={<ComingSoon title="Valuation Engine" />} />
           <Route path="/market" element={<ComingSoon title="Market Intel" />} />
           <Route path="/crm" element={<ComingSoon title="Buyer CRM" />} />
