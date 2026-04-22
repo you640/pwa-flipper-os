@@ -9,6 +9,7 @@ import ComingSoon from "./pages/ComingSoon.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
 import Valuation from "./pages/Valuation.tsx";
 import Market from "./pages/Market.tsx";
+import CRM from "./pages/CRM.tsx";
 
 const queryClient = new QueryClient();
 
