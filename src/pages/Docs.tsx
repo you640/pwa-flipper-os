@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { motion, type Variants } from "framer-motion";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SEO } from "@/components/seo/SEO";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -12,6 +13,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useProfile } from "@/hooks/useProfile";
+import { useLocale } from "@/hooks/useLocale";
+import { exportManualPdf, exportFaqPdf } from "@/lib/exportDocsPdf";
 import {
   BookOpen,
   Lightbulb,
@@ -29,6 +32,11 @@ import {
   TrendingUp,
   Radar,
   ClipboardList,
+  Download,
+  Calendar,
+  Sparkles,
+  Bug,
+  History,
 } from "lucide-react";
 
 const fade: Variants = {
@@ -38,10 +46,15 @@ const fade: Variants = {
 
 const stepIcons = [Lightbulb, Kanban, Cpu, Zap];
 const ceoIcons = [Radar, TrendingUp, Rocket, ClipboardList];
+const highlightIcons = [Sparkles, Zap, Bug];
+
+const SUPPORT_EMAIL = "support@rubberduck.space";
+const WEB_URL = "https://rubberduck.space";
 
 export default function Docs() {
   const { t } = useTranslation();
-  const { isAdmin, loading } = useProfile();
+  const { isAdmin, loading, user, profile, displayName } = useProfile();
+  const { language, intlLocale, formatDate } = useLocale();
 
   const steps = [0, 1, 2, 3].map((i) => ({
     Icon: stepIcons[i],
@@ -60,6 +73,42 @@ export default function Docs() {
     title: t(`docs.ceo.sections.${k}.title`),
     body: t(`docs.ceo.sections.${k}.body`),
   }));
+
+  const changelogEntries = [1, 2, 3, 4].map((i) => {
+    const highlights = t(`docs.changelog.entries.${i}.highlights`, {
+      returnObjects: true,
+    }) as string[];
+    return {
+      version: t(`docs.changelog.entries.${i}.version`),
+      date: t(`docs.changelog.entries.${i}.date`),
+      title: t(`docs.changelog.entries.${i}.title`),
+      highlights: Array.isArray(highlights) ? highlights : [],
+    };
+  });
+
+  const handleContactSupport = () => {
+    const subject = t("docs.contact.subject", { name: displayName });
+    const body = t("docs.contact.bodyTemplate", {
+      id: user?.id ?? "—",
+      email: user?.email ?? "—",
+      name: profile?.display_name || displayName,
+      locale: language,
+    });
+    window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+      subject,
+    )}&body=${encodeURIComponent(body)}`;
+  };
+
+  const handleDownload = async (kind: "manual" | "faq") => {
+    try {
+      if (kind === "manual") await exportManualPdf(t, intlLocale);
+      else await exportFaqPdf(t, intlLocale);
+      toast.success(t("docs.downloadSuccess"));
+    } catch (err) {
+      console.error("[Docs] PDF export failed", err);
+      toast.error(t("docs.downloadFailed"));
+    }
+  };
 
   return (
     <AppLayout>
@@ -84,9 +133,10 @@ export default function Docs() {
         </motion.div>
 
         <Tabs defaultValue="manual" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-card/40 backdrop-blur-xl border border-border/60 h-auto p-1">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-5 bg-card/40 backdrop-blur-xl border border-border/60 h-auto p-1">
             <TabsTrigger value="manual">{t("docs.tabs.manual")}</TabsTrigger>
             <TabsTrigger value="faq">{t("docs.tabs.faq")}</TabsTrigger>
+            <TabsTrigger value="changelog">{t("docs.tabs.changelog")}</TabsTrigger>
             <TabsTrigger value="ceo">
               {t("docs.tabs.ceo")}
               <Lock className="ml-1.5 h-3 w-3" />
@@ -95,7 +145,18 @@ export default function Docs() {
           </TabsList>
 
           {/* USER MANUAL */}
-          <TabsContent value="manual" className="mt-6">
+          <TabsContent value="manual" className="mt-6 space-y-4">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDownload("manual")}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {t("docs.downloadPdf")}
+              </Button>
+            </div>
             <motion.div
               initial="hidden"
               animate="show"
@@ -135,7 +196,18 @@ export default function Docs() {
           </TabsContent>
 
           {/* FAQ */}
-          <TabsContent value="faq" className="mt-6">
+          <TabsContent value="faq" className="mt-6 space-y-4">
+            <div className="flex justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => handleDownload("faq")}
+                className="gap-2"
+              >
+                <Download className="h-4 w-4" />
+                {t("docs.downloadPdf")}
+              </Button>
+            </div>
             <motion.div
               initial="hidden"
               animate="show"
@@ -154,6 +226,63 @@ export default function Docs() {
                   </AccordionItem>
                 ))}
               </Accordion>
+            </motion.div>
+          </TabsContent>
+
+          {/* CHANGELOG */}
+          <TabsContent value="changelog" className="mt-6">
+            <motion.div
+              initial="hidden"
+              animate="show"
+              variants={{ show: { transition: { staggerChildren: 0.06 } } }}
+              className="space-y-4"
+            >
+              <motion.div variants={fade} className="flex items-center gap-2">
+                <History className="h-4 w-4 text-primary" />
+                <span className="text-sm text-muted-foreground">
+                  {t("docs.changelog.subtitle")}
+                </span>
+              </motion.div>
+
+              <div className="space-y-4">
+                {changelogEntries.map((entry, i) => (
+                  <motion.div
+                    key={i}
+                    variants={fade}
+                    className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-5 backdrop-blur-xl shadow-xl"
+                  >
+                    <div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-primary/10 blur-3xl" />
+                    <div className="relative">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <Badge variant="secondary" className="font-mono">
+                          {entry.version}
+                        </Badge>
+                        <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {formatDate(entry.date, { dateStyle: "long" })}
+                        </span>
+                      </div>
+                      <h3 className="mt-2 text-base font-semibold text-foreground">
+                        {entry.title}
+                      </h3>
+                      <ul className="mt-3 space-y-2">
+                        {entry.highlights.map((h, hi) => {
+                          const HIcon = highlightIcons[hi % highlightIcons.length];
+                          return (
+                            <li
+                              key={hi}
+                              className="flex items-start gap-2 text-sm text-muted-foreground"
+                            >
+                              <HIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                              <span>{h}</span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
             </motion.div>
           </TabsContent>
 
@@ -266,20 +395,24 @@ export default function Docs() {
                     {t("docs.about.contactBody")}
                   </p>
 
-                  <a
-                    href="mailto:support@flipper-os.com"
-                    className="mt-4 inline-flex items-center gap-2 rounded-lg border border-border/60 bg-background/40 px-3 py-2 text-sm text-foreground transition-colors hover:bg-background/70"
+                  <Button
+                    onClick={handleContactSupport}
+                    className="mt-4 gap-2 bg-gradient-primary shadow-glow hover:opacity-90"
                   >
-                    <Mail className="h-4 w-4 text-primary" />
-                    support@flipper-os.com
-                  </a>
+                    <Mail className="h-4 w-4" />
+                    {t("docs.contact.button")}
+                  </Button>
+
+                  <div className="mt-3 text-xs text-muted-foreground">
+                    {SUPPORT_EMAIL}
+                  </div>
 
                   <div className="mt-5 flex items-center gap-2">
                     {[
                       { Icon: Twitter, href: "https://x.com", label: "X" },
                       { Icon: Linkedin, href: "https://linkedin.com", label: "LinkedIn" },
                       { Icon: Github, href: "https://github.com", label: "GitHub" },
-                      { Icon: Globe, href: "https://flipper-os.com", label: "Web" },
+                      { Icon: Globe, href: WEB_URL, label: "Web" },
                     ].map(({ Icon, href, label }) => (
                       <Button
                         key={label}
