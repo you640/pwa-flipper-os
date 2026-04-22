@@ -23,8 +23,8 @@ export default defineConfig(({ mode }) => ({
       },
       includeAssets: ["favicon.ico", "robots.txt", "placeholder.svg"],
       manifest: {
-        name: "Flipper OS",
-        short_name: "FlippOS",
+        name: "RUBBERDUCK.SPACE",
+        short_name: "Rubberduck",
         description: "Command center to manage, value, and sell your micro-SaaS and PWA portfolio.",
         theme_color: "#09090b",
         background_color: "#09090b",
