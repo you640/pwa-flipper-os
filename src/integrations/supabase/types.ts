@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      avatar_upload_errors: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          file_name: string | null
+          file_size: number | null
+          file_type: string | null
+          id: string
+          reason: string
+          status_code: number | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          reason: string
+          status_code?: number | null
+          user_id?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          file_name?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          id?: string
+          reason?: string
+          status_code?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       crm_leads: {
         Row: {
           agency_name: string
