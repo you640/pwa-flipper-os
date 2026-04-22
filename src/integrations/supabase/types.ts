@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      crm_leads: {
+        Row: {
+          agency_name: string
+          contact_email: string | null
+          created_at: string
+          id: string
+          notes: string | null
+          status: Database["public"]["Enums"]["lead_status"]
+        }
+        Insert: {
+          agency_name: string
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+        }
+        Update: {
+          agency_name?: string
+          contact_email?: string | null
+          created_at?: string
+          id?: string
+          notes?: string | null
+          status?: Database["public"]["Enums"]["lead_status"]
+        }
+        Relationships: []
+      }
       market_intel: {
         Row: {
           created_at: string
@@ -44,6 +71,36 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio: {
+        Row: {
+          asking_price: number
+          created_at: string
+          expenses: number
+          id: string
+          mrr: number
+          name: string
+          status: Database["public"]["Enums"]["portfolio_status"]
+        }
+        Insert: {
+          asking_price?: number
+          created_at?: string
+          expenses?: number
+          id?: string
+          mrr?: number
+          name: string
+          status?: Database["public"]["Enums"]["portfolio_status"]
+        }
+        Update: {
+          asking_price?: number
+          created_at?: string
+          expenses?: number
+          id?: string
+          mrr?: number
+          name?: string
+          status?: Database["public"]["Enums"]["portfolio_status"]
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -52,7 +109,9 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      lead_status: "Lead" | "Contacted" | "Demo" | "Rejected"
       market_source: "acquire" | "flippa"
+      portfolio_status: "Building" | "For Sale" | "Sold"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -180,7 +239,9 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      lead_status: ["Lead", "Contacted", "Demo", "Rejected"],
       market_source: ["acquire", "flippa"],
+      portfolio_status: ["Building", "For Sale", "Sold"],
     },
   },
 } as const

@@ -16,6 +16,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 type Niche = "b2b" | "ecommerce" | "booking" | "devtool";
 
@@ -57,7 +58,24 @@ export default function Valuation() {
 
   const reportActive = mrrNum > 0 || expNum > 0 || form.name.length > 0;
 
-  const handleAdd = () => {
+  const [saving, setSaving] = useState(false);
+
+  const handleAdd = async () => {
+    setSaving(true);
+    const { error } = await supabase.from("portfolio").insert({
+      name: form.name || "Untitled Project",
+      mrr: mrrNum,
+      expenses: expNum,
+      asking_price: askingPrice,
+      status: "Building",
+    });
+    setSaving(false);
+
+    if (error) {
+      toast.error("Failed to save", { description: error.message });
+      return;
+    }
+
     toast.success("App added to your pipeline!", {
       description: form.name
         ? `${form.name} valued at ${formatUSD(askingPrice)}`
@@ -255,12 +273,12 @@ export default function Valuation() {
                 <div className="relative mt-7">
                   <Button
                     onClick={handleAdd}
-                    disabled={!reportActive}
+                    disabled={!reportActive || saving}
                     className="group relative h-12 w-full overflow-hidden bg-gradient-primary text-primary-foreground font-semibold shadow-glow transition-all hover:shadow-[0_0_50px_-10px_hsl(var(--primary)/0.7)] hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
                   >
                     <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                     <Sparkles className="mr-1 h-4 w-4" />
-                    Save to Portfolio
+                    {saving ? "Saving…" : "Save to Portfolio"}
                   </Button>
                   <p className="mt-2 text-center text-[11px] text-muted-foreground">
                     Estimate is indicative. Actual sale price depends on buyer demand and due diligence.
