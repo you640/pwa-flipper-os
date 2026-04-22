@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SEO } from "@/components/seo/SEO";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,7 @@ import { Loader2, LogOut, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
+import { useLocale } from "@/hooks/useLocale";
 
 type Theme = "dark" | "light" | "system";
 
@@ -35,6 +37,8 @@ function applyTheme(theme: Theme) {
 
 export default function Settings() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
+  const { language, setLanguage } = useLocale();
   const { user, profile, refresh } = useProfile();
 
   const [email, setEmail] = useState("");
@@ -56,17 +60,17 @@ export default function Settings() {
     const { error } = await supabase.auth.updateUser({ email });
     setBusy(null);
     if (error) return toast.error(error.message);
-    toast.success("Confirmation email sent to the new address");
+    toast.success(t("settings.confirmEmailSent"));
   };
 
   const updatePassword = async () => {
-    if (password.length < 6) return toast.error("Password must be at least 6 characters");
+    if (password.length < 6) return toast.error(t("settings.pwTooShort"));
     setBusy("password");
     const { error } = await supabase.auth.updateUser({ password });
     setBusy(null);
     if (error) return toast.error(error.message);
     setPassword("");
-    toast.success("Password updated");
+    toast.success(t("settings.pwUpdated"));
   };
 
   const saveNotifs = async (val: boolean) => {
@@ -78,7 +82,7 @@ export default function Settings() {
       .eq("id", user.id);
     if (error) {
       console.error(error);
-      toast.error("Could not save preference");
+      toast.error(t("settings.notifSaveFailed"));
     } else {
       refresh();
     }
@@ -86,7 +90,7 @@ export default function Settings() {
 
   const signOutEverywhere = async () => {
     await supabase.auth.signOut({ scope: "global" });
-    toast.success("Signed out from all devices");
+    toast.success(t("settings.signOutAllDone"));
     navigate("/login", { replace: true });
   };
 
@@ -94,44 +98,44 @@ export default function Settings() {
     setBusy("delete");
     const { error } = await supabase.functions.invoke("delete-account");
     setBusy(null);
-    if (error) return toast.error("Could not delete account");
+    if (error) return toast.error(t("settings.deleteFailed"));
     await supabase.auth.signOut();
-    toast.success("Account deleted");
+    toast.success(t("settings.deleted"));
     navigate("/login", { replace: true });
   };
 
   return (
     <AppLayout>
-      <SEO title="Settings | Flipper OS" description="Manage account, security, appearance and notification preferences." />
+      <SEO title={t("seo.settingsTitle")} description={t("seo.settingsDesc")} />
 
       <div className="mx-auto max-w-3xl space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Settings</h1>
-          <p className="text-sm text-muted-foreground">Tune your account, appearance, and notifications.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("settings.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("settings.subtitle")}</p>
         </div>
 
         <Tabs defaultValue="account" className="w-full">
           <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="account">Account</TabsTrigger>
-            <TabsTrigger value="appearance">Appearance</TabsTrigger>
-            <TabsTrigger value="notifications">Alerts</TabsTrigger>
-            <TabsTrigger value="danger">Danger</TabsTrigger>
+            <TabsTrigger value="account">{t("settings.tabs.account")}</TabsTrigger>
+            <TabsTrigger value="appearance">{t("settings.tabs.appearance")}</TabsTrigger>
+            <TabsTrigger value="notifications">{t("settings.tabs.notifications")}</TabsTrigger>
+            <TabsTrigger value="danger">{t("settings.tabs.danger")}</TabsTrigger>
           </TabsList>
 
           <TabsContent value="account" className="mt-6 space-y-4">
             <div className="rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-xl space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="em">Email address</Label>
+                <Label htmlFor="em">{t("settings.emailLabel")}</Label>
                 <div className="flex gap-2">
                   <Input id="em" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                   <Button onClick={updateEmail} disabled={busy === "email" || email === user?.email}>
                     {busy === "email" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Update
+                    {t("common.update")}
                   </Button>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="pw">New password</Label>
+                <Label htmlFor="pw">{t("settings.newPassword")}</Label>
                 <div className="flex gap-2">
                   <Input
                     id="pw"
@@ -142,27 +146,44 @@ export default function Settings() {
                   />
                   <Button onClick={updatePassword} disabled={busy === "password" || password.length < 6}>
                     {busy === "password" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Change
+                    {t("settings.change")}
                   </Button>
                 </div>
               </div>
             </div>
           </TabsContent>
 
-          <TabsContent value="appearance" className="mt-6">
+          <TabsContent value="appearance" className="mt-6 space-y-4">
             <div className="rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-xl space-y-3">
-              <Label>Theme</Label>
+              <Label>{t("settings.theme")}</Label>
               <div className="grid grid-cols-3 gap-2">
-                {(["dark", "light", "system"] as Theme[]).map((t) => (
+                {(["dark", "light", "system"] as Theme[]).map((tName) => (
                   <Button
-                    key={t}
-                    variant={theme === t ? "default" : "outline"}
-                    onClick={() => setTheme(t)}
-                    className="capitalize"
+                    key={tName}
+                    variant={theme === tName ? "default" : "outline"}
+                    onClick={() => setTheme(tName)}
                   >
-                    {t}
+                    {t(`settings.themes.${tName}` as const)}
                   </Button>
                 ))}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-xl space-y-3">
+              <Label>{t("settings.languageTitle")}</Label>
+              <p className="text-xs text-muted-foreground">{t("settings.languageHint")}</p>
+              <div className="grid grid-cols-2 gap-2">
+                <Button
+                  variant={language === "en" ? "default" : "outline"}
+                  onClick={() => setLanguage("en")}
+                >
+                  🇬🇧 {t("common.languageEN")}
+                </Button>
+                <Button
+                  variant={language === "sk" ? "default" : "outline"}
+                  onClick={() => setLanguage("sk")}
+                >
+                  🇸🇰 {t("common.languageSK")}
+                </Button>
               </div>
             </div>
           </TabsContent>
@@ -171,8 +192,8 @@ export default function Settings() {
             <div className="rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-xl">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Email notifications</p>
-                  <p className="text-xs text-muted-foreground">Deal alerts, weekly portfolio summary, lead updates.</p>
+                  <p className="text-sm font-medium text-foreground">{t("settings.emailNotifs")}</p>
+                  <p className="text-xs text-muted-foreground">{t("settings.emailNotifsHint")}</p>
                 </div>
                 <Switch checked={emailNotif} onCheckedChange={saveNotifs} />
               </div>
@@ -183,38 +204,38 @@ export default function Settings() {
             <div className="rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-xl space-y-4">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-foreground">Sign out everywhere</p>
-                  <p className="text-xs text-muted-foreground">Ends all active sessions across devices.</p>
+                  <p className="text-sm font-medium text-foreground">{t("settings.signOutAll")}</p>
+                  <p className="text-xs text-muted-foreground">{t("settings.signOutAllHint")}</p>
                 </div>
                 <Button variant="outline" onClick={signOutEverywhere}>
-                  <LogOut className="mr-2 h-4 w-4" /> Sign out all
+                  <LogOut className="mr-2 h-4 w-4" /> {t("settings.signOutAllBtn")}
                 </Button>
               </div>
             </div>
             <div className="rounded-2xl border border-destructive/40 bg-destructive/5 p-6 backdrop-blur-xl">
               <div className="flex items-center justify-between gap-4">
                 <div>
-                  <p className="text-sm font-medium text-destructive">Delete account</p>
-                  <p className="text-xs text-muted-foreground">Permanently removes your account and all data.</p>
+                  <p className="text-sm font-medium text-destructive">{t("settings.deleteAccount")}</p>
+                  <p className="text-xs text-muted-foreground">{t("settings.deleteAccountHint")}</p>
                 </div>
                 <AlertDialog>
                   <AlertDialogTrigger asChild>
                     <Button variant="destructive">
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      <Trash2 className="mr-2 h-4 w-4" /> {t("common.delete")}
                     </Button>
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>Delete your account?</AlertDialogTitle>
+                      <AlertDialogTitle>{t("settings.deleteDialogTitle")}</AlertDialogTitle>
                       <AlertDialogDescription>
-                        This is permanent. Your portfolio, leads, market intel and profile will be erased.
+                        {t("settings.deleteDialogDesc")}
                       </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                       <AlertDialogAction onClick={deleteAccount} disabled={busy === "delete"}>
                         {busy === "delete" && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                        Yes, delete
+                        {t("settings.deleteConfirm")}
                       </AlertDialogAction>
                     </AlertDialogFooter>
                   </AlertDialogContent>

@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SEO } from "@/components/seo/SEO";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -13,6 +14,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 
 export default function Profile() {
+  const { t } = useTranslation();
   const { user, profile, isAdmin, displayName, initials, refresh, loading } = useProfile();
   const [name, setName] = useState("");
   const [bio, setBio] = useState("");
@@ -35,10 +37,10 @@ export default function Profile() {
     setSaving(false);
     if (error) {
       console.error(error);
-      toast.error("Could not save profile");
+      toast.error(t("profile.saveFailed"));
       return;
     }
-    toast.success("Profile updated");
+    toast.success(t("profile.saved"));
     refresh();
   };
 
@@ -60,7 +62,7 @@ export default function Profile() {
         .update({ avatar_url: data.publicUrl })
         .eq("id", user.id);
       if (updErr) throw updErr;
-      toast.success("Avatar updated");
+      toast.success(t("profile.avatarUpdated"));
       refresh();
     } catch (err: any) {
       console.error("Avatar upload error:", err);
@@ -80,7 +82,6 @@ export default function Profile() {
       else if (msg.includes("mime") || msg.includes("content type")) reason = "unsupported_mime";
       else if (msg.includes("network") || msg.includes("failed to fetch")) reason = "network_error";
 
-      // Log failure to Supabase for later review (best-effort, don't block UX)
       try {
         await supabase.from("avatar_upload_errors").insert({
           user_id: user.id,
@@ -96,40 +97,17 @@ export default function Profile() {
       }
 
       if (reason === "bucket_not_found") {
-        toast.error("Avatar storage not configured", {
-          description:
-            "The 'avatars' bucket is missing. Ask an admin to create a public 'avatars' storage bucket, then try again.",
-        });
-      } else if (
-        msg.includes("row-level security") ||
-        msg.includes("rls") ||
-        msg.includes("not authorized") ||
-        msg.includes("permission") ||
-        status === 403
-      ) {
-        toast.error("Permission denied", {
-          description:
-            "You don't have permission to upload to this bucket. Make sure you're signed in and that storage policies allow uploads to your own folder (auth.uid()/...).",
-        });
-      } else if (msg.includes("payload too large") || status === 413) {
-        toast.error("File too large", {
-          description: "Pick an image under the bucket's size limit (try < 2 MB) and upload again.",
-        });
-      } else if (msg.includes("mime") || msg.includes("content type")) {
-        toast.error("Unsupported file type", {
-          description: "Use a standard image format (PNG, JPG, or WEBP) and try again.",
-        });
-      } else if (msg.includes("network") || msg.includes("failed to fetch")) {
-        toast.error("Network error", {
-          description: "Check your internet connection and try the upload again.",
-        });
+        toast.error(t("profile.avatarBucketMissingTitle"), { description: t("profile.avatarBucketMissingDesc") });
+      } else if (reason === "permission_denied") {
+        toast.error(t("profile.avatarPermissionTitle"), { description: t("profile.avatarPermissionDesc") });
+      } else if (reason === "file_too_large") {
+        toast.error(t("profile.avatarTooLargeTitle"), { description: t("profile.avatarTooLargeDesc") });
+      } else if (reason === "unsupported_mime") {
+        toast.error(t("profile.avatarMimeTitle"), { description: t("profile.avatarMimeDesc") });
+      } else if (reason === "network_error") {
+        toast.error(t("profile.avatarNetworkTitle"), { description: t("profile.avatarNetworkDesc") });
       } else {
-        toast.error("Avatar upload failed", {
-          description:
-            err?.message
-              ? `${err.message}. Try a smaller image or sign out and back in.`
-              : "Try a smaller image, refresh the page, or sign out and back in.",
-        });
+        toast.error(t("profile.avatarFailedTitle"), { description: err?.message || t("profile.avatarFailedDesc") });
       }
     } finally {
       setUploading(false);
@@ -139,12 +117,12 @@ export default function Profile() {
 
   return (
     <AppLayout>
-      <SEO title="Profile | Flipper OS" description="Manage your Flipper OS profile, avatar, and bio." />
+      <SEO title={t("seo.profileTitle")} description={t("seo.profileDesc")} />
 
       <div className="mx-auto max-w-3xl space-y-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">Profile</h1>
-          <p className="text-sm text-muted-foreground">Personal details visible across your workspace.</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">{t("profile.title")}</h1>
+          <p className="text-sm text-muted-foreground">{t("profile.subtitle")}</p>
         </div>
 
         <div className="relative rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-xl shadow-xl md:p-8">
@@ -166,7 +144,9 @@ export default function Profile() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h2 className="text-lg font-semibold text-foreground">{displayName}</h2>
-                    <Badge variant={isAdmin ? "default" : "secondary"}>{isAdmin ? "Admin" : "Member"}</Badge>
+                    <Badge variant={isAdmin ? "default" : "secondary"}>
+                      {isAdmin ? t("common.admin") : t("common.member")}
+                    </Badge>
                   </div>
                   <p className="text-sm text-muted-foreground">{user?.email}</p>
                   <input
@@ -188,29 +168,29 @@ export default function Profile() {
                     ) : (
                       <Upload className="mr-2 h-4 w-4" />
                     )}
-                    Upload avatar
+                    {t("profile.uploadAvatar")}
                   </Button>
                 </div>
               </div>
 
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Display name</Label>
-                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name" />
+                  <Label htmlFor="name">{t("profile.displayName")}</Label>
+                  <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder={t("profile.namePh")} />
                 </div>
                 <div className="space-y-2">
-                  <Label>Email</Label>
+                  <Label>{t("auth.email")}</Label>
                   <Input value={user?.email ?? ""} disabled />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="bio">Bio</Label>
+                <Label htmlFor="bio">{t("profile.bio")}</Label>
                 <Textarea
                   id="bio"
                   value={bio}
                   onChange={(e) => setBio(e.target.value)}
-                  placeholder="A short description about you…"
+                  placeholder={t("profile.bioPh")}
                   rows={4}
                 />
               </div>
@@ -218,7 +198,7 @@ export default function Profile() {
               <div className="flex justify-end">
                 <Button onClick={handleSave} disabled={saving} className="bg-gradient-primary shadow-glow">
                   {saving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                  Save changes
+                  {t("common.saveChanges")}
                 </Button>
               </div>
             </div>
