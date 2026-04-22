@@ -20,15 +20,6 @@ function CustomTooltip({ active, payload, label }: any) {
   );
 }
 
-const monthLabels = (() => {
-  const now = new Date();
-  const out: string[] = [];
-  for (let i = 0; i < 6; i++) {
-    const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-    out.push(d.toLocaleString("en-US", { month: "short" }));
-  }
-  return out;
-})();
 
 export function ProjectionChart({ currentMRR }: Props) {
   const { t, intlLocale } = useLocale();
