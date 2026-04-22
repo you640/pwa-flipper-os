@@ -51,6 +51,10 @@ export default function Login() {
 
   return (
     <div className="relative min-h-screen w-full overflow-hidden bg-background">
+      <SEO
+        title="Sign In | Flipper OS"
+        description="Access your PWA acquisition command center. Valuation engine, buyer CRM, market intel, and portfolio kanban — in one place."
+      />
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0">
         <div className="absolute -top-40 left-1/2 h-[500px] w-[500px] -translate-x-1/2 rounded-full bg-primary/20 blur-[120px]" />
