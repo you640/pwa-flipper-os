@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { SEO } from "@/components/seo/SEO";
 import {
   DndContext,
   DragOverlay,
