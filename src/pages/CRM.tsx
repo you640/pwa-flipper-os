@@ -104,12 +104,14 @@ export default function CRM() {
       if (cancelled) return;
 
       if (leadsRes.error) {
-        toast.error("Failed to load leads", { description: leadsRes.error.message });
+        console.error("Failed to load leads", leadsRes.error);
+        toast.error("Failed to load leads", { description: "Please try again." });
       } else {
         setLeads((leadsRes.data ?? []) as Lead[]);
       }
       if (appsRes.error) {
-        toast.error("Failed to load portfolio", { description: appsRes.error.message });
+        console.error("Failed to load portfolio", appsRes.error);
+        toast.error("Failed to load portfolio", { description: "Please try again." });
       } else {
         setApps((appsRes.data ?? []) as PortfolioApp[]);
       }
