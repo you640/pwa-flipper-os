@@ -22,13 +22,23 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/portfolio" element={<Portfolio />} />
-          <Route path="/valuation" element={<Valuation />} />
-          <Route path="/market" element={<Market />} />
-          <Route path="/crm" element={<CRM />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
+          <Route path="/login" element={<Login />} />
+          <Route
+            path="/*"
+            element={
+              <AuthGuard>
+                <Routes>
+                  <Route path="/" element={<Index />} />
+                  <Route path="/portfolio" element={<Portfolio />} />
+                  <Route path="/valuation" element={<Valuation />} />
+                  <Route path="/market" element={<Market />} />
+                  <Route path="/crm" element={<CRM />} />
+                  {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </AuthGuard>
+            }
+          />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>
