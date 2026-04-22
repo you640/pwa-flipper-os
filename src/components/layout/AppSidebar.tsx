@@ -1,6 +1,7 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { LayoutDashboard, Kanban, Calculator, Radar, Users, Settings, Sparkles } from "lucide-react";
+import { InstallPWA } from "./InstallPWA";
 import {
   Sidebar,
   SidebarContent,
@@ -83,7 +84,8 @@ export function AppSidebar() {
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border px-3 py-3">
+      <SidebarFooter className="border-t border-sidebar-border px-3 py-3 gap-2">
+        <InstallPWA />
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <button className="flex items-center gap-2 rounded-md px-2 py-1.5 hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors">
             <Settings className="h-4 w-4" />
