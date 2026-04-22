@@ -1,53 +1,81 @@
+# Help & Documentation Center
 
-
-# Industry News upgrade
-
-Refresh the Dashboard's Industry News section with more articles, a denser responsive grid, robust image fallbacks, uniform card heights, full i18n, and a compact "Show More" UX so the dashboard stays short by default.
+A new `/docs` route with a 4-tab help center: User Manual, FAQ, CEO Manual (admin-only), and About & Contact. Fully localized in EN/SK and matched to the existing glassmorphic dark aesthetic.
 
 ## What you'll get
 
-**1. More articles, smarter fetch**
-- Endpoint switched to `https://dev.to/api/articles?tag=pwa&per_page=24`.
-- Up to 24 articles loaded; gracefully handles fewer results.
+**1. New route + sidebar entry**
 
-**2. Responsive 4-column grid with staggered animation**
-- Grid: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`.
-- Cards animate in with a Framer Motion stagger (parent `staggerChildren`, child fade + lift), capped so later cards still feel snappy.
+- Route `/docs` rendered through `AppLayout`, gated by `AuthGuard` like the other app pages.
+- Sidebar link **"Documentation"** with `BookOpen` icon, placed in the bottom footer area of `AppSidebar` next to **Settings**.
 
-**3. Premium image fallback (no broken icons)**
-- A new `<NewsCover>` subcomponent owns image state (`loading | loaded | error`).
-- If `cover_image` is missing OR `onError` fires, it renders a branded gradient (using existing `bg-gradient-primary` / purple→cyan tokens) with a centered `Globe` icon (subtle, 30% opacity) plus a faint radial sheen.
-- Skeleton shown while the image is still loading so we never flash a half-loaded picture.
+**2. Docs page with 4 Shadcn Tabs**
+Header: gradient title "Help & Documentation" + subtitle, mirroring other pages (Portfolio/Valuation style).
 
-**4. Uniform card heights**
-- Titles forced to `line-clamp-2` with a fixed `min-h` so 1-line and 2-line titles produce identical card heights.
-- Cover area fixed height (`h-36`), meta row pinned to the bottom via `flex flex-col` + `mt-auto`.
+- **Tab 1 — User Manual (Onboarding)**: 4 steps as numbered glass cards, each with a Lucide icon (Lightbulb, Kanban, Cpu, Zap), title, description, and a short "Tip" line.
+  1. Valuation – how to value your first app
+  2. Kanban – manage your pipeline
+  3. CRM – AI pitches & closing
+  4. PWA Install – Add Flipper OS to iPhone/Android
+- **Tab 2 — FAQ**: Shadcn `Accordion` (`type="single" collapsible`) with **8 entries**:
+  - How is the valuation calculated?
+  - Which industry multipliers do you use?
+  - Can I use my own email for CRM outreach?
+  - Is my data encrypted?
+  - How do I export my portfolio?
+  - How do I update the PWA?
+  - Does Flipper OS work offline?
+  - How do I delete my account?
+- **Tab 3 — CEO Manual (Private)**: Admin-only.
+  - Visible only to users with the `admin` role (via `has_role` check).
+  - Non-admin users see a locked card: `ShieldCheck` icon + "Restricted" message.
+  - Header has a red `Confidential` Shadcn `Badge`.
+  - Sections (each as a glass card with icon): managing `market_intel`, sourcing SK/CZ acquisition agencies, scaling the portfolio, ops checklist.
+- **Tab 4 — About & Contact**:
+  - "About Flipper OS" card — mission to dominate the micro-SaaS exit market.
+  - Contact card with `Mail` icon → `support@flipper-os.com`, plus social links (X / LinkedIn / GitHub) as icon buttons.
 
-**5. Full i18n**
-- All visible strings go through `t()`:
-  - `dashboard.newsTitle` → "Industry News" / "Novinky z odvetvia"
-  - `dashboard.newsSource` → "via dev.to" / "cez dev.to"
-  - `dashboard.readArticle` → "Read Article" / "Čítať článok"
-  - `dashboard.newsError` (existing)
-  - New: `dashboard.newsShowMore` ("Show more") / `dashboard.newsShowLess` ("Show less")
-  - New: `dashboard.newsLiveBadge` ("live" / "naživo") rendered as a small badge next to the source
-- EN and SK locale files updated; existing keys kept as-is, just retuned to drop the trailing "· live" since it becomes a separate badge.
+**3. Full i18n (EN + SK)**
 
-**6. Compact-by-default UX**
-- Show the first **8** articles (2 rows on desktop) by default.
-- A centered ghost button toggles between "Show more (24)" and "Show less", animating the extra rows in/out via Framer Motion's `AnimatePresence` with a height + fade transition.
-- No extra scroll container — the page stays compact, and expansion is opt-in.
+- New namespaces in `src/i18n/locales/en.ts` and `sk.ts`:
+  - `docs.title`, `docs.subtitle`, `docs.tabs.{manual,faq,ceo,about}`
+  - `docs.manual.steps[1..4].{title,desc,tip}`
+  - `docs.faq.items[1..8].{q,a}`
+  - `docs.ceo.{confidential,restricted,sections.{market,leads,scale,ops}.{title,body}}`
+  - `docs.about.{mission.title,mission.body,contact.title,contact.email,contact.social}`
+- `sk.ts` matches the `Translations` shape so TS stays happy.
+- Sidebar key `sidebar.docs` added.
 
-## Technical approach
+**4. Visuals**
 
-**File edited:** `src/components/dashboard/IndustryNews.tsx` — rewritten to:
-- Fetch 24 articles, store full list, derive `visible = expanded ? all : all.slice(0, 8)`.
-- Replace the inline `<img>` block with `<NewsCover article={a} />` (defined in the same file) handling `error` state and rendering the gradient + `Globe` fallback.
-- Wrap the grid in a `motion.div` with `variants` for staggered children; each card uses a child variant (`opacity 0 → 1`, `y 12 → 0`, 0.35s ease-out, stagger 0.04s).
-- Add `<AnimatePresence>` around the overflow rows so collapsing animates smoothly.
-- Add `Show more / Show less` button (shadcn `Button variant="ghost"`) below the grid, hidden when `articles.length <= 8`.
+- Glassmorphic cards (`glass` / `card` classes already used elsewhere), gradient header, Framer Motion fade-in on tab change.
+- Icons: `Lightbulb`, `ShieldCheck`, `Cpu`, `Zap`, `BookOpen`, `Kanban`, `Mail`, `Globe`.
 
-**Files edited:** `src/i18n/locales/en.ts`, `src/i18n/locales/sk.ts` — add `newsShowMore`, `newsShowLess`, `newsLiveBadge`; trim `newsSource` to just "via dev.to" / "cez dev.to".
+## Technical details
 
-**No other files** need to change — `Index.tsx` already renders `<IndustryNews />` and doesn't need updates.
+**Files created**
 
+- `src/pages/Docs.tsx` — page with `<Tabs>` + 4 panels.
+- `src/components/docs/ManualTab.tsx`, `FaqTab.tsx`, `CeoTab.tsx`, `AboutTab.tsx` — keeps `Docs.tsx` small.
+- `src/hooks/useIsAdmin.ts` — calls `supabase.rpc('has_role', { _user_id, _role: 'admin' })`, returns `{ isAdmin, loading }`.
+- `supabase/migrations/<ts>_user_roles.sql` — only if `user_roles` table / `app_role` enum / `has_role()` function don't already exist (will check first; created exactly per the security pattern: enum `app_role`, table `public.user_roles`, RLS, `SECURITY DEFINER` `has_role` function). No admin is auto-assigned — you'll grant yourself admin via a one-line insert that the migration includes guarded by your `auth.uid()` (we'll ask for confirmation before assigning).
+
+**Files edited**
+
+- `src/App.tsx` — add `<Route path="/docs" element={<Docs />} />` above the catch-all.
+- `src/components/layout/AppSidebar.tsx` — add Documentation link in the footer block (above Settings), using `BookOpen`. New i18n key `sidebar.docs`.
+- `src/i18n/locales/en.ts` + `sk.ts` — add `docs.*` namespace and `sidebar.docs`.
+
+**Admin gating**
+
+```tsx
+const { isAdmin, loading } = useIsAdmin();
+if (loading) return <Skeleton/>;
+if (!isAdmin) return <RestrictedCard/>;
+```
+
+Tab trigger stays visible to everyone (so the UI looks consistent), but the panel content is what's gated — no data leakage because nothing sensitive is fetched, just static localized copy.
+
+**No changes** to existing dashboard, kanban, valuation, CRM, or news code.  
+  
+*"Pravidlo č. 1: Nikdy nepredávaj pod 30-násobok mesačného zisku!"*
