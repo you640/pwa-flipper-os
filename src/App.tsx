@@ -10,6 +10,8 @@ import Portfolio from "./pages/Portfolio.tsx";
 import Valuation from "./pages/Valuation.tsx";
 import Market from "./pages/Market.tsx";
 import CRM from "./pages/CRM.tsx";
+import Login from "./pages/Login.tsx";
+import { AuthGuard } from "./components/auth/AuthGuard.tsx";
 
 const queryClient = new QueryClient();
 
