@@ -58,7 +58,8 @@ export default function Portfolio() {
 
       if (cancelled) return;
       if (error) {
-        toast.error("Failed to load portfolio", { description: error.message });
+        console.error("Failed to load portfolio", error);
+        toast.error("Failed to load portfolio", { description: "Please try again." });
         setLoading(false);
         return;
       }

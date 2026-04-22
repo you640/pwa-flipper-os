@@ -95,7 +95,8 @@ export default function Market() {
 
       if (cancelled) return;
       if (error) {
-        toast.error("Failed to load market intel", { description: error.message });
+        console.error("Failed to load market intel", error);
+        toast.error("Failed to load market intel", { description: "Please try again." });
         setLoading(false);
         return;
       }
@@ -162,7 +163,8 @@ export default function Market() {
     if (error) {
       // Roll back optimistic update
       setRows((prev) => prev.filter((r) => r.id !== tempId));
-      toast.error("Failed to add intel", { description: error.message });
+      console.error("Failed to add intel", error);
+      toast.error("Failed to add intel", { description: "Please try again." });
       return;
     }
 
@@ -192,7 +194,8 @@ export default function Market() {
     const { error } = await supabase.from("market_intel").delete().eq("id", id);
     if (error) {
       setRows(prev); // rollback
-      toast.error("Failed to delete", { description: error.message });
+      console.error("Failed to delete market intel", error);
+      toast.error("Failed to delete", { description: "Please try again." });
       return;
     }
     toast.success("Listing deleted");
