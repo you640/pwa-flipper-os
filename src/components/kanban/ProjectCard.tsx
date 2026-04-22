@@ -8,7 +8,6 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -31,16 +30,18 @@ export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCa
     transition,
   };
 
+  const isListed = project.column === "Listed";
+  const isSold = project.column === "Sold";
+
   const content = (
     <Card
       className={cn(
         "group relative overflow-hidden bg-gradient-card p-4 shadow-elegant transition-shadow",
         "border-border/60 hover:border-primary/40",
-        isOverlay && "rotate-2 scale-[1.03] shadow-glow ring-1 ring-primary/40 cursor-grabbing",
+        isOverlay && "rotate-2 scale-[1.04] shadow-glow ring-1 ring-primary/40 cursor-grabbing",
         isDragging && !isOverlay && "opacity-40",
       )}
     >
-      {/* drag handle area covers the whole card except the menu */}
       <div className="flex items-start justify-between gap-2">
         <button
           {...attributes}
@@ -48,7 +49,9 @@ export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCa
           className="flex-1 cursor-grab text-left active:cursor-grabbing focus:outline-none"
           aria-label={`Drag ${project.name}`}
         >
-          <h3 className="text-sm font-semibold tracking-tight text-foreground">{project.name}</h3>
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">
+            {project.name}
+          </h3>
         </button>
 
         <DropdownMenu>
@@ -62,12 +65,7 @@ export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCa
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>View Details</DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-destructive focus:text-destructive">
-              Delete
-            </DropdownMenuItem>
+            <DropdownMenuItem>View details</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
@@ -79,27 +77,29 @@ export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCa
       >
         <div className="mt-3 flex items-end justify-between">
           <div>
-            <div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Asking</div>
-            <div className="mt-0.5 text-xl font-semibold tracking-tight text-foreground">
+            <div className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">
+              Asking
+            </div>
+            <div
+              className={cn(
+                "mt-0.5 text-xl font-semibold tracking-tight tabular-nums",
+                isListed
+                  ? "text-success drop-shadow-[0_0_12px_hsl(var(--success)/0.55)]"
+                  : isSold
+                    ? "text-muted-foreground line-through"
+                    : "text-foreground",
+              )}
+            >
               {project.askingPrice > 0 ? formatUSD(project.askingPrice) : "—"}
             </div>
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <TrendingUp className="h-3 w-3 text-success" />
+          <Badge
+            variant="outline"
+            className="border-border/60 bg-secondary/50 px-2 py-0.5 text-[10px] font-medium text-muted-foreground"
+          >
+            <TrendingUp className="mr-1 h-3 w-3" />
             {project.mrr > 0 ? `${formatUSD(project.mrr)}/mo` : "Pre-revenue"}
-          </div>
-        </div>
-
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {project.tags.map((tag) => (
-            <Badge
-              key={tag}
-              variant="outline"
-              className="border-border/60 bg-secondary/50 px-1.5 py-0 text-[10px] font-medium text-muted-foreground"
-            >
-              {tag}
-            </Badge>
-          ))}
+          </Badge>
         </div>
       </div>
     </Card>
@@ -113,7 +113,7 @@ export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCa
       style={style}
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.3, delay: index * 0.04, ease: "easeOut" }}
+      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.4), ease: "easeOut" }}
     >
       {content}
     </motion.div>
