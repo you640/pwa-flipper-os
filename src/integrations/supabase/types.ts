@@ -146,6 +146,44 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_audits: {
+        Row: {
+          ai_report: Json
+          created_at: string
+          id: string
+          inputs: Json
+          model: string
+          portfolio_id: string | null
+          user_id: string
+        }
+        Insert: {
+          ai_report: Json
+          created_at?: string
+          id?: string
+          inputs: Json
+          model?: string
+          portfolio_id?: string | null
+          user_id?: string
+        }
+        Update: {
+          ai_report?: Json
+          created_at?: string
+          id?: string
+          inputs?: Json
+          model?: string
+          portfolio_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "portfolio_audits_portfolio_id_fkey"
+            columns: ["portfolio_id"]
+            isOneToOne: false
+            referencedRelation: "portfolio"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
