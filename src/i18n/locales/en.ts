@@ -44,6 +44,7 @@ const en = {
     crm: "Buyer CRM",
     settings: "Settings",
     docs: "Documentation",
+    adminPanel: "Admin Panel",
     commandOS: "Command OS",
     brand: "RUBBERDUCK.SPACE",
     installApp: "Install App",

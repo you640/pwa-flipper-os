@@ -46,6 +46,7 @@ const sk: Translations = {
     crm: "CRM kupujúcich",
     settings: "Nastavenia",
     docs: "Dokumentácia",
+    adminPanel: "Admin Panel",
     commandOS: "Command OS",
     brand: "RUBBERDUCK.SPACE",
     installApp: "Inštalovať aplikáciu",
