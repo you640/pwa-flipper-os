@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { SEO } from "@/components/seo/SEO";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
 import { toast } from "sonner";
-import { Sparkles, TrendingUp, Calculator, Building2, Brain } from "lucide-react";
+import { Sparkles, TrendingUp, Calculator, Building2, Brain, Github } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card } from "@/components/ui/card";
@@ -43,12 +43,15 @@ const formatUSD = (n: number) =>
 const initialState = {
   name: "",
   url: "",
+  githubUrl: "",
   mrr: "",
   expenses: "",
   niche: "b2b" as Niche,
   techStack: "",
   notes: "",
 };
+
+const GITHUB_RE = /^https?:\/\/(www\.)?github\.com\/[\w.-]+\/[\w.-]+\/?$/i;
 
 export default function Valuation() {
   const { t } = useTranslation();
@@ -71,6 +74,8 @@ export default function Valuation() {
   const fallbackPrice = isAssetOnly ? 1000 : netProfit * niche.multiplier;
   const reportActive = mrrNum > 0 || expNum > 0 || form.name.length > 0;
 
+  const githubValid = GITHUB_RE.test(form.githubUrl.trim());
+
   const handleAiAudit = async () => {
     if (!form.name.trim()) {
       toast.error(t("valuation.ai.errors.generic"), {
@@ -78,9 +83,16 @@ export default function Valuation() {
       });
       return;
     }
+    if (!githubValid) {
+      toast.error(t("valuation.ai.errors.generic"), {
+        description: t("valuation.githubUrlError"),
+      });
+      return;
+    }
     await run({
       name: form.name.trim(),
       url: form.url.trim() || undefined,
+      github_url: form.githubUrl.trim(),
       mrr: mrrNum,
       expenses: expNum,
       niche: nicheLabel,
