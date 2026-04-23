@@ -20,12 +20,28 @@ export function useProfile() {
   const [loading, setLoading] = useState(true);
 
   const loadExtras = useCallback(async (uid: string) => {
-    const [{ data: prof }, { data: roleRow }] = await Promise.all([
-      supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
-      supabase.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin").maybeSingle(),
-    ]);
-    setProfile((prof as Profile) ?? null);
-    setIsAdmin(!!roleRow);
+    try {
+      const [profRes, roleRes] = await Promise.all([
+        supabase.from("profiles").select("*").eq("id", uid).maybeSingle(),
+        supabase.from("user_roles").select("role").eq("user_id", uid).eq("role", "admin").maybeSingle(),
+      ]);
+      if (profRes.error) {
+        console.warn("[useProfile] profile load failed:", profRes.error.message);
+        setProfile(null);
+      } else {
+        setProfile((profRes.data as Profile) ?? null);
+      }
+      if (roleRes.error) {
+        console.warn("[useProfile] role load failed:", roleRes.error.message);
+        setIsAdmin(false);
+      } else {
+        setIsAdmin(!!roleRes.data);
+      }
+    } catch (e) {
+      console.warn("[useProfile] loadExtras threw:", e);
+      setProfile(null);
+      setIsAdmin(false);
+    }
   }, []);
 
   const refresh = useCallback(async () => {
