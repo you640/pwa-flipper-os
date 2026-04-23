@@ -9,10 +9,28 @@ export interface ValueUpTip {
   detail: string;
 }
 
+export interface TechStackAudit {
+  summary: string;
+  excellence: string[];
+  tech_debt: string[];
+  detected_stack: string[];
+}
+
+export type CodeQualityLabel =
+  | "Clean as Glass"
+  | "Solid"
+  | "Mixed"
+  | "Rubberdebt"
+  | "Toxic";
+
 export interface AiValuationReport {
   estimated_valuation: { low: number; mid: number; high: number };
   multiple: number;
   risk_score: number;
+  code_quality_score: number;
+  code_quality_label: CodeQualityLabel;
+  tech_stack_audit: TechStackAudit;
+  refactor_tips: ValueUpTip[];
   value_up_tips: ValueUpTip[];
   summary: string;
 }
@@ -20,6 +38,7 @@ export interface AiValuationReport {
 export interface ValuationInputs {
   name: string;
   url?: string;
+  github_url: string;
   mrr: number;
   expenses: number;
   niche: string;
@@ -37,7 +56,9 @@ export function useAiValuation() {
     setLoading(true);
     setReport(null);
     try {
-      const { data, error } = await supabase.functions.invoke("valuate-pwa", { body: payload });
+      const { data, error } = await supabase.functions.invoke("valuate-pwa", {
+        body: payload,
+      });
       if (error) {
         const status = (error as any).context?.response?.status;
         if (status === 429) toast.error(t("valuation.ai.errors.rateLimit"));
