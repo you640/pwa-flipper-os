@@ -229,6 +229,32 @@ export default function Valuation() {
                   />
                 </Field>
 
+                <Field label={t("valuation.githubUrl")} htmlFor="github">
+                  <div className="relative">
+                    <Github className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="github"
+                      placeholder={t("valuation.githubUrlPh")}
+                      value={form.githubUrl}
+                      onChange={(e) =>
+                        setForm({ ...form, githubUrl: e.target.value })
+                      }
+                      className={cn(
+                        "h-11 bg-card/40 pl-9",
+                        form.githubUrl.length > 0 && !githubValid && "border-destructive/60",
+                        githubValid && "border-success/50",
+                      )}
+                      maxLength={300}
+                      required
+                    />
+                  </div>
+                  {form.githubUrl.length > 0 && !githubValid && (
+                    <p className="text-[11px] text-destructive">
+                      {t("valuation.githubUrlError")}
+                    </p>
+                  )}
+                </Field>
+
                 <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
                   <Field label={t("valuation.monthlyMRR")} htmlFor="mrr" suffix="USD">
                     <CurrencyInput
@@ -296,7 +322,7 @@ export default function Valuation() {
 
                 <Button
                   onClick={handleAiAudit}
-                  disabled={!reportActive || aiLoading}
+                  disabled={!reportActive || !githubValid || aiLoading}
                   className="group relative h-12 w-full overflow-hidden bg-gradient-primary text-primary-foreground font-semibold shadow-glow transition-all hover:shadow-[0_0_50px_-10px_hsl(var(--primary)/0.7)] hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
                 >
                   <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
