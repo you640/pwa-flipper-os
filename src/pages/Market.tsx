@@ -443,6 +443,7 @@ function AddIntelDialog({
 }: {
   onSubmit: (row: { name: string; source: Source; mrr: number; price: number }) => void;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [source, setSource] = useState<Source>("acquire");
   const [mrr, setMrr] = useState("");
@@ -468,27 +469,25 @@ function AddIntelDialog({
   return (
     <DialogContent className="glass border-border/60 sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Add market intel</DialogTitle>
-        <DialogDescription>
-          Log a competitor listing you spotted on Acquire or Flippa.
-        </DialogDescription>
+        <DialogTitle>{t("market.dialogTitle")}</DialogTitle>
+        <DialogDescription>{t("market.dialogDesc")}</DialogDescription>
       </DialogHeader>
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="m-name" className="text-xs uppercase tracking-wider text-muted-foreground">
-            App Name
+            {t("market.app")}
           </Label>
           <Input
             id="m-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. SalonSync"
+            placeholder={t("market.appNamePh")}
             className="h-10 bg-card/40"
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Source</Label>
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">{t("market.source")}</Label>
           <Select value={source} onValueChange={(v) => setSource(v as Source)}>
             <SelectTrigger className="h-10 bg-card/40">
               <SelectValue />
@@ -503,7 +502,7 @@ function AddIntelDialog({
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="m-mrr" className="text-xs uppercase tracking-wider text-muted-foreground">
-              MRR ($)
+              {t("market.mrr")} ($)
             </Label>
             <Input
               id="m-mrr"
@@ -517,7 +516,7 @@ function AddIntelDialog({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="m-price" className="text-xs uppercase tracking-wider text-muted-foreground">
-              Listed Price ($)
+              {t("market.listedPrice")} ($)
             </Label>
             <Input
               id="m-price"
@@ -537,7 +536,7 @@ function AddIntelDialog({
             disabled={!valid}
             className="bg-gradient-primary font-semibold text-primary-foreground shadow-glow hover:shadow-[0_0_40px_-8px_hsl(var(--primary)/0.7)] disabled:opacity-50"
           >
-            Save Intel
+            {t("market.saveBtn")}
           </Button>
         </DialogFooter>
       </form>
