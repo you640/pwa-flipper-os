@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SEO } from "@/components/seo/SEO";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -77,6 +78,7 @@ const calcMultiplier = (price: number, mrr: number) =>
   mrr > 0 ? +(price / mrr).toFixed(1) : null;
 
 export default function Market() {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<IntelRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
