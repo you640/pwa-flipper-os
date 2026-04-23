@@ -34,6 +34,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { OutreachTab } from "@/components/crm/OutreachTab";
+import { useTranslation } from "react-i18next";
 import {
   Select,
   SelectContent,
@@ -386,6 +389,7 @@ function AddLeadDialog({
 // Pitch generator panel (in Sheet)
 // ---------------------------------------------------------------
 function PitchPanel({ lead, apps }: { lead: Lead; apps: PortfolioApp[] }) {
+  const { t } = useTranslation();
   const [appId, setAppId] = useState<string>(apps[0]?.id ?? "");
   const [generating, setGenerating] = useState(false);
   const [pitch, setPitch] = useState("");
@@ -395,7 +399,7 @@ function PitchPanel({ lead, apps }: { lead: Lead; apps: PortfolioApp[] }) {
     [appId, apps],
   );
 
-  // Auto-generate pitch when app changes
+  // Auto-generate basic template pitch when app changes (Details tab fallback)
   useEffect(() => {
     if (!selectedApp) {
       setPitch("");
@@ -413,9 +417,9 @@ function PitchPanel({ lead, apps }: { lead: Lead; apps: PortfolioApp[] }) {
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(pitch);
-      toast.success("Pitch copied to clipboard!");
+      toast.success(t("crm.copied"));
     } catch {
-      toast.error("Could not access clipboard");
+      toast.error(t("crm.copyFailed"));
     }
   };
 
@@ -424,97 +428,106 @@ function PitchPanel({ lead, apps }: { lead: Lead; apps: PortfolioApp[] }) {
       <SheetHeader className="space-y-2 text-left">
         <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
           <Sparkles className="h-3 w-3 text-primary" />
-          AI Pitch Generator
+          {t("crm.pitchTitle")}
         </div>
         <SheetTitle className="text-2xl font-semibold tracking-tight">
           {lead.agency_name}
         </SheetTitle>
         <SheetDescription className="flex items-center gap-1.5 text-sm">
           <Mail className="h-3.5 w-3.5" />
-          {lead.contact_email || "No email on file"}
+          {lead.contact_email || t("crm.noEmail")}
         </SheetDescription>
       </SheetHeader>
 
-      <div className="mt-6 flex-1 space-y-5">
-        {/* App selector */}
-        <div className="space-y-1.5">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-            Select an app from your portfolio
-          </Label>
-          {apps.length === 0 ? (
-            <div className="rounded-xl border border-dashed border-border/60 bg-card/30 p-4 text-center text-sm text-muted-foreground">
-              No portfolio apps yet. Add one from the Valuation Engine.
-            </div>
-          ) : (
-            <Select value={appId} onValueChange={setAppId}>
-              <SelectTrigger className="h-11 bg-card/40">
-                <SelectValue placeholder="Pick an app to pitch" />
-              </SelectTrigger>
-              <SelectContent>
-                {apps.map((a) => (
-                  <SelectItem key={a.id} value={a.id}>
-                    <div className="flex items-center justify-between gap-6">
-                      <span>{a.name}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {formatUSD(a.mrr)} MRR
-                      </span>
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </div>
+      <Tabs defaultValue="outreach" className="mt-6 flex-1">
+        <TabsList className="grid w-full grid-cols-2">
+          <TabsTrigger value="details">{t("crm.tabs.details")}</TabsTrigger>
+          <TabsTrigger value="outreach">
+            <Sparkles className="mr-1.5 h-3.5 w-3.5" />
+            {t("crm.tabs.outreach")}
+          </TabsTrigger>
+        </TabsList>
 
-        {/* App stats */}
-        <AnimatePresence mode="wait">
-          {selectedApp && (
-            <motion.div
-              key={selectedApp.id}
-              initial={{ opacity: 0, y: 6 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -6 }}
-              transition={{ duration: 0.25 }}
-              className="grid grid-cols-2 gap-3"
-            >
-              <Stat label="MRR" value={formatUSD(selectedApp.mrr)} />
-              <Stat label="Asking Price" value={formatUSD(selectedApp.asking_price)} highlight />
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Pitch textarea */}
-        <div className="space-y-1.5">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">
-            Cold email
-          </Label>
-          <div className="relative">
-            <Textarea
-              value={pitch}
-              onChange={(e) => setPitch(e.target.value)}
-              placeholder={selectedApp ? "Generating…" : "Pick an app to generate a pitch."}
-              className="min-h-[280px] resize-none border-border/60 bg-card/40 font-mono text-[13px] leading-relaxed"
-            />
-            {generating && (
-              <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md bg-background/40 backdrop-blur-sm">
-                <Loader2 className="h-5 w-5 animate-spin text-primary" />
+        <TabsContent value="details" className="mt-5 space-y-5">
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+              {t("crm.selectApp")}
+            </Label>
+            {apps.length === 0 ? (
+              <div className="rounded-xl border border-dashed border-border/60 bg-card/30 p-4 text-center text-sm text-muted-foreground">
+                {t("crm.noPortfolio")}
               </div>
+            ) : (
+              <Select value={appId} onValueChange={setAppId}>
+                <SelectTrigger className="h-11 bg-card/40">
+                  <SelectValue placeholder={t("crm.pickApp")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {apps.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      <div className="flex items-center justify-between gap-6">
+                        <span>{a.name}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {formatUSD(a.mrr)} MRR
+                        </span>
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
-        </div>
-      </div>
 
-      <div className="mt-6 border-t border-border/50 pt-5">
-        <Button
-          onClick={handleCopy}
-          disabled={!pitch || generating}
-          className="group relative h-12 w-full overflow-hidden bg-gradient-primary font-semibold text-primary-foreground shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-[0_0_50px_-10px_hsl(var(--primary)/0.7)] disabled:opacity-50 disabled:hover:translate-y-0"
-        >
-          <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-          <Copy className="mr-1.5 h-4 w-4" />
-          Copy to Clipboard
-        </Button>
-      </div>
+          <AnimatePresence mode="wait">
+            {selectedApp && (
+              <motion.div
+                key={selectedApp.id}
+                initial={{ opacity: 0, y: 6 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -6 }}
+                transition={{ duration: 0.25 }}
+                className="grid grid-cols-2 gap-3"
+              >
+                <Stat label="MRR" value={formatUSD(selectedApp.mrr)} />
+                <Stat label={t("crm.askingPrice")} value={formatUSD(selectedApp.asking_price)} highlight />
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          <div className="space-y-1.5">
+            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+              {t("crm.coldEmail")}
+            </Label>
+            <div className="relative">
+              <Textarea
+                value={pitch}
+                onChange={(e) => setPitch(e.target.value)}
+                placeholder={selectedApp ? t("crm.generating") : t("crm.pickAppHint")}
+                className="min-h-[260px] resize-none border-border/60 bg-card/40 font-mono text-[13px] leading-relaxed"
+              />
+              {generating && (
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center rounded-md bg-background/40 backdrop-blur-sm">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              )}
+            </div>
+          </div>
+
+          <Button
+            onClick={handleCopy}
+            disabled={!pitch || generating}
+            className="group relative h-11 w-full overflow-hidden bg-gradient-primary font-semibold text-primary-foreground shadow-glow transition-all hover:-translate-y-0.5 disabled:opacity-50 disabled:hover:translate-y-0"
+          >
+            <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+            <Copy className="mr-1.5 h-4 w-4" />
+            {t("crm.copy")}
+          </Button>
+        </TabsContent>
+
+        <TabsContent value="outreach" className="mt-5">
+          <OutreachTab leadId={lead.id} contactEmail={lead.contact_email} apps={apps} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
