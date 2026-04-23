@@ -1,5 +1,5 @@
 import { animate, motion, useMotionValue, useTransform } from "framer-motion";
-import { useEffect } from "react";
+import { forwardRef, useEffect } from "react";
 import { Card } from "@/components/ui/card";
 import { type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -15,7 +15,10 @@ interface MetricCardProps {
   loading?: boolean;
 }
 
-function CountUp({ value, prefix = "", suffix = "" }: { value: number; prefix?: string; suffix?: string }) {
+const CountUp = forwardRef<
+  HTMLSpanElement,
+  { value: number; prefix?: string; suffix?: string }
+>(function CountUp({ value, prefix = "", suffix = "" }, ref) {
   const mv = useMotionValue(0);
   const rounded = useTransform(mv, (v) => `${prefix}${Math.round(v).toLocaleString()}${suffix}`);
 
@@ -24,8 +27,8 @@ function CountUp({ value, prefix = "", suffix = "" }: { value: number; prefix?: 
     return () => controls.stop();
   }, [value, mv]);
 
-  return <motion.span>{rounded}</motion.span>;
-}
+  return <motion.span ref={ref}>{rounded}</motion.span>;
+});
 
 const accentMap = {
   primary: { glow: "bg-primary/15", icon: "text-primary", shadow: "hover:shadow-glow" },
