@@ -322,6 +322,7 @@ function AddLeadDialog({
 }: {
   onSubmit: (data: { agency_name: string; contact_email: string; notes: string }) => void;
 }) {
+  const { t } = useTranslation();
   const [agency, setAgency] = useState("");
   const [email, setEmail] = useState("");
   const [notes, setNotes] = useState("");
@@ -339,35 +340,35 @@ function AddLeadDialog({
   return (
     <DialogContent className="glass border-border/60 sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Add a new lead</DialogTitle>
-        <DialogDescription>Track a potential buyer agency.</DialogDescription>
+        <DialogTitle>{t("crm.dialogTitle")}</DialogTitle>
+        <DialogDescription>{t("crm.dialogDesc")}</DialogDescription>
       </DialogHeader>
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-1.5">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Agency Name</Label>
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">{t("crm.agency")}</Label>
           <Input
             value={agency}
             onChange={(e) => setAgency(e.target.value)}
-            placeholder="e.g. Pixel Forge Studios"
+            placeholder={t("crm.agencyPh")}
             className="h-10 bg-card/40"
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Contact Email</Label>
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">{t("crm.contact")}</Label>
           <Input
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="hello@agency.com"
+            placeholder={t("crm.emailPh")}
             className="h-10 bg-card/40"
           />
         </div>
         <div className="space-y-1.5">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Notes</Label>
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">{t("crm.notes")}</Label>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
-            placeholder="Anything worth remembering…"
+            placeholder={t("crm.notesPh")}
             className="min-h-[88px] resize-none bg-card/40"
           />
         </div>
@@ -377,7 +378,7 @@ function AddLeadDialog({
             disabled={!valid}
             className="bg-gradient-primary font-semibold text-primary-foreground shadow-glow disabled:opacity-50"
           >
-            Save Lead
+            {t("crm.saveBtn")}
           </Button>
         </DialogFooter>
       </form>
