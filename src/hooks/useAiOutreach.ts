@@ -30,8 +30,6 @@ export function useAiOutreach() {
     try {
       const { data, error } = await supabase.functions.invoke("draft-outreach", {
         body: { lead_id, portfolio_id },
-        // @ts-expect-error supabase-js forwards AbortSignal to underlying fetch
-        signal: controller.signal,
       });
       if (timedOut) {
         toast.error(t("crm.outreach.errors.timedOut"));
