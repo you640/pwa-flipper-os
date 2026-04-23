@@ -312,6 +312,7 @@ const en = {
       openInMail: "Open in Mail",
       sendViaResend: "Send via Resend",
       comingSoon: "Coming soon — connect Resend in Settings",
+      techPitch: "Pitch is auto-enriched with the app's Code Quality score and detected stack.",
       errors: {
         noApp: "Pick an app from your portfolio first.",
         rateLimit: "Too many requests. Wait a few seconds and try again.",

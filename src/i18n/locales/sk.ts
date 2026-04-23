@@ -314,6 +314,7 @@ const sk: Translations = {
       openInMail: "Otvoriť v Maili",
       sendViaResend: "Poslať cez Resend",
       comingSoon: "Čoskoro — pripojte Resend v Nastaveniach",
+      techPitch: "Pitch je automaticky obohatený o Code Quality skóre a detegovaný stack.",
       errors: {
         noApp: "Najprv vyberte aplikáciu z portfólia.",
         rateLimit: "Príliš veľa požiadaviek. Počkajte chvíľu a skúste znova.",
