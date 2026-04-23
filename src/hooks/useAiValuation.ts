@@ -71,8 +71,6 @@ export function useAiValuation() {
     try {
       const { data, error } = await supabase.functions.invoke("valuate-pwa", {
         body: payload,
-        // @ts-expect-error supabase-js forwards AbortSignal to underlying fetch
-        signal: controller.signal,
       });
       if (timedOut) {
         toast.error(t("valuation.ai.errors.timedOut"));
