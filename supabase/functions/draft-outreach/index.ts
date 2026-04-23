@@ -66,19 +66,25 @@ Deno.serve(async (req) => {
       });
     }
 
-    const valueTips = (latestAudit?.ai_report as any)?.value_up_tips ?? [];
-    const summary = (latestAudit?.ai_report as any)?.summary ?? "";
+    const aiReport = (latestAudit?.ai_report as any) ?? null;
+    const valueTips = aiReport?.value_up_tips ?? [];
+    const summary = aiReport?.summary ?? "";
+    const codeScore = aiReport?.code_quality_score;
+    const codeLabel = aiReport?.code_quality_label;
+    const excellence: string[] = aiReport?.tech_stack_audit?.excellence ?? [];
+    const detectedStack: string[] = aiReport?.tech_stack_audit?.detected_stack ?? [];
 
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
-    const systemPrompt = `You write killer cold outreach emails for a solo PWA / micro-SaaS flipper pitching agencies on acquiring an existing app. Rules:
+    const systemPrompt = `You write killer, technically informed cold outreach emails for a solo PWA / micro-SaaS flipper pitching agencies on acquiring an existing app. Rules:
 - Max 140 words in the body
 - Open with ONE specific observation about the agency's niche/work (infer from their name)
-- Weave in MRR + 1-2 value-up tips as "why this is a fit for THEIR book of business"
+- If a Code Quality score is provided, mention it naturally with ONE concrete tech excellence (e.g. "92% Code Quality, TypeScript + tests + CI") — this is your differentiator
+- Tie MRR + 1 value-up tip to "their book of business"
 - One clear CTA (15-min call this week)
-- Sign off with the sender's name only (no fake company)
-- Tone: consultative, confident, never spammy, no exclamation marks
+- Sign off with sender's name only (no fake company)
+- Tone: consultative, confident, never spammy, no exclamation marks, no emoji
 Return strictly via the tool.`;
 
     const userPrompt = `Sender name: ${profile?.display_name || "the founder"}
@@ -92,6 +98,11 @@ App for sale:
 - Monthly expenses: $${app.expenses}
 - Asking: $${app.asking_price}
 - Status: ${app.status}
+
+Code audit:
+- Code Quality score: ${codeScore != null ? `${codeScore}/100 (${codeLabel})` : "not audited"}
+- Detected stack: ${detectedStack.join(", ") || "n/a"}
+- Tech excellence: ${excellence.slice(0, 3).join(" | ") || "n/a"}
 
 AI valuation summary: ${summary || "n/a"}
 Top value-up tips:
