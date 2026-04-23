@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -46,19 +46,36 @@ export interface ValuationInputs {
   notes?: string;
 }
 
+const TIMEOUT_MS = 60_000; // 60s hard ceiling — UI must never hang forever
+
 export function useAiValuation() {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState<AiValuationReport | null>(null);
   const [inputs, setInputs] = useState<ValuationInputs | null>(null);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const run = async (payload: ValuationInputs) => {
     setLoading(true);
     setReport(null);
+
+    // Hard client-side timeout so the "Analyzing" state can never hang forever
+    const controller = new AbortController();
+    let timedOut = false;
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => {
+      timedOut = true;
+      controller.abort();
+    }, TIMEOUT_MS);
+
     try {
       const { data, error } = await supabase.functions.invoke("valuate-pwa", {
         body: payload,
       });
+      if (timedOut) {
+        toast.error(t("valuation.ai.errors.timedOut"));
+        return null;
+      }
       if (error) {
         const status = (error as any).context?.response?.status;
         if (status === 429) toast.error(t("valuation.ai.errors.rateLimit"));
@@ -82,11 +99,19 @@ export function useAiValuation() {
       setInputs(data.inputs);
       return data.report as AiValuationReport;
     } catch (e) {
-      toast.error(t("valuation.ai.errors.generic"), {
-        description: e instanceof Error ? e.message : undefined,
-      });
+      if (timedOut || (e as any)?.name === "AbortError") {
+        toast.error(t("valuation.ai.errors.timedOut"));
+      } else {
+        toast.error(t("valuation.ai.errors.generic"), {
+          description: e instanceof Error ? e.message : undefined,
+        });
+      }
       return null;
     } finally {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
       setLoading(false);
     }
   };

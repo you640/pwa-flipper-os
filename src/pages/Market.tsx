@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { SEO } from "@/components/seo/SEO";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
@@ -77,6 +78,7 @@ const calcMultiplier = (price: number, mrr: number) =>
   mrr > 0 ? +(price / mrr).toFixed(1) : null;
 
 export default function Market() {
+  const { t } = useTranslation();
   const [rows, setRows] = useState<IntelRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
@@ -204,8 +206,8 @@ export default function Market() {
   return (
     <AppLayout>
       <SEO
-        title="Market Intel | Flipper OS"
-        description="Live deal-flow intelligence from Acquire and Flippa. Find undervalued micro-SaaS and PWAs before anyone else."
+        title={t("seo.marketTitle")}
+        description={t("seo.marketDesc")}
       />
       <div className="mx-auto w-full max-w-[1400px] space-y-6">
         <motion.header
@@ -216,15 +218,15 @@ export default function Market() {
         >
           <div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground md:text-3xl">
-              Market <span className="text-gradient">Intel</span>
+              {t("market.title")} <span className="text-gradient">{t("market.titleAccent")}</span>
             </h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Track competitor PWAs and micro-SaaS deals on Flippa & Acquire.
+              {t("market.subtitle")}
             </p>
           </div>
           <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-xs text-muted-foreground">
             <Radar className="h-3.5 w-3.5 text-primary" />
-            {loading ? "Loading…" : `${rows.length} listings tracked`}
+            {loading ? t("common.loading") : t("market.tracked", { count: rows.length })}
           </div>
         </motion.header>
 
@@ -241,7 +243,7 @@ export default function Market() {
                 <Input
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
-                  placeholder="Search by app name…"
+                  placeholder={t("market.searchPh")}
                   className="h-10 bg-card/40 pl-9"
                 />
               </div>
@@ -251,7 +253,7 @@ export default function Market() {
                   <Button className="group relative h-10 overflow-hidden bg-gradient-primary font-semibold text-primary-foreground shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-[0_0_40px_-8px_hsl(var(--primary)/0.7)]">
                     <span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
                     <Plus className="mr-1 h-4 w-4" />
-                    Add Intel
+                    {t("market.addIntel")}
                   </Button>
                 </DialogTrigger>
                 <AddIntelDialog onSubmit={handleAdd} />
@@ -441,6 +443,7 @@ function AddIntelDialog({
 }: {
   onSubmit: (row: { name: string; source: Source; mrr: number; price: number }) => void;
 }) {
+  const { t } = useTranslation();
   const [name, setName] = useState("");
   const [source, setSource] = useState<Source>("acquire");
   const [mrr, setMrr] = useState("");
@@ -466,27 +469,25 @@ function AddIntelDialog({
   return (
     <DialogContent className="glass border-border/60 sm:max-w-md">
       <DialogHeader>
-        <DialogTitle>Add market intel</DialogTitle>
-        <DialogDescription>
-          Log a competitor listing you spotted on Acquire or Flippa.
-        </DialogDescription>
+        <DialogTitle>{t("market.dialogTitle")}</DialogTitle>
+        <DialogDescription>{t("market.dialogDesc")}</DialogDescription>
       </DialogHeader>
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="m-name" className="text-xs uppercase tracking-wider text-muted-foreground">
-            App Name
+            {t("market.app")}
           </Label>
           <Input
             id="m-name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="e.g. SalonSync"
+            placeholder={t("market.appNamePh")}
             className="h-10 bg-card/40"
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label className="text-xs uppercase tracking-wider text-muted-foreground">Source</Label>
+          <Label className="text-xs uppercase tracking-wider text-muted-foreground">{t("market.source")}</Label>
           <Select value={source} onValueChange={(v) => setSource(v as Source)}>
             <SelectTrigger className="h-10 bg-card/40">
               <SelectValue />
@@ -501,7 +502,7 @@ function AddIntelDialog({
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="m-mrr" className="text-xs uppercase tracking-wider text-muted-foreground">
-              MRR ($)
+              {t("market.mrr")} ($)
             </Label>
             <Input
               id="m-mrr"
@@ -515,7 +516,7 @@ function AddIntelDialog({
           </div>
           <div className="space-y-1.5">
             <Label htmlFor="m-price" className="text-xs uppercase tracking-wider text-muted-foreground">
-              Listed Price ($)
+              {t("market.listedPrice")} ($)
             </Label>
             <Input
               id="m-price"
@@ -535,7 +536,7 @@ function AddIntelDialog({
             disabled={!valid}
             className="bg-gradient-primary font-semibold text-primary-foreground shadow-glow hover:shadow-[0_0_40px_-8px_hsl(var(--primary)/0.7)] disabled:opacity-50"
           >
-            Save Intel
+            {t("market.saveBtn")}
           </Button>
         </DialogFooter>
       </form>

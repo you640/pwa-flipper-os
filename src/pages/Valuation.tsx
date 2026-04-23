@@ -169,8 +169,8 @@ export default function Valuation() {
   return (
     <AppLayout>
       <SEO
-        title="AI Valuation Engine | RUBBERDUCK.SPACE"
-        description="AI-powered PWA valuation. Gemini analyzes MRR, niche and tech stack to produce a low/mid/high price, risk score and value-up tips."
+        title={t("seo.valuationTitle")}
+        description={t("seo.valuationDesc")}
       />
       <div className="mx-auto w-full max-w-[1400px] space-y-6">
         <motion.header

@@ -1,3 +1,4 @@
+import * as React from "react";
 import { Helmet } from "react-helmet-async";
 
 interface SEOProps {
@@ -13,7 +14,7 @@ const DEFAULT_IMAGE = "/icons/icon-512.png";
 const DEFAULT_TWITTER = "@flipperos";
 const SITE_NAME = "Flipper OS";
 
-export function SEO({
+function SEOComponent({
   title,
   description,
   image,
@@ -89,4 +90,5 @@ export function SEO({
   );
 }
 
+export const SEO = React.memo(SEOComponent);
 export default SEO;
