@@ -5,6 +5,9 @@ import {
   TrendingUp,
   Zap,
   ShieldAlert,
+  Wrench,
+  CheckCircle2,
+  AlertTriangle,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -17,6 +20,7 @@ import {
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
 import type { AiValuationReport } from "@/hooks/useAiValuation";
+import { CodeHealthGauge } from "./CodeHealthGauge";
 
 const formatUSD = (n: number) =>
   new Intl.NumberFormat("en-US", {
@@ -53,6 +57,7 @@ export function AiReportCard({
   const { low, mid, high } = report.estimated_valuation;
   const range = Math.max(high - low, 1);
   const midPct = ((mid - low) / range) * 100;
+  const audit = report.tech_stack_audit;
 
   return (
     <motion.div
@@ -95,6 +100,76 @@ export function AiReportCard({
         </div>
       </div>
 
+      {/* Code Health Gauge */}
+      <CodeHealthGauge
+        score={report.code_quality_score}
+        label={report.code_quality_label}
+      />
+
+      {/* Detected stack */}
+      {audit?.detected_stack && audit.detected_stack.length > 0 && (
+        <div>
+          <div className="mb-2 text-[10px] uppercase tracking-wider text-muted-foreground">
+            {t("valuation.ai.report.detectedStack")}
+          </div>
+          <div className="flex flex-wrap gap-1.5">
+            {audit.detected_stack.map((tech) => (
+              <Badge
+                key={tech}
+                variant="outline"
+                className="border-0 bg-secondary/60 text-[11px] text-foreground/90 ring-1 ring-border/60"
+              >
+                {tech}
+              </Badge>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Tech excellence vs debt */}
+      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+        <div className="rounded-xl border border-success/30 bg-success/5 p-3">
+          <div className="mb-2 flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-success">
+            <CheckCircle2 className="h-3.5 w-3.5" />
+            {t("valuation.ai.report.techExcellence")}
+          </div>
+          <ul className="space-y-1.5">
+            {audit.excellence.map((item, i) => (
+              <li
+                key={i}
+                className="flex items-start gap-1.5 text-xs text-foreground/90"
+              >
+                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-success" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="rounded-xl border border-destructive/30 bg-destructive/5 p-3">
+          <div className="mb-2 flex items-center gap-1.5 text-[10px] uppercase tracking-wider text-destructive">
+            <AlertTriangle className="h-3.5 w-3.5" />
+            {t("valuation.ai.report.techDebt")}
+          </div>
+          <ul className="space-y-1.5">
+            {audit.tech_debt.map((item, i) => (
+              <li
+                key={i}
+                className="flex items-start gap-1.5 text-xs text-foreground/90"
+              >
+                <span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-destructive" />
+                {item}
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
+      {audit?.summary && (
+        <div className="rounded-xl border border-border/50 bg-card/30 p-3 text-xs leading-relaxed text-muted-foreground">
+          {audit.summary}
+        </div>
+      )}
+
       <div className="grid grid-cols-2 gap-3">
         <div className="rounded-xl border border-border/50 bg-card/40 p-3">
           <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
@@ -109,7 +184,12 @@ export function AiReportCard({
             <ShieldAlert className="h-3 w-3" />
             {t("valuation.ai.report.risk")}
           </div>
-          <div className={cn("mt-1 font-mono text-base font-semibold tabular-nums", riskColor(report.risk_score))}>
+          <div
+            className={cn(
+              "mt-1 font-mono text-base font-semibold tabular-nums",
+              riskColor(report.risk_score),
+            )}
+          >
             {report.risk_score}/10
           </div>
         </div>
@@ -119,15 +199,34 @@ export function AiReportCard({
         {report.summary}
       </div>
 
+      {/* Refactor tips */}
+      <div>
+        <div className="mb-2 flex items-center gap-1.5 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+          <Wrench className="h-3.5 w-3.5 text-primary" />
+          {t("valuation.ai.report.refactorTips")}
+        </div>
+        <div className="space-y-2">
+          {report.refactor_tips?.map((tip, i) => {
+            const Icon = IMPACT_ICON[tip.impact] ?? Sparkles;
+            return (
+              <Collapsible key={`r-${i}`}>
+                <Tip tip={tip} index={i} Icon={Icon} />
+              </Collapsible>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Value-up tips */}
       <div>
         <div className="mb-2 text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-          {t("valuation.ai.report.tips")}
+          {t("valuation.ai.report.valueUpTips")}
         </div>
         <div className="space-y-2">
           {report.value_up_tips.map((tip, i) => {
             const Icon = IMPACT_ICON[tip.impact] ?? Sparkles;
             return (
-              <Collapsible key={i}>
+              <Collapsible key={`v-${i}`}>
                 <Tip tip={tip} index={i} Icon={Icon} />
               </Collapsible>
             );
@@ -145,7 +244,12 @@ export function AiReportCard({
           <Sparkles className="mr-1 h-4 w-4" />
           {applying ? t("valuation.saving") : t("valuation.ai.applyToPortfolio")}
         </Button>
-        <Button onClick={onSave} variant="outline" disabled={applying} className="h-11 flex-1">
+        <Button
+          onClick={onSave}
+          variant="outline"
+          disabled={applying}
+          className="h-11 flex-1"
+        >
           {t("valuation.ai.saveAuditOnly")}
         </Button>
       </div>
@@ -170,16 +274,29 @@ function Tip({
         onClick={() => setOpen((o) => !o)}
         className="group flex w-full items-center gap-3 rounded-lg border border-border/50 bg-card/40 p-3 text-left transition-colors hover:bg-card/60"
       >
-        <div className={cn("flex h-8 w-8 items-center justify-center rounded-lg ring-1", IMPACT_CLR[tip.impact])}>
+        <div
+          className={cn(
+            "flex h-8 w-8 items-center justify-center rounded-lg ring-1",
+            IMPACT_CLR[tip.impact],
+          )}
+        >
           <Icon className="h-4 w-4" />
         </div>
         <div className="flex-1">
           <div className="text-sm font-medium text-foreground">{tip.title}</div>
-          <Badge variant="outline" className="mt-0.5 border-0 bg-transparent p-0 text-[10px] uppercase tracking-wider text-muted-foreground">
+          <Badge
+            variant="outline"
+            className="mt-0.5 border-0 bg-transparent p-0 text-[10px] uppercase tracking-wider text-muted-foreground"
+          >
             {t(`valuation.ai.report.impact.${tip.impact}`)}
           </Badge>
         </div>
-        <ChevronDown className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-180")} />
+        <ChevronDown
+          className={cn(
+            "h-4 w-4 text-muted-foreground transition-transform",
+            open && "rotate-180",
+          )}
+        />
       </CollapsibleTrigger>
       <CollapsibleContent className="overflow-hidden data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down">
         <div className="rounded-b-lg border border-t-0 border-border/50 bg-card/20 p-3 text-sm text-muted-foreground">

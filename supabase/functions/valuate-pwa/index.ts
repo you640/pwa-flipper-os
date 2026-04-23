@@ -10,12 +10,161 @@ const corsHeaders = {
 const BodySchema = z.object({
   name: z.string().trim().min(1).max(120),
   url: z.string().trim().max(500).optional().or(z.literal("")),
+  github_url: z
+    .string()
+    .trim()
+    .regex(
+      /^https?:\/\/(www\.)?github\.com\/[\w.-]+\/[\w.-]+\/?$/i,
+      "Must be a github.com/owner/repo URL",
+    )
+    .max(300),
   mrr: z.number().nonnegative().max(10_000_000),
   expenses: z.number().nonnegative().max(10_000_000),
   niche: z.string().trim().min(1).max(80),
   tech_stack: z.string().trim().max(300).optional().or(z.literal("")),
   notes: z.string().trim().max(800).optional().or(z.literal("")),
 });
+
+interface RepoSnapshot {
+  full_name: string;
+  description: string | null;
+  language: string | null;
+  languages: Record<string, number>;
+  stars: number;
+  forks: number;
+  open_issues: number;
+  size_kb: number;
+  default_branch: string;
+  pushed_at: string | null;
+  created_at: string | null;
+  topics: string[];
+  license: string | null;
+  has_tests: boolean;
+  has_ci: boolean;
+  has_readme: boolean;
+  has_typescript: boolean;
+  package_manager: string | null;
+  framework_hints: string[];
+  recent_commits_30d: number;
+  fetch_error?: string;
+}
+
+async function fetchRepoSnapshot(
+  githubUrl: string,
+): Promise<RepoSnapshot | { fetch_error: string }> {
+  try {
+    const m = githubUrl.match(/github\.com\/([\w.-]+)\/([\w.-]+?)(?:\.git)?\/?$/i);
+    if (!m) return { fetch_error: "invalid_url" };
+    const [, owner, repo] = m;
+    const headers: Record<string, string> = {
+      "User-Agent": "rubberduck-space/valuate-pwa",
+      Accept: "application/vnd.github+json",
+    };
+    const ghToken = Deno.env.get("GITHUB_TOKEN");
+    if (ghToken) headers.Authorization = `Bearer ${ghToken}`;
+
+    const base = `https://api.github.com/repos/${owner}/${repo}`;
+    const repoRes = await fetch(base, { headers });
+    if (!repoRes.ok) {
+      return {
+        fetch_error:
+          repoRes.status === 404
+            ? "repo_not_found"
+            : repoRes.status === 403
+              ? "rate_limit"
+              : `http_${repoRes.status}`,
+      };
+    }
+    const repoData = await repoRes.json();
+
+    const [langsRes, treeRes, commitsRes] = await Promise.all([
+      fetch(`${base}/languages`, { headers }),
+      fetch(`${base}/git/trees/${repoData.default_branch}?recursive=1`, { headers }),
+      fetch(
+        `${base}/commits?since=${new Date(
+          Date.now() - 30 * 24 * 3600 * 1000,
+        ).toISOString()}&per_page=100`,
+        { headers },
+      ),
+    ]);
+
+    const languages = langsRes.ok ? await langsRes.json() : {};
+    const tree = treeRes.ok ? await treeRes.json() : { tree: [] };
+    const commits = commitsRes.ok ? await commitsRes.json() : [];
+
+    const paths: string[] = (tree.tree ?? []).map((n: any) =>
+      String(n.path).toLowerCase(),
+    );
+    const has = (re: RegExp) => paths.some((p) => re.test(p));
+
+    const has_tests =
+      has(/(^|\/)__tests__\//) ||
+      has(/\.(test|spec)\.[tj]sx?$/) ||
+      has(/(^|\/)(tests?|e2e)\//) ||
+      has(/(^|\/)cypress\.config\./) ||
+      has(/(^|\/)playwright\.config\./);
+    const has_ci =
+      has(/^\.github\/workflows\//) ||
+      has(/(^|\/)\.gitlab-ci\.yml$/) ||
+      has(/(^|\/)\.circleci\//);
+    const has_readme = has(/^readme(\.md|\.mdx|\.rst|\.txt)?$/);
+    const has_typescript =
+      has(/(^|\/)tsconfig\.json$/) || !!languages["TypeScript"];
+
+    const package_manager = has(/^pnpm-lock\.yaml$/)
+      ? "pnpm"
+      : has(/^yarn\.lock$/)
+        ? "yarn"
+        : has(/^bun\.lockb?$/)
+          ? "bun"
+          : has(/^package-lock\.json$/)
+            ? "npm"
+            : has(/^poetry\.lock$/)
+              ? "poetry"
+              : has(/^cargo\.lock$/)
+                ? "cargo"
+                : has(/^go\.sum$/)
+                  ? "go modules"
+                  : null;
+
+    const framework_hints: string[] = [];
+    if (has(/(^|\/)next\.config\./)) framework_hints.push("Next.js");
+    if (has(/(^|\/)vite\.config\./)) framework_hints.push("Vite");
+    if (has(/(^|\/)nuxt\.config\./)) framework_hints.push("Nuxt");
+    if (has(/(^|\/)remix\.config\./)) framework_hints.push("Remix");
+    if (has(/(^|\/)astro\.config\./)) framework_hints.push("Astro");
+    if (has(/(^|\/)svelte\.config\./)) framework_hints.push("Svelte");
+    if (has(/(^|\/)tailwind\.config\./)) framework_hints.push("Tailwind");
+    if (has(/(^|\/)supabase\//)) framework_hints.push("Supabase");
+    if (has(/(^|\/)prisma\/schema\.prisma$/)) framework_hints.push("Prisma");
+    if (has(/(^|\/)drizzle\.config\./)) framework_hints.push("Drizzle");
+
+    return {
+      full_name: repoData.full_name,
+      description: repoData.description ?? null,
+      language: repoData.language ?? null,
+      languages,
+      stars: repoData.stargazers_count ?? 0,
+      forks: repoData.forks_count ?? 0,
+      open_issues: repoData.open_issues_count ?? 0,
+      size_kb: repoData.size ?? 0,
+      default_branch: repoData.default_branch ?? "main",
+      pushed_at: repoData.pushed_at ?? null,
+      created_at: repoData.created_at ?? null,
+      topics: repoData.topics ?? [],
+      license: repoData.license?.spdx_id ?? null,
+      has_tests,
+      has_ci,
+      has_readme,
+      has_typescript,
+      package_manager,
+      framework_hints,
+      recent_commits_30d: Array.isArray(commits) ? commits.length : 0,
+    };
+  } catch (e) {
+    return { fetch_error: e instanceof Error ? e.message : "unknown" };
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -33,7 +182,9 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_ANON_KEY")!,
       { global: { headers: { Authorization: authHeader } } },
     );
-    const { data: claims } = await supabase.auth.getClaims(authHeader.replace("Bearer ", ""));
+    const { data: claims } = await supabase.auth.getClaims(
+      authHeader.replace("Bearer ", ""),
+    );
     if (!claims?.claims) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
@@ -41,38 +192,62 @@ Deno.serve(async (req) => {
       });
     }
 
-    const raw = await req.json();
-    const parsed = BodySchema.safeParse(raw);
+    const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) {
       return new Response(
-        JSON.stringify({ error: "Invalid input", details: parsed.error.flatten().fieldErrors }),
+        JSON.stringify({
+          error: "Invalid input",
+          details: parsed.error.flatten().fieldErrors,
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
     const input = parsed.data;
 
+    const repo = await fetchRepoSnapshot(input.github_url);
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
 
-    const systemPrompt = `You are a senior micro-SaaS / PWA broker who values small internet businesses sold on Acquire.com, MicroAcquire, and Flippa. You produce realistic, conservative valuations in USD for the EU/global market. Weigh:
-- Net profit (MRR - expenses), trailing assumed stable
-- Niche multipliers: Booking 36-48x, B2B SaaS 30-42x, E-commerce 24-36x, Dev Tool 20-30x, Content/Affiliate 18-28x
-- Risk: revenue concentration, churn, dependencies, age, tech debt
-- If net profit <= 0, value as ASSET (code + traffic + brand) at 500-5000 USD
+    const systemPrompt = `You are a SENIOR CODE AUDITOR and micro-SaaS broker. You value PWAs and small SaaS for sale on Acquire / MicroAcquire / Flippa, and you treat code quality as a multiplier on the exit price.
+
+CODE QUALITY SCORING (0-100):
+- 90-100 "Clean as Glass": TypeScript, tests, CI, recent commits, clear framework, lockfile, license, README
+- 70-89  "Solid": most of the above, minor gaps
+- 50-69  "Mixed": missing tests OR CI OR types
+- 30-49  "Rubberdebt": no tests, no CI, stale, no docs
+- 0-29   "Toxic": inactive, no docs, no tests, no types, unknown stack
+
+VALUATION RULES:
+- Base = net profit (MRR - expenses) × niche multiplier (Booking 36-48x, B2B SaaS 30-42x, E-commerce 24-36x, Dev Tool 20-30x, Content 18-28x).
+- Adjust the multiplier by code quality: 90+ → +25%, 70-89 → +10%, 50-69 → 0, 30-49 → -20%, <30 → -40%.
+- If net profit ≤ 0, value as ASSET ($500-$5000), code quality still shifts within range.
+- All amounts in USD, conservative.
+
+If repo_snapshot has fetch_error, set code_quality_score to 50, note the limitation in tech_stack_audit.summary, and proceed.
+
 Return strictly via the tool. No prose.`;
 
     const userPrompt = `Value this PWA / micro-SaaS:
-Name: ${input.name}
-URL: ${input.url || "n/a"}
-MRR: $${input.mrr}
-Monthly expenses: $${input.expenses}
-Niche: ${input.niche}
-Tech stack: ${input.tech_stack || "unknown"}
-Notes: ${input.notes || "none"}`;
+
+PROJECT
+- Name: ${input.name}
+- Live URL: ${input.url || "n/a"}
+- Niche: ${input.niche}
+- MRR: $${input.mrr}/mo
+- Expenses: $${input.expenses}/mo
+- User-stated tech: ${input.tech_stack || "unknown"}
+- Notes: ${input.notes || "none"}
+
+GITHUB DNA (auto-fetched)
+${JSON.stringify(repo, null, 2)}`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+      headers: {
+        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        "Content-Type": "application/json",
+      },
       body: JSON.stringify({
         model: "google/gemini-2.5-pro",
         messages: [
@@ -84,7 +259,7 @@ Notes: ${input.notes || "none"}`;
             type: "function",
             function: {
               name: "submit_valuation",
-              description: "Return a structured PWA valuation report.",
+              description: "Return structured PWA valuation + technical audit.",
               parameters: {
                 type: "object",
                 properties: {
@@ -98,8 +273,49 @@ Notes: ${input.notes || "none"}`;
                     required: ["low", "mid", "high"],
                     additionalProperties: false,
                   },
-                  multiple: { type: "number", description: "Effective multiple of monthly net profit (or 0 if asset-only)" },
+                  multiple: { type: "number" },
                   risk_score: { type: "integer", minimum: 1, maximum: 10 },
+                  code_quality_score: { type: "integer", minimum: 0, maximum: 100 },
+                  code_quality_label: {
+                    type: "string",
+                    enum: ["Clean as Glass", "Solid", "Mixed", "Rubberdebt", "Toxic"],
+                  },
+                  tech_stack_audit: {
+                    type: "object",
+                    properties: {
+                      summary: { type: "string" },
+                      excellence: {
+                        type: "array",
+                        minItems: 1,
+                        maxItems: 5,
+                        items: { type: "string" },
+                      },
+                      tech_debt: {
+                        type: "array",
+                        minItems: 1,
+                        maxItems: 5,
+                        items: { type: "string" },
+                      },
+                      detected_stack: { type: "array", items: { type: "string" } },
+                    },
+                    required: ["summary", "excellence", "tech_debt", "detected_stack"],
+                    additionalProperties: false,
+                  },
+                  refactor_tips: {
+                    type: "array",
+                    minItems: 3,
+                    maxItems: 3,
+                    items: {
+                      type: "object",
+                      properties: {
+                        title: { type: "string" },
+                        impact: { type: "string", enum: ["high", "medium", "low"] },
+                        detail: { type: "string" },
+                      },
+                      required: ["title", "impact", "detail"],
+                      additionalProperties: false,
+                    },
+                  },
                   value_up_tips: {
                     type: "array",
                     minItems: 3,
@@ -115,16 +331,26 @@ Notes: ${input.notes || "none"}`;
                       additionalProperties: false,
                     },
                   },
-                  summary: { type: "string", description: "2-3 sentence executive summary" },
+                  summary: { type: "string" },
                 },
-                required: ["estimated_valuation", "multiple", "risk_score", "value_up_tips", "summary"],
+                required: [
+                  "estimated_valuation",
+                  "multiple",
+                  "risk_score",
+                  "code_quality_score",
+                  "code_quality_label",
+                  "tech_stack_audit",
+                  "refactor_tips",
+                  "value_up_tips",
+                  "summary",
+                ],
                 additionalProperties: false,
               },
             },
           },
         ],
         tool_choice: { type: "function", function: { name: "submit_valuation" } },
-        max_tokens: 800,
+        max_tokens: 1500,
       }),
     });
 
@@ -160,14 +386,18 @@ Notes: ${input.notes || "none"}`;
     }
     const report = JSON.parse(toolCall.function.arguments);
 
-    return new Response(JSON.stringify({ report, inputs: input }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ report, inputs: input, repo_snapshot: repo }),
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
+    );
   } catch (e) {
     console.error("valuate-pwa error", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "unknown" }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return new Response(
+      JSON.stringify({ error: e instanceof Error ? e.message : "unknown" }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 });
