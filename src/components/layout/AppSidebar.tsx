@@ -1,8 +1,9 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LayoutDashboard, Kanban, Calculator, Radar, Users, Settings, Sparkles, BookOpen } from "lucide-react";
+import { LayoutDashboard, Kanban, Calculator, Radar, Users, Settings, Sparkles, BookOpen, Shield } from "lucide-react";
 import { InstallPWA } from "./InstallPWA";
+import { useProfile } from "@/hooks/useProfile";
 import {
   Sidebar,
   SidebarContent,
@@ -22,6 +23,7 @@ export function AppSidebar() {
   const { t } = useTranslation();
   const collapsed = state === "collapsed";
   const location = useLocation();
+  const { isAdmin } = useProfile();
 
   const items = [
     { title: t("sidebar.overview"), url: "/", icon: LayoutDashboard },
@@ -96,6 +98,16 @@ export function AppSidebar() {
           <BookOpen className="h-4 w-4" />
           {!collapsed && <span>{t("sidebar.docs")}</span>}
         </NavLink>
+        {isAdmin && (
+          <NavLink
+            to="/admin-panel"
+            className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs text-muted-foreground hover:bg-sidebar-accent hover:text-sidebar-foreground transition-colors"
+            activeClassName="!bg-sidebar-accent !text-sidebar-foreground font-medium"
+          >
+            <Shield className="h-4 w-4 text-primary" />
+            {!collapsed && <span>{t("sidebar.adminPanel")}</span>}
+          </NavLink>
+        )}
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <NavLink
             to="/settings"
