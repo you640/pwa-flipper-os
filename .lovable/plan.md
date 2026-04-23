@@ -1,123 +1,127 @@
 
 
-# Fix Tooltip crash + ship Superadmin Command Center
+# AI Brain & Outreach Engine
 
-Two things bundled: a one-line root-cause fix for the `TooltipProvider` crash, then the full **RUBBERDUCK Superadmin Command Center** at `/admin-panel` as originally planned.
+Two production-ready AI features bundled into one upgrade: an **AI Valuation Engine** that replaces the rule-based multiplier on `/valuation`, and an **AI Outreach Engine** in the CRM lead sheet that turns each lead into a personalized cold email — both powered by Lovable AI Gateway (no API key needed).
 
-## What you'll get
+---
 
-**1. Crash fix — root cause**
-The error `Cannot read properties of null (reading 'useRef')` inside `TooltipProvider` is the classic **duplicate React** symptom (two React copies loaded → hooks return null). It is *not* a missing provider — `App.tsx` already wraps the tree in `<TooltipProvider>`. The trigger is a stale Vite dep cache after adding new components/icons.
+## 1) AI Valuation Engine
 
-Fix: clear Vite's pre-bundled deps cache and let it re-optimize against the single React in `node_modules`. Concretely:
-- Delete `node_modules/.vite`.
-- Add `optimizeDeps.force: true` (one-shot) in `vite.config.ts`, or alternatively dedupe explicitly with `resolve.dedupe: ["react", "react-dom"]` (kept permanently — safer).
-- Add a defensive `<TooltipProvider>` inside `AdminLayout` too, so the admin surface is self-contained even if mounted standalone.
+**Edge function: `valuate-pwa`** (`verify_jwt = true` via in-code JWT validation, CORS enabled)
+- Input: `{ name, url?, mrr, expenses, tech_stack?, niche, notes? }` validated with Zod.
+- Calls Lovable AI Gateway with `google/gemini-2.5-pro` using **tool-calling** (`tool_choice` forced) to guarantee structured JSON:
+  ```json
+  {
+    "estimated_valuation": { "low": 12000, "mid": 18000, "high": 25000 },
+    "multiple": 3.2,
+    "risk_score": 4,
+    "value_up_tips": [
+      { "title": "...", "impact": "high|medium|low", "detail": "..." },
+      ...
+    ],
+    "summary": "2-3 sentence executive summary"
+  }
+  ```
+- Returns 429/402 errors verbatim with friendly toast text on the client.
+- System prompt: hardcoded on backend, instructs Gemini to act as a senior micro-SaaS broker, weight niche multipliers, factor MRR/expenses/burn, and produce realistic EU-market valuations in USD.
 
-**2. Route + access control**
-- New route `/admin-panel` registered in `App.tsx`, inside the existing `AuthGuard`.
-- New `AdminGuard` wraps `Admin.tsx`:
-  - Uses `useProfile()`; while `loading` shows a spinner.
-  - If `!isAdmin` → `toast.error(t("admin.unauthorized"))` (sonner) + `<Navigate to="/" replace />`.
-- Admin status is derived from the `user_roles` table (existing `has_role` + RLS). Only users with `role = 'admin'` pass — so `larsenevans@proton.me` must have a row in `user_roles` with role `admin`. If that row doesn't exist yet, I'll add a migration that grants `admin` to whichever `auth.users.id` matches that email (idempotent `INSERT ... ON CONFLICT DO NOTHING`).
-
-**3. Layout: `AdminLayout` + `AdminSidebar`**
-- `src/components/admin/AdminLayout.tsx`: same `SidebarProvider` shell as `AppLayout`, mounts `<AdminSidebar />` and a slim admin topbar (Superadmin badge, admin name, **Back to App** button). Wrapped in its own `<TooltipProvider>`.
-- `src/components/admin/AdminSidebar.tsx` sections (each scrolls to an in-page anchor):
-  - **Global Pulse** (`Activity`)
-  - **User Management** (`Users`)
-  - **SEO Hub** (`Search`)
-  - **Database Explorer** (`Database`)
-  - **System Logs** (`Terminal`)
-- Same RUBBERDUCK glassmorphic dark tokens; collapsible-to-icon behavior matches the main sidebar.
-
-**4. Top tab strip: Analytics / Users / SEO Tools**
-Shadcn `Tabs` at the top of `Admin.tsx`:
-- **Analytics** → Global Pulse + Global Growth chart + System Logs.
-- **Users** → User Management table + Database Explorer.
-- **SEO Tools** → SEO Hub.
-
-**5. Global Pulse**
-Four `MetricCard`s reusing the dashboard component:
-- Total users (count of `profiles`)
-- Combined MRR (sum of all `portfolio.mrr`)
-- Total portfolio value (sum of all `portfolio.asking_price`)
-- System health pill ("Operational") + last-refresh timestamp.
-
-**Global Growth** (recharts `AreaChart`): signups per day for last 30 days, derived by bucketing `profiles.created_at`. Same gradient styling as `ProjectionChart`.
-
-**6. User Management**
-Shadcn `Table` columns: Avatar + display_name, role (joined from `user_roles`), joined date, actions.
-- **Edit Role** → `Dialog` with `Select` (`admin` / `moderator` / `user`). On confirm: delete existing rows for that user_id then insert the new role (covered by existing admin RLS).
-- **Impersonate** → tooltip "Coming soon — requires backend session swap" + `toast.info`. (True impersonation needs a service-role edge function; called out as out of scope.)
-- Client-side search by display_name.
-
-**7. SEO Hub (plugin slot)**
-Big glass card titled **"SEO Analysis Dashboard"** with a dashed-border **Drop Zone** at the top:
-- `<div id="seo-plugin-slot" data-seo-plugin-slot />` so future scripts can mount via `window.RubberduckSEO`.
-- Placeholder copy: "Drop your SEO plugin here."
-
-Three placeholder cards in a 1/3 grid: **Keyword Tracking** (`Hash`), **Backlink Pulse** (`Link2`), **Meta Auditor** (`FileSearch`) — each with empty-state and disabled "Run audit" button.
-
-**8. Database Explorer (read-only)**
-Shadcn `Accordion` with two cards:
-- **portfolio** — paginated (20/page): `name`, truncated `user_id`, `mrr`, `asking_price`, `status`, `created_at`. CSV export.
-- **crm_leads** — paginated: `agency_name`, `contact_email`, `status`, truncated `user_id`, `created_at`. CSV export.
-
-Both fetch with `select("*")` — admin RLS already permits it.
-
-**9. System Logs**
-Two stacked lists:
-- Recent sign-ups — last 10 `profiles` by `created_at desc`.
-- Avatar upload errors — last 10 from `avatar_upload_errors`.
-
-Locale-aware relative time (reuses helper from `ActivityFeed`).
-
-**10. i18n: full `admin.*` namespace** in `en.ts` + `sk.ts`
-`admin.title`, `admin.subtitle`, `admin.unauthorized`, `admin.backToApp`, `admin.lastRefresh`, `admin.tabs.{analytics,users,seoTools}`, `admin.sidebar.{globalPulse,users,seoHub,database,logs}`, `admin.pulse.*`, `admin.users.*` (incl. `roles.{admin,moderator,user}`), `admin.seo.*`, `admin.db.*`, `admin.logs.*`. Plus `sidebar.adminPanel`.
-
-**11. Conditional admin link in main `AppSidebar`**
-Footer entry **"Admin Panel"** with `Shield` icon, rendered only when `useProfile().isAdmin` is true. Non-admins never see it.
-
-## Technical details
-
-**Files created**
-- `src/pages/Admin.tsx` (orchestrator — tabs + sections)
-- `src/hooks/useAdminData.ts` (parallel queries: `profiles`, all `portfolio`, all `crm_leads`, `user_roles`, `avatar_upload_errors`; builds `growthSeries`)
-- `src/components/admin/AdminGuard.tsx`
-- `src/components/admin/AdminLayout.tsx` (wraps in its own `<TooltipProvider>`)
-- `src/components/admin/AdminSidebar.tsx`
-- `src/components/admin/sections/GlobalPulse.tsx`
-- `src/components/admin/sections/GlobalGrowthChart.tsx` (recharts)
-- `src/components/admin/sections/UserManagement.tsx`
-- `src/components/admin/sections/SeoHub.tsx`
-- `src/components/admin/sections/DatabaseExplorer.tsx`
-- `src/components/admin/sections/SystemLogs.tsx`
-
-**Files edited**
-- `vite.config.ts` — add `resolve: { dedupe: ["react", "react-dom"] }` (permanent fix for duplicate-React class of crash) + one-shot `optimizeDeps.force` on next dev run.
-- `src/App.tsx` — register `<Route path="/admin-panel" element={<AdminGuard><Admin /></AdminGuard>} />`.
-- `src/components/layout/AppSidebar.tsx` — conditional admin link in footer.
-- `src/i18n/locales/en.ts`, `src/i18n/locales/sk.ts` — `admin.*` + `sidebar.adminPanel`.
-
-**Migration (one)**
-Idempotent SQL to grant admin to `larsenevans@proton.me` if a matching `auth.users` row exists:
-
+**DB migration: `portfolio_audits`**
 ```sql
-insert into public.user_roles (user_id, role)
-select u.id, 'admin'::app_role
-from auth.users u
-where u.email = 'larsenevans@proton.me'
-on conflict (user_id, role) do nothing;
+create table public.portfolio_audits (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null default auth.uid(),
+  portfolio_id uuid references public.portfolio(id) on delete cascade,
+  inputs jsonb not null,
+  ai_report jsonb not null,
+  model text not null default 'google/gemini-2.5-pro',
+  created_at timestamptz not null default now()
+);
+alter table public.portfolio_audits enable row level security;
+-- user policies (select/insert/delete own) + admin select-all, mirroring portfolio.
 ```
 
-No schema or RLS changes — existing admin policies cover all reads/writes used here.
+**UI rebuild — `src/pages/Valuation.tsx`**
+- Keep the form (Name, MRR, Expenses, Niche) and add **App URL** + **Tech Stack** inputs.
+- Replace static "Save to Portfolio" CTA with a primary **`✨ Magic AI Audit`** button (gradient + shadow-glow + animated shimmer).
+- During run: glowing "Analyzing your PWA…" pulse on the right card with a 4-step progress indicator (Parsing → Benchmarking → Pricing → Strategy) animated via framer-motion.
+- On success: **AI Valuation Report** card animates in (`scale-in` + stagger) with:
+  - Hero: mid valuation with low–high range bar
+  - Multiple badge + Risk score gauge (color-coded green/amber/red)
+  - 3 **Value-up tips** as collapsible cards with `Sparkles` / `TrendingUp` / `Zap` icons
+  - Executive summary
+- Two CTAs: **Apply to Portfolio** (insert/update `portfolio` with `asking_price = mid`, `status = 'For Sale'`) + saves the audit row referencing the new `portfolio_id`. **Save Audit Only** (just inserts into `portfolio_audits`).
+- Past audits drawer (last 5) toggled by a small button in the header.
 
-**Cache cleanup**
-The build step will delete `node_modules/.vite` so the next dev start re-bundles cleanly against the deduped React.
+---
 
-**Out of scope**
-- True user impersonation (needs a service-role edge function).
-- Realtime subscriptions on the explorer (manual Refresh only).
-- Actual SEO plugin code — just the slot + placeholder cards.
+## 2) AI Outreach Engine (CRM)
+
+**Edge function: `draft-outreach`** (verify_jwt in-code)
+- Input: `{ lead_id, portfolio_id }` validated with Zod.
+- Server-side: fetches the lead + portfolio + latest `portfolio_audits.ai_report` for that portfolio (RLS scoped to caller).
+- Calls Lovable AI Gateway `openai/gpt-5-mini` (cheaper, great writer) with tool-calling returning:
+  ```json
+  { "subject": "...", "body_markdown": "...", "tone": "consultative" }
+  ```
+- Prompt rules: opens with one specific observation about the agency's niche, weaves in MRR + 1–2 value-up tips as "why this is a fit for *their* book of business", clear CTA, max 140 words, signs off with the user's `display_name`.
+
+**UI — `src/pages/CRM.tsx` Lead Sheet**
+- Add `Tabs` to the existing `Sheet`: **Details** (current content) / **AI Outreach** (new).
+- AI Outreach tab:
+  - **Select** dropdown listing the user's portfolio apps (shows name + MRR).
+  - **`Generate Pitch`** button → loading skeleton over a glassy email preview.
+  - Editable **Subject** input + Markdown-rendered **Body** (with `Edit` toggle to a `Textarea`).
+  - Footer actions:
+    - **Copy** (clipboard)
+    - **Open in Mail** (`mailto:` with subject + body, URL-encoded — works today)
+    - **Send via Resend** disabled with tooltip "Coming soon — connect Resend in Settings" (slot ready for the connector flow later)
+  - Persist draft to component state per lead during the session; no DB writes for drafts in this iteration.
+
+---
+
+## 3) i18n — full coverage
+
+**`src/i18n/locales/en.ts`** + **`sk.ts`** add:
+- `valuation.ai.*`: `auditButton`, `analyzing`, `steps.{parsing,benchmarking,pricing,strategy}`, `report.{title,range,multiple,risk,tips,summary}`, `applyToPortfolio`, `saveAuditOnly`, `pastAudits`, `errors.{rateLimit,credits,generic}`.
+- `crm.outreach.*`: `tab`, `selectApp`, `generate`, `regenerate`, `subject`, `body`, `copy`, `openInMail`, `sendViaResend`, `comingSoon`, `errors.{noApp,rateLimit,credits,generic}`.
+
+---
+
+## 4) Files
+
+**Created**
+- `supabase/functions/valuate-pwa/index.ts`
+- `supabase/functions/draft-outreach/index.ts`
+- `src/hooks/useAiValuation.ts` (calls function, manages state, returns `{ run, loading, report, error }`)
+- `src/hooks/useAiOutreach.ts` (same pattern)
+- `src/components/valuation/AiReportCard.tsx`
+- `src/components/valuation/AnalyzingState.tsx`
+- `src/components/crm/OutreachTab.tsx`
+- `supabase/migrations/<ts>_portfolio_audits.sql`
+
+**Edited**
+- `src/pages/Valuation.tsx` — wires form → `useAiValuation` → report card; keeps fallback rule-based estimate visible until first AI run.
+- `src/pages/CRM.tsx` — adds `Tabs` inside the existing lead `Sheet` and mounts `OutreachTab`.
+- `src/i18n/locales/en.ts`, `src/i18n/locales/sk.ts`.
+- `supabase/config.toml` — register both functions.
+
+---
+
+## 5) Security & cost guardrails
+
+- Both edge functions validate Supabase JWT in code (caller's `auth.uid()` is used to scope DB reads via the user's access token, so RLS still applies — admin override not used).
+- Zod input validation; reject payloads >4KB.
+- Hard cap: `max_tokens` ~700 on valuation, ~400 on outreach.
+- All AI calls non-streaming + tool-calling → single round-trip → **lowest credit burn** for the same UX (no streaming overhead, deterministic JSON).
+- Surface `429` (`valuation.ai.errors.rateLimit`) and `402` (`...credits`) as sonner toasts in EN/SK.
+
+---
+
+## 6) Out of scope (explicit)
+
+- Real Resend integration (button is disabled with a "Coming soon" tooltip; connector wiring is a follow-up).
+- AI URL crawling / screenshotting — `url` is passed to the model as text only.
+- Streaming token-by-token rendering — replaced with the 4-step animated "Analyzing" sequence to keep credit usage flat.
+- Audit history pagination beyond last 5.
 
