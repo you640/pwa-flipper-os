@@ -134,6 +134,7 @@ export default function Valuation() {
         return;
       }
       portfolioId = pf.id;
+      setSavedPortfolioId(pf.id);
     }
 
     const { error: aErr } = await supabase.from("portfolio_audits").insert({
