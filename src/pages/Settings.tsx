@@ -116,10 +116,11 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="account" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="account">{t("settings.tabs.account")}</TabsTrigger>
             <TabsTrigger value="appearance">{t("settings.tabs.appearance")}</TabsTrigger>
             <TabsTrigger value="notifications">{t("settings.tabs.notifications")}</TabsTrigger>
+            <TabsTrigger value="pricing">{t("pricing.title")}</TabsTrigger>
             <TabsTrigger value="danger">{t("settings.tabs.danger")}</TabsTrigger>
           </TabsList>
 
