@@ -294,6 +294,36 @@ export function AiReportCard({
         </div>
       </div>
 
+      {/* PDF + List for Sale */}
+      <div className="space-y-3 border-t border-border/50 pt-4">
+        <Button
+          onClick={handleDownloadPdf}
+          disabled={pdfBusy || !inputs}
+          variant="outline"
+          className="h-11 w-full ring-1 ring-primary/30 hover:bg-primary/10"
+        >
+          <FileDown className="mr-2 h-4 w-4 text-primary" />
+          {pdfBusy ? t("common.pleaseWait") : t("valuationExtras.downloadPdf")}
+        </Button>
+
+        {portfolioId && (
+          <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card/40 p-3">
+            <div className="flex items-start gap-2">
+              <Tag className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <div>
+                <div className="text-sm font-medium text-foreground">
+                  {t("valuationExtras.listForSale")}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {t("valuationExtras.listForSaleHint")}
+                </div>
+              </div>
+            </div>
+            <Switch checked={forSale} onCheckedChange={handleToggleForSale} disabled={saleBusy} />
+          </div>
+        )}
+      </div>
+
       <div className="flex flex-col gap-2 border-t border-border/50 pt-4 sm:flex-row">
         <Button
           onClick={onApply}
