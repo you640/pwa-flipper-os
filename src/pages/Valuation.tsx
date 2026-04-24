@@ -162,10 +162,7 @@ export default function Valuation() {
       },
     );
 
-    if (alsoApply) {
-      setForm(initialState);
-      reset();
-    }
+    // Keep report + form so user can toggle "List for Sale" or download PDF.
   };
 
   return (
