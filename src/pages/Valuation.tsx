@@ -57,6 +57,7 @@ export default function Valuation() {
   const { t } = useTranslation();
   const [form, setForm] = useState(initialState);
   const [applying, setApplying] = useState(false);
+  const [savedPortfolioId, setSavedPortfolioId] = useState<string | null>(null);
 
   const { run, loading: aiLoading, report, inputs: aiInputs, reset } = useAiValuation();
 
