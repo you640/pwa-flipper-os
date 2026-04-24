@@ -23,6 +23,8 @@ const BodySchema = z.object({
   niche: z.string().trim().min(1).max(80),
   tech_stack: z.string().trim().max(300).optional().or(z.literal("")),
   notes: z.string().trim().max(800).optional().or(z.literal("")),
+  // Anonymous flow (no JWT). Server enforces 1 audit / IP / 24h.
+  anonymous: z.boolean().optional(),
 });
 
 interface RepoSnapshot {
@@ -47,6 +49,13 @@ interface RepoSnapshot {
   framework_hints: string[];
   recent_commits_30d: number;
   fetch_error?: string;
+}
+
+async function sha256(text: string): Promise<string> {
+  const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(text));
+  return Array.from(new Uint8Array(buf))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
 }
 
 async function fetchRepoSnapshot(
@@ -170,28 +179,6 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_ANON_KEY")!,
-      { global: { headers: { Authorization: authHeader } } },
-    );
-    const { data: claims } = await supabase.auth.getClaims(
-      authHeader.replace("Bearer ", ""),
-    );
-    if (!claims?.claims) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
     const parsed = BodySchema.safeParse(await req.json());
     if (!parsed.success) {
       return new Response(
@@ -203,6 +190,63 @@ Deno.serve(async (req) => {
       );
     }
     const input = parsed.data;
+    const isAnonymous = !!input.anonymous;
+
+    let userId: string | null = null;
+
+    if (!isAnonymous) {
+      const authHeader = req.headers.get("Authorization");
+      if (!authHeader?.startsWith("Bearer ")) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const supabase = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_ANON_KEY")!,
+        { global: { headers: { Authorization: authHeader } } },
+      );
+      const { data: claims } = await supabase.auth.getClaims(
+        authHeader.replace("Bearer ", ""),
+      );
+      if (!claims?.claims) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      userId = (claims.claims as any).sub ?? null;
+    } else {
+      // Server-side IP rate limit: 1 audit / IP / 24h.
+      const fwd = req.headers.get("x-forwarded-for") || "";
+      const ip = fwd.split(",")[0].trim() || "unknown";
+      const ipHash = await sha256(`rd-anon-${ip}`);
+      const admin = createClient(
+        Deno.env.get("SUPABASE_URL")!,
+        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+      );
+      const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
+      const { count } = await admin
+        .from("anon_audit_attempts")
+        .select("id", { count: "exact", head: true })
+        .eq("ip_hash", ipHash)
+        .gte("created_at", since);
+      if ((count ?? 0) >= 1) {
+        return new Response(
+          JSON.stringify({ error: "anon_limit", message: "Free audit already used" }),
+          {
+            status: 429,
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          },
+        );
+      }
+      // Record attempt up-front so retries don't bypass.
+      await admin.from("anon_audit_attempts").insert({
+        ip_hash: ipHash,
+        github_url: input.github_url,
+      });
+    }
 
     const repo = await fetchRepoSnapshot(input.github_url);
 
@@ -387,7 +431,7 @@ ${JSON.stringify(repo, null, 2)}`;
     const report = JSON.parse(toolCall.function.arguments);
 
     return new Response(
-      JSON.stringify({ report, inputs: input, repo_snapshot: repo }),
+      JSON.stringify({ report, inputs: input, repo_snapshot: repo, anonymous: isAnonymous }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (e) {
