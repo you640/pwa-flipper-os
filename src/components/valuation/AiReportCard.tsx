@@ -51,20 +51,73 @@ function riskColor(score: number) {
 
 export function AiReportCard({
   report,
+  inputs,
   onApply,
   onSave,
   applying,
+  portfolioId,
+  initialForSale,
 }: {
   report: AiValuationReport;
+  inputs?: ValuationInputs | null;
   onApply: () => void;
   onSave: () => void;
   applying?: boolean;
+  portfolioId?: string | null;
+  initialForSale?: boolean;
 }) {
   const { t } = useTranslation();
+  const { intlLocale } = useLocale();
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [forSale, setForSale] = useState(!!initialForSale);
+  const [saleBusy, setSaleBusy] = useState(false);
   const { low, mid, high } = report.estimated_valuation;
   const range = Math.max(high - low, 1);
   const midPct = ((mid - low) / range) * 100;
   const audit = report.tech_stack_audit;
+
+  const handleDownloadPdf = async () => {
+    if (!inputs) {
+      toast.error(t("valuationExtras.pdfFailed"));
+      return;
+    }
+    setPdfBusy(true);
+    try {
+      await exportInvestorPdf(t, intlLocale, report, inputs);
+      toast.success(t("valuationExtras.pdfReady"));
+    } catch (e) {
+      toast.error(t("valuationExtras.pdfFailed"), {
+        description: e instanceof Error ? e.message : undefined,
+      });
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
+  const handleToggleForSale = async (next: boolean) => {
+    if (!portfolioId) {
+      toast.error(t("valuationExtras.needSavedAudit"));
+      return;
+    }
+    const prev = forSale;
+    setForSale(next);
+    setSaleBusy(true);
+    const { error } = await supabase
+      .from("portfolio")
+      .update({
+        for_sale: next,
+        listed_at: next ? new Date().toISOString() : null,
+        status: next ? "For Sale" : "Building",
+      })
+      .eq("id", portfolioId);
+    setSaleBusy(false);
+    if (error) {
+      setForSale(prev);
+      toast.error(t("valuationExtras.listFailed"), { description: error.message });
+      return;
+    }
+    toast.success(next ? t("valuationExtras.listed") : t("valuationExtras.unlisted"));
+  };
 
   return (
     <motion.div
