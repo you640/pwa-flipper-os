@@ -44,9 +44,10 @@ export interface ValuationInputs {
   niche: string;
   tech_stack?: string;
   notes?: string;
+  anonymous?: boolean;
 }
 
-const TIMEOUT_MS = 60_000; // 60s hard ceiling — UI must never hang forever
+const TIMEOUT_MS = 60_000;
 
 export function useAiValuation() {
   const { t } = useTranslation();
@@ -59,13 +60,10 @@ export function useAiValuation() {
     setLoading(true);
     setReport(null);
 
-    // Hard client-side timeout so the "Analyzing" state can never hang forever
-    const controller = new AbortController();
     let timedOut = false;
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       timedOut = true;
-      controller.abort();
     }, TIMEOUT_MS);
 
     try {
@@ -82,6 +80,10 @@ export function useAiValuation() {
         else if (status === 402) toast.error(t("valuation.ai.errors.credits"));
         else toast.error(t("valuation.ai.errors.generic"), { description: error.message });
         return null;
+      }
+      if (data?.error === "anon_limit") {
+        toast.error(t("landing.anonLimit"));
+        return { _anonLimit: true } as any;
       }
       if (data?.error === "rate_limit") {
         toast.error(t("valuation.ai.errors.rateLimit"));
