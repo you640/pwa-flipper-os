@@ -246,6 +246,7 @@ const sk: Translations = {
       disclaimer: "Túto prezentáciu vygeneroval RUBBERDUCK.SPACE na základe zadaných údajov a AI analýzy verejného repozitára. Odhady sú orientačné a negarantujú predajnú cenu. Kupujúci si musí vykonať vlastnú due diligence.",
     },
   },
+  market: {
     title: "Trhové",
     titleAccent: "dáta",
     subtitle: "Sledujte konkurenčné PWA a micro-SaaS na Flippa a Acquire.",
