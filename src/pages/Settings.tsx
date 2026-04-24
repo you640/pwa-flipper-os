@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocale } from "@/hooks/useLocale";
+import { PricingTab } from "@/components/pricing/PricingTab";
 
 type Theme = "dark" | "light" | "system";
 
