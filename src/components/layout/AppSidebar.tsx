@@ -26,7 +26,7 @@ export function AppSidebar() {
   const { isAdmin } = useProfile();
 
   const items = [
-    { title: t("sidebar.overview"), url: "/", icon: LayoutDashboard },
+    { title: t("sidebar.overview"), url: "/dashboard", icon: LayoutDashboard },
     { title: t("sidebar.portfolio"), url: "/portfolio", icon: Kanban },
     { title: t("sidebar.valuation"), url: "/valuation", icon: Calculator },
     { title: t("sidebar.market"), url: "/market", icon: Radar },

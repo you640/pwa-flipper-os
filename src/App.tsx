@@ -8,8 +8,8 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
+import Landing from "./pages/Landing.tsx";
 import NotFound from "./pages/NotFound.tsx";
-import ComingSoon from "./pages/ComingSoon.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
 import Valuation from "./pages/Valuation.tsx";
 import Market from "./pages/Market.tsx";
@@ -37,7 +37,6 @@ const App = () => {
     return () => i18n.off("languageChanged", handler);
   }, [i18n]);
 
-  // Sync language from user profile once signed in (one-shot on session)
   useEffect(() => {
     const sync = async (uid: string) => {
       const { data } = await supabase.from("profiles").select("locale").eq("id", uid).maybeSingle();
@@ -63,13 +62,17 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Routes>
+            {/* PUBLIC routes (no auth required) */}
+            <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+
+            {/* AUTH-GATED routes */}
             <Route
               path="/*"
               element={
                 <AuthGuard>
                   <Routes>
-                    <Route path="/" element={<Index />} />
+                    <Route path="/dashboard" element={<Index />} />
                     <Route path="/portfolio" element={<Portfolio />} />
                     <Route path="/valuation" element={<Valuation />} />
                     <Route path="/market" element={<Market />} />
@@ -80,6 +83,14 @@ const App = () => {
                     <Route path="/docs" element={<Docs />} />
                     <Route
                       path="/admin-panel"
+                      element={
+                        <AdminGuard>
+                          <Admin />
+                        </AdminGuard>
+                      }
+                    />
+                    <Route
+                      path="/admin"
                       element={
                         <AdminGuard>
                           <Admin />
