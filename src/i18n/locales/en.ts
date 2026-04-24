@@ -692,7 +692,7 @@ const en = {
     potentialExit: "Potential Exit Value",
     appsForSale: "Apps For Sale",
   },
-  pdf: {},
+  
   admin: {
     title: "Superadmin Command Center",
     subtitle: "RUBBERDUCK.SPACE control room",
