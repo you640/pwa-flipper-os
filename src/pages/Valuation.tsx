@@ -90,6 +90,7 @@ export default function Valuation() {
       });
       return;
     }
+    setSavedPortfolioId(null);
     await run({
       name: form.name.trim(),
       url: form.url.trim() || undefined,
