@@ -24,6 +24,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfile } from "@/hooks/useProfile";
 import { useLocale } from "@/hooks/useLocale";
+import { PricingTab } from "@/components/pricing/PricingTab";
 
 type Theme = "dark" | "light" | "system";
 
@@ -115,10 +116,11 @@ export default function Settings() {
         </div>
 
         <Tabs defaultValue="account" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="account">{t("settings.tabs.account")}</TabsTrigger>
             <TabsTrigger value="appearance">{t("settings.tabs.appearance")}</TabsTrigger>
             <TabsTrigger value="notifications">{t("settings.tabs.notifications")}</TabsTrigger>
+            <TabsTrigger value="pricing">{t("pricing.title")}</TabsTrigger>
             <TabsTrigger value="danger">{t("settings.tabs.danger")}</TabsTrigger>
           </TabsList>
 
@@ -198,6 +200,10 @@ export default function Settings() {
                 <Switch checked={emailNotif} onCheckedChange={saveNotifs} />
               </div>
             </div>
+          </TabsContent>
+
+          <TabsContent value="pricing" className="mt-6">
+            <PricingTab defaultEmail={user?.email ?? ""} />
           </TabsContent>
 
           <TabsContent value="danger" className="mt-6 space-y-4">

@@ -57,6 +57,7 @@ export default function Valuation() {
   const { t } = useTranslation();
   const [form, setForm] = useState(initialState);
   const [applying, setApplying] = useState(false);
+  const [savedPortfolioId, setSavedPortfolioId] = useState<string | null>(null);
 
   const { run, loading: aiLoading, report, inputs: aiInputs, reset } = useAiValuation();
 
@@ -89,6 +90,7 @@ export default function Valuation() {
       });
       return;
     }
+    setSavedPortfolioId(null);
     await run({
       name: form.name.trim(),
       url: form.url.trim() || undefined,
@@ -133,6 +135,7 @@ export default function Valuation() {
         return;
       }
       portfolioId = pf.id;
+      setSavedPortfolioId(pf.id);
     }
 
     const { error: aErr } = await supabase.from("portfolio_audits").insert({
@@ -160,10 +163,7 @@ export default function Valuation() {
       },
     );
 
-    if (alsoApply) {
-      setForm(initialState);
-      reset();
-    }
+    // Keep report + form so user can toggle "List for Sale" or download PDF.
   };
 
   return (
@@ -363,7 +363,9 @@ export default function Valuation() {
                     >
                       <AiReportCard
                         report={report}
+                        inputs={aiInputs}
                         applying={applying}
+                        portfolioId={savedPortfolioId}
                         onApply={() => persistAudit(true)}
                         onSave={() => persistAudit(false)}
                       />

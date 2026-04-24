@@ -8,19 +8,26 @@ import {
   Wrench,
   CheckCircle2,
   AlertTriangle,
+  FileDown,
+  Tag,
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import type { AiValuationReport } from "@/hooks/useAiValuation";
+import type { AiValuationReport, ValuationInputs } from "@/hooks/useAiValuation";
 import { CodeHealthGauge } from "./CodeHealthGauge";
+import { exportInvestorPdf } from "@/lib/exportInvestorPdf";
+import { useLocale } from "@/hooks/useLocale";
+import { supabase } from "@/integrations/supabase/client";
 
 const formatUSD = (n: number) =>
   new Intl.NumberFormat("en-US", {
@@ -44,20 +51,73 @@ function riskColor(score: number) {
 
 export function AiReportCard({
   report,
+  inputs,
   onApply,
   onSave,
   applying,
+  portfolioId,
+  initialForSale,
 }: {
   report: AiValuationReport;
+  inputs?: ValuationInputs | null;
   onApply: () => void;
   onSave: () => void;
   applying?: boolean;
+  portfolioId?: string | null;
+  initialForSale?: boolean;
 }) {
   const { t } = useTranslation();
+  const { intlLocale } = useLocale();
+  const [pdfBusy, setPdfBusy] = useState(false);
+  const [forSale, setForSale] = useState(!!initialForSale);
+  const [saleBusy, setSaleBusy] = useState(false);
   const { low, mid, high } = report.estimated_valuation;
   const range = Math.max(high - low, 1);
   const midPct = ((mid - low) / range) * 100;
   const audit = report.tech_stack_audit;
+
+  const handleDownloadPdf = async () => {
+    if (!inputs) {
+      toast.error(t("valuationExtras.pdfFailed"));
+      return;
+    }
+    setPdfBusy(true);
+    try {
+      await exportInvestorPdf(t, intlLocale, report, inputs);
+      toast.success(t("valuationExtras.pdfReady"));
+    } catch (e) {
+      toast.error(t("valuationExtras.pdfFailed"), {
+        description: e instanceof Error ? e.message : undefined,
+      });
+    } finally {
+      setPdfBusy(false);
+    }
+  };
+
+  const handleToggleForSale = async (next: boolean) => {
+    if (!portfolioId) {
+      toast.error(t("valuationExtras.needSavedAudit"));
+      return;
+    }
+    const prev = forSale;
+    setForSale(next);
+    setSaleBusy(true);
+    const { error } = await supabase
+      .from("portfolio")
+      .update({
+        for_sale: next,
+        listed_at: next ? new Date().toISOString() : null,
+        status: next ? "For Sale" : "Building",
+      })
+      .eq("id", portfolioId);
+    setSaleBusy(false);
+    if (error) {
+      setForSale(prev);
+      toast.error(t("valuationExtras.listFailed"), { description: error.message });
+      return;
+    }
+    toast.success(next ? t("valuationExtras.listed") : t("valuationExtras.unlisted"));
+  };
 
   return (
     <motion.div
@@ -232,6 +292,36 @@ export function AiReportCard({
             );
           })}
         </div>
+      </div>
+
+      {/* PDF + List for Sale */}
+      <div className="space-y-3 border-t border-border/50 pt-4">
+        <Button
+          onClick={handleDownloadPdf}
+          disabled={pdfBusy || !inputs}
+          variant="outline"
+          className="h-11 w-full ring-1 ring-primary/30 hover:bg-primary/10"
+        >
+          <FileDown className="mr-2 h-4 w-4 text-primary" />
+          {pdfBusy ? t("common.pleaseWait") : t("valuationExtras.downloadPdf")}
+        </Button>
+
+        {portfolioId && (
+          <div className="flex items-center justify-between rounded-xl border border-border/50 bg-card/40 p-3">
+            <div className="flex items-start gap-2">
+              <Tag className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+              <div>
+                <div className="text-sm font-medium text-foreground">
+                  {t("valuationExtras.listForSale")}
+                </div>
+                <div className="text-[11px] text-muted-foreground">
+                  {t("valuationExtras.listForSaleHint")}
+                </div>
+              </div>
+            </div>
+            <Switch checked={forSale} onCheckedChange={handleToggleForSale} disabled={saleBusy} />
+          </div>
+        )}
       </div>
 
       <div className="flex flex-col gap-2 border-t border-border/50 pt-4 sm:flex-row">

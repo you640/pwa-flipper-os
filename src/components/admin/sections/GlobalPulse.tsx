@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Users, DollarSign, Briefcase, Activity } from "lucide-react";
+import { Users, DollarSign, Briefcase, Activity, TrendingUp } from "lucide-react";
 import { MetricCard } from "@/components/dashboard/MetricCard";
 import type { Database } from "@/integrations/supabase/types";
 
@@ -18,9 +18,11 @@ export function GlobalPulse({
   const { t } = useTranslation();
   const totalMrr = portfolio.reduce((s, p) => s + (p.mrr ?? 0), 0);
   const totalValue = portfolio.reduce((s, p) => s + (p.asking_price ?? 0), 0);
+  const forSale = portfolio.filter((p) => p.for_sale);
+  const potentialExit = forSale.reduce((s, p) => s + (p.asking_price ?? 0), 0);
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
       <MetricCard
         label={t("admin.pulse.totalUsers")}
         value={users.length}
@@ -48,12 +50,21 @@ export function GlobalPulse({
         loading={loading}
       />
       <MetricCard
+        label={`${t("adminExtras.potentialExit")} · ${forSale.length} ${t("adminExtras.appsForSale")}`}
+        value={potentialExit}
+        prefix="€"
+        icon={TrendingUp}
+        accent="primary"
+        index={3}
+        loading={loading}
+      />
+      <MetricCard
         label={t("admin.pulse.health")}
         value={100}
         suffix="%"
         icon={Activity}
         accent="success"
-        index={3}
+        index={4}
         loading={loading}
       />
     </div>
