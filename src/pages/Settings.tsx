@@ -202,6 +202,10 @@ export default function Settings() {
             </div>
           </TabsContent>
 
+          <TabsContent value="pricing" className="mt-6">
+            <PricingTab defaultEmail={user?.email ?? ""} />
+          </TabsContent>
+
           <TabsContent value="danger" className="mt-6 space-y-4">
             <div className="rounded-2xl border border-border/60 bg-card/40 p-6 backdrop-blur-xl space-y-4">
               <div className="flex items-center justify-between gap-4">
