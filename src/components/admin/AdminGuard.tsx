@@ -18,7 +18,7 @@ export function AdminGuard({ children }: { children: ReactNode }) {
   }
   if (!isAdmin) {
     toast.error(t("admin.unauthorized"));
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
   return <>{children}</>;
 }
