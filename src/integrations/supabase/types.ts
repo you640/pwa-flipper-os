@@ -14,6 +14,27 @@ export type Database = {
   }
   public: {
     Tables: {
+      anon_audit_attempts: {
+        Row: {
+          created_at: string
+          github_url: string | null
+          id: string
+          ip_hash: string
+        }
+        Insert: {
+          created_at?: string
+          github_url?: string | null
+          id?: string
+          ip_hash: string
+        }
+        Update: {
+          created_at?: string
+          github_url?: string | null
+          id?: string
+          ip_hash?: string
+        }
+        Relationships: []
+      }
       avatar_upload_errors: {
         Row: {
           created_at: string
@@ -118,7 +139,9 @@ export type Database = {
           asking_price: number
           created_at: string
           expenses: number
+          for_sale: boolean
           id: string
+          listed_at: string | null
           mrr: number
           name: string
           status: Database["public"]["Enums"]["portfolio_status"]
@@ -128,7 +151,9 @@ export type Database = {
           asking_price?: number
           created_at?: string
           expenses?: number
+          for_sale?: boolean
           id?: string
+          listed_at?: string | null
           mrr?: number
           name: string
           status?: Database["public"]["Enums"]["portfolio_status"]
@@ -138,7 +163,9 @@ export type Database = {
           asking_price?: number
           created_at?: string
           expenses?: number
+          for_sale?: boolean
           id?: string
+          listed_at?: string | null
           mrr?: number
           name?: string
           status?: Database["public"]["Enums"]["portfolio_status"]
@@ -183,6 +210,30 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      pricing_waitlist: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          tier: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          tier: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          tier?: string
+          user_id?: string | null
+        }
+        Relationships: []
       }
       profiles: {
         Row: {
