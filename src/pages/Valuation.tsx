@@ -362,7 +362,9 @@ export default function Valuation() {
                     >
                       <AiReportCard
                         report={report}
+                        inputs={aiInputs}
                         applying={applying}
+                        portfolioId={savedPortfolioId}
                         onApply={() => persistAudit(true)}
                         onSave={() => persistAudit(false)}
                       />
