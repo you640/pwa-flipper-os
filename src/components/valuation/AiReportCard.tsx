@@ -13,16 +13,21 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
 import {
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { cn } from "@/lib/utils";
-import type { AiValuationReport } from "@/hooks/useAiValuation";
+import type { AiValuationReport, ValuationInputs } from "@/hooks/useAiValuation";
 import { CodeHealthGauge } from "./CodeHealthGauge";
+import { exportInvestorPdf } from "@/lib/exportInvestorPdf";
+import { useLocale } from "@/hooks/useLocale";
+import { supabase } from "@/integrations/supabase/client";
 
 const formatUSD = (n: number) =>
   new Intl.NumberFormat("en-US", {
