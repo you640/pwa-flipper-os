@@ -1,7 +1,7 @@
 import { NavLink } from "@/components/NavLink";
 import { useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import { LayoutDashboard, Kanban, Calculator, Radar, Users, Settings, Sparkles, BookOpen, Shield } from "lucide-react";
+import { LayoutDashboard, Kanban, Calculator, Radar, Users, Settings, Sparkles, BookOpen, Shield, ShoppingBag } from "lucide-react";
 import { InstallPWA } from "./InstallPWA";
 import { useProfile } from "@/hooks/useProfile";
 import {
@@ -29,6 +29,7 @@ export function AppSidebar() {
     { title: t("sidebar.overview"), url: "/dashboard", icon: LayoutDashboard },
     { title: t("sidebar.portfolio"), url: "/portfolio", icon: Kanban },
     { title: t("sidebar.valuation"), url: "/valuation", icon: Calculator },
+    { title: t("sidebar.dealRoom"), url: "/deals", icon: ShoppingBag },
     { title: t("sidebar.market"), url: "/market", icon: Radar },
     { title: t("sidebar.crm"), url: "/crm", icon: Users },
   ];
