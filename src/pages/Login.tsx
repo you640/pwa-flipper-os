@@ -136,6 +136,37 @@ export default function Login() {
                     {loading ? t("common.pleaseWait") : mode === "signin" ? t("auth.signIn") : t("auth.createAccount")}
                   </Button>
                 </form>
+
+                <div className="my-4 flex items-center gap-3 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                  <span className="h-px flex-1 bg-border/60" />
+                  {t("auth.or") ?? "or"}
+                  <span className="h-px flex-1 bg-border/60" />
+                </div>
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  disabled={googleLoading}
+                  onClick={async () => {
+                    setGoogleLoading(true);
+                    const result = await lovable.auth.signInWithOAuth("google", {
+                      redirect_uri: window.location.origin,
+                    });
+                    if (result.error) {
+                      toast.error((result.error as Error)?.message ?? t("auth.authFailed"));
+                      setGoogleLoading(false);
+                      return;
+                    }
+                    if (result.redirected) return;
+                    navigate("/", { replace: true });
+                  }}
+                  className="w-full h-11"
+                >
+                  <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24" aria-hidden>
+                    <path fill="#EA4335" d="M12 10.2v3.9h5.5c-.24 1.5-1.74 4.4-5.5 4.4-3.31 0-6-2.74-6-6.1S8.69 6.3 12 6.3c1.88 0 3.14.8 3.86 1.5l2.64-2.55C16.94 3.74 14.7 2.8 12 2.8 6.96 2.8 2.9 6.86 2.9 11.9S6.96 21 12 21c6.93 0 9.16-4.86 9.16-7.74 0-.52-.05-.92-.13-1.32H12z"/>
+                  </svg>
+                  {googleLoading ? t("common.pleaseWait") : (t("auth.continueGoogle") ?? "Continue with Google")}
+                </Button>
               </TabsContent>
             </Tabs>
           </div>
