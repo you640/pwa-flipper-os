@@ -9,6 +9,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import Index from "./pages/Index.tsx";
 import Landing from "./pages/Landing.tsx";
+import DealRoom from "./pages/DealRoom.tsx";
 import NotFound from "./pages/NotFound.tsx";
 import Portfolio from "./pages/Portfolio.tsx";
 import Valuation from "./pages/Valuation.tsx";
@@ -64,6 +65,7 @@ const App = () => {
           <Routes>
             {/* PUBLIC routes (no auth required) */}
             <Route path="/" element={<Landing />} />
+            <Route path="/deals" element={<DealRoom />} />
             <Route path="/login" element={<Login />} />
 
             {/* AUTH-GATED routes */}

@@ -48,17 +48,16 @@ export default function Landing() {
   );
 
   useEffect(() => {
+    let mounted = true;
     supabase.auth.getSession().then(({ data }) => {
+      if (!mounted) return;
       const has = !!data.session;
       setAuthed(has);
       if (has) navigate("/dashboard", { replace: true });
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => {
-      const has = !!s;
-      setAuthed(has);
-      if (has) navigate("/dashboard", { replace: true });
-    });
-    return () => sub.subscription.unsubscribe();
+    return () => {
+      mounted = false;
+    };
   }, [navigate]);
 
   const valid = GITHUB_RE.test(github.trim());

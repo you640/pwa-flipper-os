@@ -16,10 +16,23 @@ import {
 import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { Plus } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { KanbanColumn } from "@/components/kanban/KanbanColumn";
 import { ProjectCard } from "@/components/kanban/ProjectCard";
+import { ProjectFormDialog, type ProjectFormValue } from "@/components/portfolio/ProjectFormDialog";
 import {
   COLUMNS,
   COLUMN_IDS,
@@ -42,6 +55,51 @@ export default function Portfolio() {
   const [projects, setProjects] = useState<PwaProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<PwaProject | null>(null);
+  const [defaultStatus, setDefaultStatus] = useState<ColumnId>("Building");
+  const [pendingDelete, setPendingDelete] = useState<PwaProject | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleAdd = (col: ColumnId) => {
+    setEditing(null);
+    setDefaultStatus(col);
+    setFormOpen(true);
+  };
+  const handleEdit = (p: PwaProject) => {
+    setEditing(p);
+    setFormOpen(true);
+  };
+  const handleSaved = (row: ProjectFormValue & { id: string }) => {
+    setProjects((prev) => {
+      const idx = prev.findIndex((p) => p.id === row.id);
+      const mapped: PwaProject = {
+        id: row.id,
+        name: row.name,
+        askingPrice: row.asking_price,
+        mrr: row.mrr,
+        expenses: row.expenses,
+        column: row.status,
+      };
+      if (idx === -1) return [mapped, ...prev];
+      const next = [...prev];
+      next[idx] = mapped;
+      return next;
+    });
+  };
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    const { error } = await supabase.from("portfolio").delete().eq("id", pendingDelete.id);
+    setDeleting(false);
+    if (error) {
+      toast.error(t("portfolio.form.deleteFailed"), { description: error.message });
+      return;
+    }
+    setProjects((prev) => prev.filter((p) => p.id !== pendingDelete.id));
+    toast.success(t("portfolio.form.deleted"));
+    setPendingDelete(null);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -205,13 +263,19 @@ export default function Portfolio() {
               {t("portfolio.subtitle")}
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-xs text-muted-foreground">
-            {loading
-              ? t("common.loading")
-              : t("portfolio.counter", {
-                  count: projects.length,
-                  sold: projects.filter((p) => p.column === "Sold").length,
-                })}
+          <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-xs text-muted-foreground sm:flex">
+              {loading
+                ? t("common.loading")
+                : t("portfolio.counter", {
+                    count: projects.length,
+                    sold: projects.filter((p) => p.column === "Sold").length,
+                  })}
+            </div>
+            <Button onClick={() => handleAdd("Building")} className="bg-gradient-primary text-primary-foreground">
+              <Plus className="mr-1.5 h-4 w-4" />
+              {t("portfolio.addProject")}
+            </Button>
           </div>
         </motion.header>
 
@@ -242,6 +306,9 @@ export default function Portfolio() {
                   column={col}
                   projects={projectsByColumn[col.id]}
                   index={i}
+                  onAdd={handleAdd}
+                  onEdit={handleEdit}
+                  onDelete={(p) => setPendingDelete(p)}
                 />
               ))}
             </div>
@@ -263,6 +330,42 @@ export default function Portfolio() {
           </div>
         )}
       </div>
+
+      <ProjectFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        initial={
+          editing
+            ? {
+                id: editing.id,
+                name: editing.name,
+                mrr: editing.mrr,
+                expenses: editing.expenses,
+                asking_price: editing.askingPrice,
+                status: editing.column,
+              }
+            : undefined
+        }
+        defaultStatus={defaultStatus}
+        onSaved={handleSaved}
+      />
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("portfolio.form.deleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("portfolio.form.deleteDesc", { name: pendingDelete?.name ?? "" })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={deleting}>
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
