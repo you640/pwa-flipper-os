@@ -263,13 +263,19 @@ export default function Portfolio() {
               {t("portfolio.subtitle")}
             </p>
           </div>
-          <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-xs text-muted-foreground">
-            {loading
-              ? t("common.loading")
-              : t("portfolio.counter", {
-                  count: projects.length,
-                  sold: projects.filter((p) => p.column === "Sold").length,
-                })}
+          <div className="flex items-center gap-2">
+            <div className="hidden items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-xs text-muted-foreground sm:flex">
+              {loading
+                ? t("common.loading")
+                : t("portfolio.counter", {
+                    count: projects.length,
+                    sold: projects.filter((p) => p.column === "Sold").length,
+                  })}
+            </div>
+            <Button onClick={() => handleAdd("Building")} className="bg-gradient-primary text-primary-foreground">
+              <Plus className="mr-1.5 h-4 w-4" />
+              {t("portfolio.addProject")}
+            </Button>
           </div>
         </motion.header>
 
@@ -300,6 +306,9 @@ export default function Portfolio() {
                   column={col}
                   projects={projectsByColumn[col.id]}
                   index={i}
+                  onAdd={handleAdd}
+                  onEdit={handleEdit}
+                  onDelete={(p) => setPendingDelete(p)}
                 />
               ))}
             </div>
@@ -321,6 +330,42 @@ export default function Portfolio() {
           </div>
         )}
       </div>
+
+      <ProjectFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
+        initial={
+          editing
+            ? {
+                id: editing.id,
+                name: editing.name,
+                mrr: editing.mrr,
+                expenses: editing.expenses,
+                asking_price: editing.askingPrice,
+                status: editing.column,
+              }
+            : undefined
+        }
+        defaultStatus={defaultStatus}
+        onSaved={handleSaved}
+      />
+
+      <AlertDialog open={!!pendingDelete} onOpenChange={(o) => !o && setPendingDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("portfolio.form.deleteTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {t("portfolio.form.deleteDesc", { name: pendingDelete?.name ?? "" })}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete} disabled={deleting}>
+              {t("common.delete")}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
