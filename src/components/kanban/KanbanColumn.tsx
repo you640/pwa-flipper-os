@@ -74,7 +74,13 @@ export function KanbanColumn({
             strategy={verticalListSortingStrategy}
           >
             {projects.map((project, i) => (
-              <ProjectCard key={project.id} project={project} index={i} />
+              <ProjectCard
+                key={project.id}
+                project={project}
+                index={i}
+                onEdit={onEdit}
+                onDelete={onDelete}
+              />
             ))}
           </SortableContext>
 
