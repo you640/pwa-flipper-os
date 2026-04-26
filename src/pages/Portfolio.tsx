@@ -16,10 +16,23 @@ import {
 import { sortableKeyboardCoordinates, arrayMove } from "@dnd-kit/sortable";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
+import { Plus } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { KanbanColumn } from "@/components/kanban/KanbanColumn";
 import { ProjectCard } from "@/components/kanban/ProjectCard";
+import { ProjectFormDialog, type ProjectFormValue } from "@/components/portfolio/ProjectFormDialog";
 import {
   COLUMNS,
   COLUMN_IDS,
