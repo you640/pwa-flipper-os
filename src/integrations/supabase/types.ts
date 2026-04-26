@@ -77,6 +77,7 @@ export type Database = {
           contact_email: string | null
           created_at: string
           id: string
+          last_outreach_at: string | null
           notes: string | null
           status: Database["public"]["Enums"]["lead_status"]
           user_id: string | null
@@ -86,6 +87,7 @@ export type Database = {
           contact_email?: string | null
           created_at?: string
           id?: string
+          last_outreach_at?: string | null
           notes?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           user_id?: string | null
@@ -95,9 +97,43 @@ export type Database = {
           contact_email?: string | null
           created_at?: string
           id?: string
+          last_outreach_at?: string | null
           notes?: string | null
           status?: Database["public"]["Enums"]["lead_status"]
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      deal_inquiries: {
+        Row: {
+          buyer_email: string
+          buyer_name: string | null
+          created_at: string
+          id: string
+          message: string
+          portfolio_id: string
+          seller_user_id: string
+          status: string
+        }
+        Insert: {
+          buyer_email: string
+          buyer_name?: string | null
+          created_at?: string
+          id?: string
+          message: string
+          portfolio_id: string
+          seller_user_id: string
+          status?: string
+        }
+        Update: {
+          buyer_email?: string
+          buyer_name?: string | null
+          created_at?: string
+          id?: string
+          message?: string
+          portfolio_id?: string
+          seller_user_id?: string
+          status?: string
         }
         Relationships: []
       }
@@ -265,6 +301,69 @@ export type Database = {
           id?: string
           locale?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      public_audits: {
+        Row: {
+          app_name: string
+          audit_id: string
+          created_at: string
+          id: string
+          slug: string
+          user_id: string
+        }
+        Insert: {
+          app_name: string
+          audit_id: string
+          created_at?: string
+          id?: string
+          slug: string
+          user_id: string
+        }
+        Update: {
+          app_name?: string
+          audit_id?: string
+          created_at?: string
+          id?: string
+          slug?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      subscriptions: {
+        Row: {
+          created_at: string
+          current_period_end: string | null
+          id: string
+          status: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          tier: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_period_end?: string | null
+          id?: string
+          status?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          tier?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }

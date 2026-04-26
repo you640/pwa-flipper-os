@@ -1,107 +1,129 @@
+# RUBBERDUCK.SPACE — Final Polish: 10 Funkcií na 99.99%
 
-
-# RUBBERDUCK AI BRAIN — GitHub-Aware Code Auditor
-
-Evolves the AI Valuation Engine you just approved into a **code-aware** broker. The core scaffolding (edge functions `valuate-pwa` and `draft-outreach`, the `portfolio_audits` table, `useAiValuation`/`useAiOutreach` hooks, `AiReportCard`, `AnalyzingState`, the CRM Outreach tab, EN/SK i18n) is already shipped — this upgrade extends it.
+**Stratégia:** Funkčnosť → Polish. Pre každú z 10 funkcií najprv dotiahnem chýbajúce wiring, potom opravím bugy, na konci jeden i18n + responsive sweep.
 
 ---
 
-## 1) GitHub-aware `valuate-pwa` edge function
+## 🎯 Funkcia 1 — Landing Page & Anonymný Audit
+**Stav:** ✅ Funguje, treba doladiť konverziu a SEO.
+- Pridať **JSON-LD `SoftwareApplication`** schema do `Landing.tsx` (Helmet) — boost pre Google rich snippets na keywords "SaaS valuation", "GitHub code audit".
+- Pridať **trust strip** pod hero (Powered by Gemini 2.5 Pro · No signup required · 100% private).
+- Pridať `prefers-reduced-motion` guard do `AnalyzingState.tsx` — používatelia s motion-sensitivity dostanú statickú verziu.
+- Opraviť `<TeaserResult>` na 320px viewport (aktuálne sa rozbíja layout chips).
 
-- New **required** input: `github_url` (validated via regex `^https?://(www\.)?github\.com/[\w.-]+/[\w.-]+/?$`).
-- Server fetches the repo's "DNA" from the **GitHub REST API** (no auth needed for public repos; will use `GITHUB_TOKEN` secret if present to lift the 60/hr rate limit):
-  - `/repos/{o}/{r}` — stars, forks, size, pushed_at, default_branch, license, topics, open_issues
-  - `/repos/{o}/{r}/languages` — language byte distribution
-  - `/git/trees/{branch}?recursive=1` — full file tree, used to detect: tests (`*.test.*`, `__tests__`, Cypress, Playwright), CI (`.github/workflows`, `.gitlab-ci.yml`), README, `tsconfig.json`, package manager (pnpm/yarn/bun/npm/poetry/cargo/go.sum), framework hints (Next, Vite, Nuxt, Remix, Astro, Svelte, Tailwind, Supabase, Prisma, Drizzle)
-  - `/commits?since=30d` — `recent_commits_30d`
-- This snapshot is sent into Gemini 2.5 Pro with a hardened **"Senior Code Auditor"** system prompt and **tool-calling** to guarantee JSON.
-- Scoring rubric encoded in the prompt (excerpt):
-  - 90-100 = "Clean as Glass" → multiplier **+25%**
-  - 70-89 = "Solid" → +10%
-  - 50-69 = "Mixed" → 0
-  - 30-49 = "Rubberdebt" → -20%
-  - 0-29 = "Toxic" → -40%
-- Returns enriched JSON:
-  ```ts
-  {
-    estimated_valuation: { low, mid, high },
-    multiple, risk_score,
-    code_quality_score: 0-100,
-    code_quality_label: "Clean as Glass" | "Solid" | "Mixed" | "Rubberdebt" | "Toxic",
-    tech_stack_audit: { summary, excellence[], tech_debt[], detected_stack[] },
-    refactor_tips: [{ title, impact, detail }, ×3],
-    value_up_tips: [{ title, impact, detail }, ×3],
-    summary
-  }
-  ```
-- Graceful fallback: if GitHub returns 404/private/rate-limit, the snapshot carries `fetch_error` and the AI is told to default `code_quality_score` to 50 and explain the limitation in the audit summary — no hard failure.
-- Response also carries `repo_snapshot` so the UI can show stars / commits / detected stack chips.
+## 🎯 Funkcia 2 — AI Valuation Lab (`/valuation`)
+**Stav:** ✅ Funguje, ale chýba history a re-run guard.
+- **Audit History panel** na pravej strane (last 5 audits z `portfolio_audits` cez `useQuery`) — klik načíta starý report do `AiReportCard`.
+- **Re-run protection:** ak používateľ kliká „Magic AI Audit" 2× za 10s, debounce + warning toast (šetrí kredity).
+- Validácia GitHub URL aj na **paste event** (auto-trim, strip `.git` suffix).
+- Pridať „Clear form" tlačidlo.
 
-## 2) Valuation page UI — "The Lab"
+## 🎯 Funkcia 3 — Investment Report (PDF + Share OG)
+**Stav:** ⚠️ PDF funguje (Roboto), Share image je iba client canvas → nie je hostovateľný link.
+- **Nová edge funkcia `og-share`** (Deno + `https://deno.land/x/og_image`) → vracia PNG 1200×630 podľa query params (`?app=...&val=...&score=...`). Endpoint `/functions/v1/og-share` sa pridá ako `<meta property="og:image">` do reportu, takže LinkedIn/Twitter/X scraper ho stiahne.
+- Dlhodobé share linky: nová tabuľka `public_audits` (id, audit_id FK, slug unique, created_at) + RLS „anyone read by slug" → public URL `/r/{slug}` zobrazí read-only TeaserResult bez blur. Migrácia + nová route `Report.tsx`.
+- PDF: pridať QR kód (cez `qrcode` lib) na cover page → odkazuje na public report URL.
+- Opraviť: `exportInvestorPdf` občas crashuje keď `tech_stack_audit.detected_stack` je `undefined` → null-guards.
 
-- **GitHub Repository URL (Public)** input becomes a required field with live regex validation; submit button disabled until valid.
-- The "✨ Magic AI Audit" loading state is rebuilt as a 4-step animated sequence in `AnalyzingState.tsx`:
-  1. **Fetching Repository Data** — pulsing `Github` icon, scanning shimmer
-  2. **Analyzing Project DNA** — `Code` icon with floating snippet glyphs (`<div/>`, `useState()`, `await`) animated horizontally
-  3. **Benchmarking vs. Market** — `BarChart3` icon with bars animating up
-  4. **Calculating Exit Price** — `Coins` icon with rolling number ticker
-  Each step ~1.2s with a connecting glowing trail. All framer-motion.
-- Result: `AiReportCard.tsx` is upgraded into a **Technical Audit Report**:
-  - Hero: low/mid/high valuation bar (existing)
-  - **Code Health Gauge**: SVG semicircle gauge animating from 0 to `code_quality_score`, color-interpolated red → amber → green via HSL on the gauge stroke, large numeric center, label badge below ("Clean as Glass" etc.)
-  - **Detected Stack** chips row from `tech_stack_audit.detected_stack`
-  - Two-column **Tech Excellence** (green/check icons) vs **Tech Debt** (red/alert icons) breakdown
-  - Collapsible **Refactor Tips** (×3) with impact-coded icons — same pattern as value-up tips, separately tabbed/grouped from business `value_up_tips`
-  - Risk score + multiple cards (existing)
-  - Apply to Portfolio / Save Audit Only (existing)
-- Glassmorphic surfaces, neon `shadow-glow`, scale-in transitions retained throughout.
+## 🎯 Funkcia 4 — Portfolio Kanban
+**Stav:** ⚠️ Drag funguje, chýba CRUD.
+- **„Add App" dialog** (Plus tlačidlo v hlavičke) → form: name, mrr, expenses, asking_price, status. Insert do `portfolio` s `user_id = auth.uid()`.
+- **„Edit App" dialog** (klik na kartu) → rovnaký form, update.
+- **Delete** s AlertDialog confirmáciou.
+- **Optimistic update rollback hardening:** `handleDragEnd` už drží predošlý stav, doplním **try/catch + toast + rollback aj na network error** (nielen Supabase error). Test scenár: vypnúť wifi → drag → musí sa vrátiť karta.
+- Empty state CTA „Audit your first repo" → linkuje na `/valuation`.
 
-## 3) Technically-informed AI Outreach
+## 🎯 Funkcia 5 — Deal Room (Public For-Sale Marketplace)
+**Stav:** ❌ Chýba úplne (iba `for_sale` flag existuje).
+- **Nová route `/deals`** — verejná (no auth), zobrazuje grid kariet pre každý `portfolio` row kde `for_sale = true`. Karta: app name, MRR, asking price, code score (z latest audit), „Contact Seller" tlačidlo.
+- **RLS migrácia:** pridať policy `Anyone view for_sale portfolio` (USING `for_sale = true`) — read-only public.
+- **Contact Seller flow:** modal → email + správa → insert do novej tabuľky `deal_inquiries` (RLS: anon insert, admin select, owner select via `portfolio.user_id`). Notifikuje vlastníka cez Resend (viď Funkcia 6).
+- Filtre: niche, price range, MRR range, code score min.
+- Link v Topbare „Deal Room" pre prihlásených, v Landing footer pre anonymných.
 
-- `draft-outreach` edge function pulls the **latest `portfolio_audits.ai_report`** for the selected app (already wired) and now also surfaces `code_quality_score`, `code_quality_label`, top excellence bullets, and detected stack into the GPT-5-mini prompt.
-- Hardened pitch instructions:
-  - Open with one observation about the agency's niche
-  - **Mention the code quality score and one specific tech excellence** ("92% Code Quality, TypeScript + tests + CI")
-  - Tie MRR + 1 value-up tip to *their* book of business
-  - Single CTA, ≤140 words, no spam
-- The CRM Outreach tab UI is unchanged: editable Subject + Body, Copy, Open in Mail, "Send via Resend" disabled with tooltip.
+## 🎯 Funkcia 6 — CRM + AI Outreach (s Resend)
+**Stav:** ⚠️ Outreach drafts fungujú, „Send via Resend" je disabled tooltip.
+- **Pripojiť Resend connector** cez `standard_connectors--connect`. Používateľ musí raz klikom potvrdiť connect.
+- **Nová edge funkcia `send-outreach`:** dostane `lead_id`, načíta draft + lead email, pošle cez Resend gateway (`from: outreach@rubberduck.space` po overení domény, fallback `onboarding@resend.dev` pre testing).
+- Aktualizovať `OutreachTab.tsx`: tlačidlo „Send via Email" enable, po úspechu update lead status na `Contacted`, zapísať `last_outreach_at` (nový stĺpec na `crm_leads`).
+- Bulk outreach: checkbox v CRM tabuľke + „Send to selected" akcia (max 10 naraz, throttle 1s).
+- Inquiry notifikácie z Deal Roomu (Funkcia 5) tiež pôjdu cez `send-outreach` (interný call).
 
-## 4) Database & i18n
+## 🎯 Funkcia 7 — Market Intel (`/market`)
+**Stav:** ⚠️ Funguje, chýba analytika a real data feed.
+- **Niche distribution chart** (Recharts pie/donut) — agregát z `market_intel.niche`.
+- **Avg multiple by niche** stĺpcový graf (cena ÷ MRR pre rows kde MRR > 0).
+- **Sortable & filterable table** (už čiastočne je) — pridať CSV export tlačidlo (`papaparse`).
+- **„Compare to my portfolio" toggle** — overlay user's portfolio rows na chartoch, vidí kde stojí vs. trh.
 
-- **No schema change** — `portfolio_audits.ai_report` is `jsonb`, the new fields just slot in. The "Apply to Portfolio" flow keeps writing the same row.
-- New i18n keys (EN + SK) under existing namespaces:
-  - `valuation.githubUrl`, `valuation.githubUrlPh`, `valuation.githubUrlError`
-  - `valuation.ai.steps.fetching`, `analyzing`, `benchmarking`, `pricing`
-  - `valuation.ai.report.codeQuality`, `codeQualityLabel`, `techExcellence`, `techDebt`, `detectedStack`, `refactorTips`, `valueUpTips`
-  - `valuation.ai.report.labels.cleanAsGlass`, `solid`, `mixed`, `rubberdebt`, `toxic`
-  - `valuation.ai.errors.repoNotFound`, `repoPrivate`, `repoRateLimit`
-  - `crm.outreach.techPitch` (UI hint above generate button)
+## 🎯 Funkcia 8 — Pricing + Stripe Pro Tier
+**Stav:** ⚠️ Waitlist funguje, Stripe nie je wired.
+- **Spustiť `payments--recommend_payment_provider`** → očakávam Stripe (digital SaaS).
+- **`payments--enable_stripe_payments`** → Lovable spraví seamless setup.
+- Vytvoriť produkt **„RUBBERDUCK Pro" $29/mo** cez `batch_create_product` (subscription, recurring monthly).
+- **Nová tabuľka `subscriptions`** (user_id, stripe_subscription_id, tier, status, current_period_end) + RLS.
+- **Edge funkcia `stripe-webhook`** na `checkout.session.completed`, `subscription.updated`, `subscription.deleted` → upsert subscriptions.
+- **Quota enforcement vo `valuate-pwa`:** auth users s `tier=free` majú 1 audit/mesiac, `tier=pro` unlimited. Counter z `portfolio_audits` count where `created_at > date_trunc('month', now())`.
+- **PricingTab.tsx:** „Upgrade to Pro" už neopendne waitlist ale priamo Stripe Checkout (cez novú `create-checkout` edge funkciu). Waitlist ostane iba pre „Exit (5%)" tier.
+- **„Pro" badge** v Topbare profile dropdown ak je active.
 
-## 5) Files
+## 🎯 Funkcia 9 — Settings / Profile / Auth
+**Stav:** ✅ Funguje, treba dotiahnuť polish a Google OAuth.
+- **Google OAuth tlačidlo** v `Login.tsx` — Supabase má provider built-in, len treba `signInWithOAuth({ provider: 'google' })`.
+- **Profile.tsx:** zobraziť aktuálny **subscription status** (Free/Pro) + „Manage billing" tlačidlo → Stripe customer portal (cez novú `customer-portal` edge funkciu).
+- **Avatar upload progress indicator** + retry on failure (zo `avatar_upload_errors` tabuľky vidno že fail rate je problém).
+- **Email confirmation banner** ak `auth.user.email_confirmed_at` je null → reminder + „Resend" tlačidlo.
 
-**Edited**
-- `supabase/functions/valuate-pwa/index.ts` — GitHub fetch + new schema + new prompt
-- `supabase/functions/draft-outreach/index.ts` — pull tech fields into prompt
-- `src/hooks/useAiValuation.ts` — extend `AiValuationReport` type with `code_quality_score`, `tech_stack_audit`, `refactor_tips`; require `github_url` in input
-- `src/pages/Valuation.tsx` — add GitHub field with validation; pass `github_url`
-- `src/components/valuation/AnalyzingState.tsx` — 4-step sequence with new icons + snippet glyphs
-- `src/components/valuation/AiReportCard.tsx` — add Code Health gauge, stack chips, tech excellence/debt grid, refactor tips section
-- `src/i18n/locales/en.ts` + `sk.ts` — new keys
+## 🎯 Funkcia 10 — Admin God View (`/admin-panel`)
+**Stav:** ⚠️ Funguje, chýba success-fee tracking a real-time.
+- **Success Fee Tracker karta:** nová sekcia v GlobalPulse — „Sold Apps" karta (count + total exit value zo `status = 'Sold'`), „Pending Commissions" (5% z forSale potential).
+- **Deal Inquiries panel:** nová admin sekcia — tabuľka všetkých `deal_inquiries` (z Funkcie 5) s linkom na lead.
+- **Pricing Waitlist export** — CSV download tlačidlo (záujem podľa tier).
+- **Subscription overview:** aktívni Pro užívatelia, MRR z subskripcií, churn (sub.deleted minulý mesiac).
+- **Real-time refresh** každých 30s (alebo Supabase realtime channel na `portfolio` + `pricing_waitlist`).
 
-**Created**
-- `src/components/valuation/CodeHealthGauge.tsx` — SVG semicircle gauge (animated stroke, HSL color interpolation, numeric center)
+---
 
-## 6) Cost & guardrails
+## 🧹 Cross-cutting Polish (po dokončení 1-10)
 
-- Single AI round-trip per audit (tool-calling, non-streaming), `max_tokens` raised to 1500 to accommodate the richer payload — still well below burn-heavy thresholds.
-- GitHub calls capped at 3 fast endpoints, gracefully degrade on rate-limit.
-- Both 429 and 402 from the gateway continue to surface as friendly EN/SK toasts.
-- All inputs validated server-side with Zod (incl. the GitHub URL regex) — no extra attack surface.
+1. **i18n ghost hunt #2** — `rg "[^t]\\(['\"][A-Z]"` cez celý `src/`, opraviť všetky nájdené hardcoded stringy. Doplniť SK preklady pre všetky nové features (deals, subscriptions, admin extras).
+2. **Mobile 320px sweep** — Landing hero, Valuation form (githubUrl input pretieka), Kanban (horizontal scroll), AdminPanel tabs (overflow), CodeHealthGauge centering.
+3. **PWA polish** — overiť `manifest.json` (icons 192/512, theme color, background color), service worker registráciu (`registerSW.ts`), offline fallback page.
+4. **RLS audit** — spustím `supabase--linter` po všetkých migráciách. Verify že `deal_inquiries`, `subscriptions`, `public_audits` majú správne policies.
+5. **Loading states & error boundaries** — `<ErrorBoundary>` wrapper okolo každej route v `App.tsx`, Skeleton loaders všade kde chýbajú.
+6. **TypeScript strict pass** — `tsc --noEmit` musí byť čisté.
 
-## 7) Out of scope (explicit)
+---
 
-- No real source-code reading (no clone, no file content fetched). The AI scores from metadata + file-tree heuristics; this keeps it fast, free, and works for any public repo size.
-- Private repos still rejected with a friendly message (would need user OAuth — separate upgrade).
-- Resend send is still a "coming soon" tooltip.
-- No new tables, no migrations.
+## 📋 Realizačný plán (poradie pre minimalizáciu rework)
 
+1. **DB migrácie naraz** (jeden balík): `public_audits`, `deal_inquiries`, `subscriptions`, `last_outreach_at` na `crm_leads`, RLS na `portfolio` pre `for_sale` public read.
+2. **Stripe enable + product setup** (Funkcia 8 backend) → odomyká quota enforcement.
+3. **Edge funkcie** v jednom batchi: `og-share`, `send-outreach`, `stripe-webhook`, `create-checkout`, `customer-portal`. Deploy + smoke test cez `curl_edge_functions`.
+4. **Resend connector connect** (vyžaduje user click — pripravím prompt).
+5. **Frontend features:** Funkcie 1-10 vyššie, postupne. Po každej `tsc --noEmit`.
+6. **Polish sweep** (i18n, mobile, PWA, RLS lint).
+7. **Final QA:** každú z 10 funkcií manuálne otestujem cez `curl_edge_functions` + `read_query` + `read_console_logs`.
+
+---
+
+## ⚠️ Riziká & Mitigations
+
+- **Stripe enablement** vyžaduje Pro plán Lovable. Ak ho nemáš, túto časť odložím a spravím iba waitlist polish.
+- **Resend connector** vyžaduje tvoje schválenie (jeden klik). Pripomeniem ti.
+- **Custom doména pre `from: outreach@rubberduck.space`** — overenie DNS môže trvať. Začnem s `onboarding@resend.dev`, dokumentujem upgrade path.
+- **Credits:** je to tučný balík (10 funkcií × hĺbka). Ak začnem dochádzať, dám ti choice point „pokračovať / pause".
+
+---
+
+## 🎯 Definícia hotového „99.99%"
+
+✅ Všetkých 10 funkcií má kompletný happy-path end-to-end (no dead buttons, no „coming soon" okrem zámerne odložených).  
+✅ Žiadne hardcoded EN/SK stringy v UI.  
+✅ Všetky tabuľky majú RLS, `supabase--linter` clean.  
+✅ Mobile 320px-1920px bez overlapov.  
+✅ PWA installable, offline fallback funguje.  
+✅ Stripe Pro upgrade end-to-end testovaný v sandbox móde.  
+✅ Resend reálne odošle email (test do tvojho inboxu).  
+✅ `tsc --noEmit` clean.  
+✅ Krátky CHANGELOG na konci čo sa zmenilo.
