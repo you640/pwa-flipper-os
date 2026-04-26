@@ -42,6 +42,7 @@ const en = {
     valuation: "Valuation Engine",
     market: "Market Intel",
     crm: "Buyer CRM",
+    dealRoom: "Deal Room",
     settings: "Settings",
     docs: "Documentation",
     adminPanel: "Admin Panel",
