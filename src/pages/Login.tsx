@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { SEO } from "@/components/seo/SEO";
-import { Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
+import logo from "@/assets/rubberduck-logo.png";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -73,10 +73,12 @@ export default function Login() {
               transition={{ delay: 0.1, duration: 0.4 }}
               className="relative mb-4"
             >
-              <div className="absolute inset-0 rounded-2xl bg-gradient-primary blur-xl opacity-60 animate-pulse-glow" />
-              <div className="relative flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-primary shadow-glow">
-                <Sparkles className="h-8 w-8 text-primary-foreground" strokeWidth={2.5} />
-              </div>
+              <div className="absolute inset-0 rounded-3xl bg-gradient-primary blur-2xl opacity-60 animate-pulse-glow" />
+              <img
+                src={logo}
+                alt="RUBBERDUCK.SPACE"
+                className="relative h-20 w-20 rounded-3xl object-cover shadow-glow"
+              />
             </motion.div>
             <h1 className="text-2xl font-semibold tracking-tight text-foreground">
               {t("auth.title")}
