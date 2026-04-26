@@ -55,6 +55,51 @@ export default function Portfolio() {
   const [projects, setProjects] = useState<PwaProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editing, setEditing] = useState<PwaProject | null>(null);
+  const [defaultStatus, setDefaultStatus] = useState<ColumnId>("Building");
+  const [pendingDelete, setPendingDelete] = useState<PwaProject | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleAdd = (col: ColumnId) => {
+    setEditing(null);
+    setDefaultStatus(col);
+    setFormOpen(true);
+  };
+  const handleEdit = (p: PwaProject) => {
+    setEditing(p);
+    setFormOpen(true);
+  };
+  const handleSaved = (row: ProjectFormValue & { id: string }) => {
+    setProjects((prev) => {
+      const idx = prev.findIndex((p) => p.id === row.id);
+      const mapped: PwaProject = {
+        id: row.id,
+        name: row.name,
+        askingPrice: row.asking_price,
+        mrr: row.mrr,
+        expenses: row.expenses,
+        column: row.status,
+      };
+      if (idx === -1) return [mapped, ...prev];
+      const next = [...prev];
+      next[idx] = mapped;
+      return next;
+    });
+  };
+  const confirmDelete = async () => {
+    if (!pendingDelete) return;
+    setDeleting(true);
+    const { error } = await supabase.from("portfolio").delete().eq("id", pendingDelete.id);
+    setDeleting(false);
+    if (error) {
+      toast.error(t("portfolio.form.deleteFailed"), { description: error.message });
+      return;
+    }
+    setProjects((prev) => prev.filter((p) => p.id !== pendingDelete.id));
+    toast.success(t("portfolio.form.deleted"));
+    setPendingDelete(null);
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
