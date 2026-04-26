@@ -13,7 +13,18 @@ interface ColumnProps {
   index: number;
 }
 
-export function KanbanColumn({ column, projects, index }: ColumnProps) {
+export function KanbanColumn({
+  column,
+  projects,
+  index,
+  onAdd,
+  onEdit,
+  onDelete,
+}: ColumnProps & {
+  onAdd?: (col: KColumn["id"]) => void;
+  onEdit?: (project: PwaProject) => void;
+  onDelete?: (project: PwaProject) => void;
+}) {
   const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
