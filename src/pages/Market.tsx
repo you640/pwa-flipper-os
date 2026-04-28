@@ -1,57 +1,66 @@
+import { motion } from "framer-motion";
+import {
+	ArrowDown,
+	ArrowUp,
+	ArrowUpDown,
+	MoreHorizontal,
+	Plus,
+	Radar,
+	Search,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SEO } from "@/components/seo/SEO";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-    DialogTrigger,
+	Dialog,
+	DialogContent,
+	DialogDescription,
+	DialogFooter,
+	DialogHeader,
+	DialogTitle,
+	DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
+	DropdownMenu,
+	DropdownMenuContent,
+	DropdownMenuItem,
+	DropdownMenuSeparator,
+	DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
+	Select,
+	SelectContent,
+	SelectItem,
+	SelectTrigger,
+	SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
+	Table,
+	TableBody,
+	TableCell,
+	TableHead,
+	TableHeader,
+	TableRow,
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
 import {
-    ArrowDown,
-    ArrowUp,
-    ArrowUpDown,
-    MoreHorizontal,
-    Plus,
-    Radar,
-    Search,
+	ArrowDown,
+	ArrowUp,
+	ArrowUpDown,
+	MoreHorizontal,
+	Plus,
+	Radar,
+	Search,
 } from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 
 type Source = "acquire" | "flippa";
 
@@ -186,13 +195,13 @@ export default function Market() {
 			prev.map((r) =>
 				r.id === tempId
 					? {
-							id: data.id,
-							name: data.name,
-							niche: data.niche,
-							source: data.source as Source,
-							mrr: data.mrr,
-							price: data.price,
-						}
+						id: data.id,
+						name: data.name,
+						niche: data.niche,
+						source: data.source as Source,
+						mrr: data.mrr,
+						price: data.price,
+					}
 					: r,
 			),
 		);

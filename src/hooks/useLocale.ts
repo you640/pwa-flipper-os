@@ -1,8 +1,8 @@
-import type { SupportedLanguage } from "@/i18n";
-import { supabase } from "@/integrations/supabase/client";
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import type { SupportedLanguage } from "@/i18n";
+import { supabase } from "@/integrations/supabase/client";
 
 export function useLocale() {
 	const { i18n, t } = useTranslation();

@@ -1,36 +1,36 @@
+import { motion } from "framer-motion";
+import {
+	AlertTriangle,
+	CheckCircle2,
+	ChevronDown,
+	FileDown,
+	ShieldAlert,
+	Sparkles,
+	Tag,
+	TrendingUp,
+	Wrench,
+	Zap,
+} from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-    Collapsible,
-    CollapsibleContent,
-    CollapsibleTrigger,
+	Collapsible,
+	CollapsibleContent,
+	CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
 import type {
-    AiValuationReport,
-    ValuationInputs,
-    ValueUpTip,
+	AiValuationReport,
+	ValuationInputs,
+	ValueUpTip,
 } from "@/hooks/useAiValuation";
 import { useLocale } from "@/hooks/useLocale";
 import { supabase } from "@/integrations/supabase/client";
 import { exportInvestorPdf } from "@/lib/exportInvestorPdf";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
-import {
-    AlertTriangle,
-    CheckCircle2,
-    ChevronDown,
-    FileDown,
-    ShieldAlert,
-    Sparkles,
-    Tag,
-    TrendingUp,
-    Wrench,
-    Zap,
-} from "lucide-react";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { CodeHealthGauge } from "./CodeHealthGauge";
 
 const formatUSD = (n: number) =>

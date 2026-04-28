@@ -1,3 +1,6 @@
+import { motion } from "framer-motion";
+import { Inbox } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -6,9 +9,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLocale } from "@/hooks/useLocale";
 import type { LeadRow, PortfolioRow } from "@/hooks/useOverviewData";
 import { cn } from "@/lib/utils";
-import { motion } from "framer-motion";
-import { Inbox } from "lucide-react";
-import { Link } from "react-router-dom";
 
 interface Props {
 	leads: LeadRow[] | null;

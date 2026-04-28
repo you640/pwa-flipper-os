@@ -1,3 +1,8 @@
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import logo from "@/assets/rubberduck-logo.png";
 import { SEO } from "@/components/seo/SEO";
 import { Button } from "@/components/ui/button";
@@ -6,11 +11,6 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
-import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useLocation, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 
 export default function Login() {
 	const navigate = useNavigate();

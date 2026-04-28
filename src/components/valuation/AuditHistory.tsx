@@ -1,14 +1,14 @@
+import { History, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type {
-    AiValuationReport,
-    ValuationInputs,
+	AiValuationReport,
+	ValuationInputs,
 } from "@/hooks/useAiValuation";
 import { supabase } from "@/integrations/supabase/client";
-import { History, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 
 interface AuditRow {
 	id: string;

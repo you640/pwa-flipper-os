@@ -1,3 +1,26 @@
+import { AnimatePresence, motion } from "framer-motion";
+import {
+	ArrowRight,
+	BarChart2,
+	Brain,
+	CheckCircle2,
+	FileText,
+	Github,
+	LayoutDashboard,
+	Lock,
+	Rocket,
+	Share2,
+	ShieldCheck,
+	Sparkles,
+	Store,
+	TrendingUp,
+	Users,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
+import { useTranslation } from "react-i18next";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import { PricingTab } from "@/components/pricing/PricingTab";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -9,29 +32,6 @@ import { type AiValuationReport, useAiValuation } from "@/hooks/useAiValuation";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadBlob, generateShareImage } from "@/lib/shareImage";
 import { cn } from "@/lib/utils";
-import { AnimatePresence, motion } from "framer-motion";
-import {
-    ArrowRight,
-    BarChart2,
-    Brain,
-    CheckCircle2,
-    FileText,
-    Github,
-    LayoutDashboard,
-    Lock,
-    Rocket,
-    Share2,
-    ShieldCheck,
-    Sparkles,
-    Store,
-    TrendingUp,
-    Users,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
-import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 
 const GITHUB_RE = /^https?:\/\/(www\.)?github\.com\/[\w.-]+\/[\w.-]+\/?$/i;
 const ANON_USED_KEY = "rd_anon_audit_used";
@@ -57,7 +57,7 @@ export default function Landing() {
 	const [authed, setAuthed] = useState<boolean | null>(null);
 	const [anonUsed, setAnonUsed] = useState(
 		typeof window !== "undefined" &&
-			localStorage.getItem(ANON_USED_KEY) === "1",
+		localStorage.getItem(ANON_USED_KEY) === "1",
 	);
 
 	useEffect(() => {

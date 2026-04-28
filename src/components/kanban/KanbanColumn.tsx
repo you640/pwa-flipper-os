@@ -1,12 +1,12 @@
-import { cn } from "@/lib/utils";
 import { useDroppable } from "@dnd-kit/core";
 import {
-    SortableContext,
-    verticalListSortingStrategy,
+	SortableContext,
+	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import type { KanbanColumn as KColumn, PwaProject } from "./data";
 import { ProjectCard } from "./ProjectCard";
 
