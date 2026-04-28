@@ -190,6 +190,208 @@ async function fetchRepoSnapshot(
 	}
 }
 
+function clamp(value: number, min: number, max: number): number {
+	return Math.min(max, Math.max(min, value));
+}
+
+function getBaseMultiple(niche: string): number {
+	const normalized = niche.toLowerCase();
+	if (normalized.includes("booking")) return 42;
+	if (normalized.includes("b2b")) return 36;
+	if (normalized.includes("e-commerce") || normalized.includes("ecommerce")) {
+		return 30;
+	}
+	if (normalized.includes("dev tool") || normalized.includes("developer")) {
+		return 25;
+	}
+	if (normalized.includes("content")) return 23;
+	return 30;
+}
+
+function getCodeQualityLabel(score: number): CodeQualityLabel {
+	if (score >= 90) return "Clean as Glass";
+	if (score >= 70) return "Solid";
+	if (score >= 50) return "Mixed";
+	if (score >= 30) return "Rubberdebt";
+	return "Toxic";
+}
+
+function uniq(items: string[]): string[] {
+	return [...new Set(items.filter(Boolean))];
+}
+
+function buildFallbackReport(
+	input: z.infer<typeof BodySchema>,
+	repo: RepoSnapshot | { fetch_error: string },
+	reason: string,
+): AiValuationReport {
+	const repoOk = !("fetch_error" in repo);
+	const detectedStack = repoOk
+		? uniq([
+			...(repo.framework_hints ?? []),
+			repo.language ?? "",
+			...Object.keys(repo.languages ?? {}).slice(0, 4),
+			...(input.tech_stack
+				? input.tech_stack
+					.split(",")
+					.map((item) => item.trim())
+				: []),
+		])
+		: uniq(
+			input.tech_stack
+				? input.tech_stack.split(",").map((item) => item.trim())
+				: [],
+		);
+
+	let score = repoOk ? 35 : 50;
+	if (repoOk) {
+		if (repo.has_tests) score += 12;
+		if (repo.has_ci) score += 10;
+		if (repo.has_readme) score += 8;
+		if (repo.has_typescript) score += 10;
+		if (repo.package_manager) score += 5;
+		if (repo.license) score += 4;
+		score += Math.min((repo.framework_hints ?? []).length * 3, 9);
+		if (repo.recent_commits_30d >= 10) score += 10;
+		else if (repo.recent_commits_30d >= 1) score += 5;
+		if (repo.pushed_at) {
+			const ageDays =
+				(Date.now() - new Date(repo.pushed_at).getTime()) / (24 * 3600 * 1000);
+			if (ageDays > 365) score -= 12;
+			else if (ageDays > 180) score -= 6;
+			else if (ageDays < 45) score += 5;
+		}
+	}
+	score = clamp(score, 0, 100);
+
+	const label = getCodeQualityLabel(score);
+	const qualityFactor =
+		score >= 90 ? 1.25 : score >= 70 ? 1.1 : score >= 50 ? 1 : score >= 30 ? 0.8 : 0.6;
+	const netProfit = input.mrr - input.expenses;
+	const baseMultiple = getBaseMultiple(input.niche);
+	const multiple = netProfit > 0 ? Number((baseMultiple * qualityFactor).toFixed(1)) : 0;
+
+	let low = 0;
+	let mid = 0;
+	let high = 0;
+	if (netProfit > 0) {
+		mid = Math.round(netProfit * multiple);
+		low = Math.round(mid * 0.8);
+		high = Math.round(mid * 1.2);
+	} else {
+		mid = Math.round(500 + score * 45);
+		low = Math.round(mid * 0.6);
+		high = Math.round(mid * 1.4);
+	}
+
+	const excellence = repoOk
+		? [
+			repo.has_typescript ? "Type-safe codebase detected" : "",
+			repo.has_tests ? "Automated tests are present" : "",
+			repo.has_ci ? "CI workflow is configured" : "",
+			repo.has_readme ? "Repository includes project documentation" : "",
+			(repo.framework_hints ?? []).length > 0
+				? `Detected stack: ${(repo.framework_hints ?? []).join(", ")}`
+				: "",
+		].filter(Boolean).slice(0, 5)
+		: [
+			"GitHub repository metadata was partially available",
+			"Fallback valuation completed without AI gateway",
+		].slice(0, 5);
+
+	const techDebt = [
+		repoOk && !repo.has_tests ? "Missing or low test coverage reduces buyer confidence" : "",
+		repoOk && !repo.has_ci ? "No CI pipeline detected for release confidence" : "",
+		repoOk && !repo.has_readme ? "Repository lacks clear onboarding documentation" : "",
+		repoOk && !repo.has_typescript ? "Limited type safety increases maintenance risk" : "",
+		!repoOk ? `GitHub inspection limitation: ${repo.fetch_error}` : "",
+		`AI fallback mode used because ${reason}`,
+	].filter(Boolean).slice(0, 5);
+
+	const refactorTips = [
+		{
+			title: repoOk && !repo.has_tests ? "Add a smoke test suite" : "Document critical flows",
+			impact: "high" as const,
+			detail: repoOk && !repo.has_tests
+				? "Cover the audit, auth, and billing paths to reduce technical diligence risk."
+				: "Document setup, deployment, and main product flows for acquirers.",
+		},
+		{
+			title: repoOk && !repo.has_ci ? "Introduce CI checks" : "Strengthen release automation",
+			impact: "medium" as const,
+			detail: repoOk && !repo.has_ci
+				? "Automate lint, tests, and build validation on every push."
+				: "Automated release health signals improve buyer trust and handoff quality.",
+		},
+		{
+			title: "Stabilize technical stack evidence",
+			impact: "medium" as const,
+			detail:
+				"Keep dependency locks, framework config, and architecture notes easy to verify during diligence.",
+		},
+	];
+
+	const valueUpTips = [
+		{
+			title: "Improve buyer-ready packaging",
+			impact: "high" as const,
+			detail:
+				"A clean README, deployment checklist, and analytics screenshots lift perceived maturity during sale."
+		},
+		{
+			title: "Reduce perceived delivery risk",
+			impact: "medium" as const,
+			detail:
+				"Visible tests, CI, and recent commits help support a stronger valuation multiple."
+		},
+		{
+			title: "Clarify monetization proof",
+			impact: "medium" as const,
+			detail:
+				"Tie technical quality with clear revenue evidence to defend the asking price in diligence."
+		},
+	];
+
+	return {
+		estimated_valuation: { low, mid, high },
+		multiple,
+		risk_score: clamp(Math.round(11 - score / 10), 1, 10),
+		code_quality_score: score,
+		code_quality_label: label,
+		tech_stack_audit: {
+			summary: repoOk
+				? `Fallback valuation used because ${reason}. Repo signals were still analyzed from GitHub metadata and file structure.`
+				: `Fallback valuation used because ${reason}. GitHub metadata was limited (${repo.fetch_error}).`,
+			excellence,
+			tech_debt: techDebt,
+			detected_stack: detectedStack,
+		},
+		refactor_tips: refactorTips,
+		value_up_tips: valueUpTips,
+		summary:
+			netProfit > 0
+				? `Fallback valuation estimates ${input.name} around $${mid.toLocaleString()} based on roughly ${multiple}x monthly net profit and a ${label.toLowerCase()} technical profile.`
+				: `Fallback valuation treats ${input.name} as an asset sale around $${mid.toLocaleString()} because current net profit is non-positive.`,
+	};
+}
+
+function buildSuccessResponse(
+	report: AiValuationReport,
+	input: z.infer<typeof BodySchema>,
+	repo: RepoSnapshot | { fetch_error: string },
+	isAnonymous: boolean,
+) {
+	return new Response(
+		JSON.stringify({
+			report,
+			inputs: input,
+			repo_snapshot: repo,
+			anonymous: isAnonymous,
+		}),
+		{ headers: { ...corsHeaders, "Content-Type": "application/json" } },
+	);
+}
+
 Deno.serve(async (req) => {
 	if (req.method === "OPTIONS")
 		return new Response(null, { headers: corsHeaders });
@@ -275,7 +477,14 @@ Deno.serve(async (req) => {
 		const repo = await fetchRepoSnapshot(input.github_url);
 
 		const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-		if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY missing");
+		if (!LOVABLE_API_KEY) {
+			return buildSuccessResponse(
+				buildFallbackReport(input, repo, "LOVABLE_API_KEY is not configured"),
+				input,
+				repo,
+				isAnonymous,
+			);
+		}
 
 		const systemPrompt = `You are a SENIOR CODE AUDITOR and micro-SaaS broker. You value PWAs and small SaaS for sale on Acquire / MicroAcquire / Flippa, and you treat code quality as a multiplier on the exit price.
 
@@ -313,7 +522,9 @@ ${JSON.stringify(repo, null, 2)}`;
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 45000); // 45s timeout for AI
 
-		const aiRes = await fetch(
+		let aiRes: Response;
+		try {
+			aiRes = await fetch(
 			"https://ai.gateway.lovable.dev/v1/chat/completions",
 			{
 				method: "POST",
@@ -455,7 +666,17 @@ ${JSON.stringify(repo, null, 2)}`;
 					max_tokens: 1500,
 				}),
 			},
-		);
+			);
+		} catch (error) {
+			clearTimeout(timeoutId);
+			console.error("AI fetch failed", error);
+			return buildSuccessResponse(
+				buildFallbackReport(input, repo, "AI gateway request failed"),
+				input,
+				repo,
+				isAnonymous,
+			);
+		}
 		clearTimeout(timeoutId);
 
 		if (!aiRes.ok) {
@@ -473,32 +694,28 @@ ${JSON.stringify(repo, null, 2)}`;
 			}
 			const t = await aiRes.text();
 			console.error("AI error", aiRes.status, t);
-			return new Response(JSON.stringify({ error: "ai_error" }), {
-				status: 500,
-				headers: { ...corsHeaders, "Content-Type": "application/json" },
-			});
+			return buildSuccessResponse(
+				buildFallbackReport(input, repo, `AI gateway returned ${aiRes.status}`),
+				input,
+				repo,
+				isAnonymous,
+			);
 		}
 
 		const aiJson = await aiRes.json();
 		const toolCall = aiJson.choices?.[0]?.message?.tool_calls?.[0];
 		if (!toolCall?.function?.arguments) {
 			console.error("No tool call", JSON.stringify(aiJson));
-			return new Response(JSON.stringify({ error: "no_tool_call" }), {
-				status: 500,
-				headers: { ...corsHeaders, "Content-Type": "application/json" },
-			});
+			return buildSuccessResponse(
+				buildFallbackReport(input, repo, "AI response did not include a structured tool call"),
+				input,
+				repo,
+				isAnonymous,
+			);
 		}
 		const report = JSON.parse(toolCall.function.arguments);
 
-		return new Response(
-			JSON.stringify({
-				report,
-				inputs: input,
-				repo_snapshot: repo,
-				anonymous: isAnonymous,
-			}),
-			{ headers: { ...corsHeaders, "Content-Type": "application/json" } },
-		);
+		return buildSuccessResponse(report, input, repo, isAnonymous);
 	} catch (e) {
 		console.error("valuate-pwa error", e);
 		return new Response(
