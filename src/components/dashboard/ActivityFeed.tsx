@@ -1,6 +1,3 @@
-import { motion } from "framer-motion";
-import { Inbox } from "lucide-react";
-import { Link } from "react-router-dom";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -9,6 +6,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useLocale } from "@/hooks/useLocale";
 import type { LeadRow, PortfolioRow } from "@/hooks/useOverviewData";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import { Inbox } from "lucide-react";
+import { Link } from "react-router-dom";
 
 interface Props {
 	leads: LeadRow[] | null;
@@ -55,6 +55,14 @@ const portfolioBadgeClass: Record<string, string> = {
 	Negotiating: "bg-accent/15 text-accent ring-accent/30",
 	Sold: "bg-success/15 text-success ring-success/30",
 };
+
+const ACTIVITY_SKELETON_KEYS = [
+	"activity-skeleton-1",
+	"activity-skeleton-2",
+	"activity-skeleton-3",
+	"activity-skeleton-4",
+	"activity-skeleton-5",
+] as const;
 
 interface UnifiedItem {
 	id: string;
@@ -132,9 +140,9 @@ export function ActivityFeed({ leads, portfolio, loading }: Props) {
 				<ScrollArea className="-mx-2 mt-5 flex-1 pr-2">
 					{loading ? (
 						<ul className="space-y-3 px-2">
-							{Array.from({ length: 5 }).map((_, i) => (
+							{ACTIVITY_SKELETON_KEYS.map((itemKey) => (
 								<li
-									key={i}
+									key={itemKey}
 									className="flex gap-3 rounded-lg border border-border/40 bg-card/40 p-3"
 								>
 									<Skeleton className="h-9 w-9 shrink-0 rounded-full" />
@@ -163,46 +171,47 @@ export function ActivityFeed({ leads, portfolio, loading }: Props) {
 					) : (
 						<ul className="space-y-3 px-2">
 							{items.map((a, i) => (
-								<motion.li
-									key={a.id}
-									initial={{ opacity: 0, x: -8 }}
-									animate={{ opacity: 1, x: 0 }}
-									transition={{ duration: 0.35, delay: 0.1 + i * 0.04 }}
-									className="group flex gap-3 rounded-lg border border-border/40 bg-card/40 p-3 transition-colors hover:border-border hover:bg-card/80"
-								>
-									<Avatar className="h-9 w-9 shrink-0 ring-1 ring-border/60">
-										<AvatarFallback
-											className={cn(
-												"bg-gradient-to-br text-[11px] font-semibold text-white",
-												pickHue(a.id),
-											)}
-										>
-											{getInitials(a.actor)}
-										</AvatarFallback>
-									</Avatar>
-									<div className="min-w-0 flex-1">
-										<div className="flex items-start justify-between gap-2">
-											<span className="truncate text-sm font-medium text-foreground">
-												{a.actor}
-											</span>
-											<Badge
-												variant="outline"
+								<li key={a.id}>
+									<motion.div
+										initial={{ opacity: 0, x: -8 }}
+										animate={{ opacity: 1, x: 0 }}
+										transition={{ duration: 0.35, delay: 0.1 + i * 0.04 }}
+										className="group flex gap-3 rounded-lg border border-border/40 bg-card/40 p-3 transition-colors hover:border-border hover:bg-card/80"
+									>
+										<Avatar className="h-9 w-9 shrink-0 ring-1 ring-border/60">
+											<AvatarFallback
 												className={cn(
-													"shrink-0 border-0 text-[10px] uppercase tracking-wider ring-1",
-													a.badgeClass,
+													"bg-gradient-to-br text-[11px] font-semibold text-white",
+													pickHue(a.id),
 												)}
 											>
-												{a.badge}
-											</Badge>
+												{getInitials(a.actor)}
+											</AvatarFallback>
+										</Avatar>
+										<div className="min-w-0 flex-1">
+											<div className="flex items-start justify-between gap-2">
+												<span className="truncate text-sm font-medium text-foreground">
+													{a.actor}
+												</span>
+												<Badge
+													variant="outline"
+													className={cn(
+														"shrink-0 border-0 text-[10px] uppercase tracking-wider ring-1",
+														a.badgeClass,
+													)}
+												>
+													{a.badge}
+												</Badge>
+											</div>
+											<p className="mt-0.5 line-clamp-2 text-sm leading-snug text-muted-foreground">
+												{a.message}
+											</p>
+											<p className="mt-1 text-[11px] text-muted-foreground/70">
+												{formatRelative(a.createdAt)}
+											</p>
 										</div>
-										<p className="mt-0.5 line-clamp-2 text-sm leading-snug text-muted-foreground">
-											{a.message}
-										</p>
-										<p className="mt-1 text-[11px] text-muted-foreground/70">
-											{formatRelative(a.createdAt)}
-										</p>
-									</div>
-								</motion.li>
+									</motion.div>
+								</li>
 							))}
 						</ul>
 					)}

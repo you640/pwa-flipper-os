@@ -13,6 +13,29 @@ function requireEnv(key: string): string {
 	return v;
 }
 
+/**
+ * Validate and resolve the origin against a server-side allowlist.
+ * Returns the validated origin or throws if not allowed.
+ */
+function resolveAppOrigin(requestedOrigin: string): string {
+	const baseUrl = requireEnv("APP_BASE_URL");
+	const allowedOriginsEnv = Deno.env.get("APP_ALLOWED_ORIGINS") ?? "";
+	const allowedOrigins = [
+		baseUrl,
+		...allowedOriginsEnv.split(",").filter(Boolean),
+	];
+
+	// Normalize origins for comparison (remove trailing slash)
+	const normalizedRequested = requestedOrigin.replace(/\/$/, "");
+	const normalizedAllowed = allowedOrigins.map((o) => o.replace(/\/$/, ""));
+
+	if (!normalizedAllowed.includes(normalizedRequested)) {
+		throw new Error("Origin not allowed");
+	}
+
+	return normalizedRequested;
+}
+
 async function stripePost(
 	secret: string,
 	path: string,
@@ -67,10 +90,23 @@ Deno.serve(async (req) => {
 			});
 		}
 
-		const { origin } = (await req.json()) as { origin?: string };
-		if (!origin) {
+		const { origin: requestedOrigin } = (await req.json()) as {
+			origin?: string;
+		};
+		if (!requestedOrigin) {
 			return new Response(JSON.stringify({ error: "Missing origin" }), {
 				status: 400,
+				headers: { ...corsHeaders, "Content-Type": "application/json" },
+			});
+		}
+
+		// Validate origin against server-side allowlist
+		let origin: string;
+		try {
+			origin = resolveAppOrigin(requestedOrigin);
+		} catch {
+			return new Response(JSON.stringify({ error: "Invalid origin" }), {
+				status: 403,
 				headers: { ...corsHeaders, "Content-Type": "application/json" },
 			});
 		}

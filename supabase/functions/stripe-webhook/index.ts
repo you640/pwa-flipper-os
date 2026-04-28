@@ -13,6 +13,9 @@ function requireEnv(key: string): string {
 	return v;
 }
 
+// Stripe recommends 300 seconds (5 minutes) tolerance to prevent replay attacks
+const STRIPE_SIGNATURE_TOLERANCE_SECONDS = 300;
+
 /** Verify Stripe webhook signature using crypto.subtle (no SDK needed) */
 async function verifyStripeSignature(
 	payload: string,
@@ -25,6 +28,18 @@ async function verifyStripeSignature(
 	const timestamp = parts.t;
 	const signature = parts.v1;
 	if (!timestamp || !signature) return false;
+
+	// Check timestamp freshness to prevent replay attacks
+	const eventTime = Number.parseInt(timestamp, 10) * 1000;
+	const now = Date.now();
+	if (now - eventTime > STRIPE_SIGNATURE_TOLERANCE_SECONDS * 1000) {
+		console.warn("Webhook timestamp too old", {
+			eventTime,
+			now,
+			diff: now - eventTime,
+		});
+		return false;
+	}
 
 	const signed = `${timestamp}.${payload}`;
 	const key = await crypto.subtle.importKey(

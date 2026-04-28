@@ -1,8 +1,3 @@
-import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import logo from "@/assets/rubberduck-logo.png";
 import { SEO } from "@/components/seo/SEO";
 import { Button } from "@/components/ui/button";
@@ -11,9 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { lovable } from "@/integrations/lovable";
 import { supabase } from "@/integrations/supabase/client";
+import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 export default function Login() {
 	const navigate = useNavigate();
+	const location = useLocation();
 	const { t } = useTranslation();
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
@@ -21,11 +22,14 @@ export default function Login() {
 	const [googleLoading, setGoogleLoading] = useState(false);
 	const [mode, setMode] = useState<"signin" | "signup">("signin");
 
+	// Determine redirect destination: preserve intended route or default to dashboard
+	const redirectTo = (location.state as { from?: { pathname?: string } })?.from?.pathname ?? "/dashboard";
+
 	useEffect(() => {
 		supabase.auth.getSession().then(({ data }) => {
-			if (data.session) navigate("/", { replace: true });
+			if (data.session) navigate(redirectTo, { replace: true });
 		});
-	}, [navigate]);
+	}, [navigate, redirectTo]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -38,16 +42,16 @@ export default function Login() {
 				});
 				if (error) throw error;
 				toast.success(t("auth.welcomeBack"));
-				navigate("/", { replace: true });
+				navigate(redirectTo, { replace: true });
 			} else {
 				const { error } = await supabase.auth.signUp({
 					email,
 					password,
-					options: { emailRedirectTo: `${window.location.origin}/` },
+					options: { emailRedirectTo: `${window.location.origin}${redirectTo}` },
 				});
 				if (error) throw error;
 				toast.success(t("auth.accountCreated"));
-				navigate("/", { replace: true });
+				navigate(redirectTo, { replace: true });
 			}
 		} catch (err) {
 			toast.error(err instanceof Error ? err.message : t("auth.authFailed"));
@@ -171,13 +175,13 @@ export default function Login() {
 										if (result.error) {
 											toast.error(
 												(result.error as Error)?.message ??
-													t("auth.authFailed"),
+												t("auth.authFailed"),
 											);
 											setGoogleLoading(false);
 											return;
 										}
 										if (result.redirected) return;
-										navigate("/", { replace: true });
+										navigate(redirectTo, { replace: true });
 									}}
 									className="w-full h-11"
 								>

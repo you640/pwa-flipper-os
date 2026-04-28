@@ -24,6 +24,11 @@ interface Article {
 
 const INITIAL_COUNT = 8;
 
+const INDUSTRY_NEWS_SKELETON_KEYS = Array.from(
+	{ length: INITIAL_COUNT },
+	(_, index) => `industry-news-skeleton-${index + 1}`,
+);
+
 function NewsCover({ article }: { article: Article }) {
 	const [attempt, setAttempt] = useState(0);
 	const [errored, setErrored] = useState(false);
@@ -130,8 +135,8 @@ export function IndustryNews() {
 			<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
 				{!articles &&
 					!error &&
-					Array.from({ length: INITIAL_COUNT }).map((_, i) => (
-						<Card key={i} className="glass overflow-hidden p-0">
+					INDUSTRY_NEWS_SKELETON_KEYS.map((cardKey) => (
+						<Card key={cardKey} className="glass overflow-hidden p-0">
 							<Skeleton className="h-36 w-full rounded-none" />
 							<div className="space-y-2 p-4">
 								<Skeleton className="h-4 w-3/4" />

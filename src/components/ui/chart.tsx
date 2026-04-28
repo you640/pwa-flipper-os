@@ -74,12 +74,9 @@ const ChartStyle = ({ id, config }: { id: string; config: ChartConfig }) => {
 		return null;
 	}
 
-	return (
-		<style
-			dangerouslySetInnerHTML={{
-				__html: Object.entries(THEMES)
-					.map(
-						([theme, prefix]) => `
+	const chartCss = Object.entries(THEMES)
+		.map(
+			([theme, prefix]) => `
 ${prefix} [data-chart=${id}] {
 ${colorConfig
 	.map(([key, itemConfig]) => {
@@ -91,11 +88,10 @@ ${colorConfig
 	.join("\n")}
 }
 `,
-					)
-					.join("\n"),
-			}}
-		/>
-	);
+		)
+		.join("\n");
+
+	return <style>{chartCss}</style>;
 };
 
 const ChartTooltip = RechartsPrimitive.Tooltip;
@@ -115,10 +111,24 @@ type ChartTooltipContentProps = React.ComponentProps<
 		hideLabel?: boolean;
 		hideIndicator?: boolean;
 		indicator?: "line" | "dot" | "dashed";
+		label?: React.ReactNode;
 		nameKey?: string;
 		labelKey?: string;
 		payload?: ChartPayloadItem[];
 	};
+
+type TooltipLabelFormatter = (
+	label: React.ReactNode,
+	payload: ChartPayloadItem[],
+) => React.ReactNode;
+
+type TooltipValueFormatter = (
+	value: ChartPayloadItem["value"],
+	name: ChartPayloadItem["name"],
+	item: ChartPayloadItem,
+	index: number,
+	payload: ChartPayloadItem["payload"],
+) => React.ReactNode;
 
 type ChartLegendContentProps = React.ComponentProps<"div"> & {
 	hideIcon?: boolean;
@@ -126,6 +136,66 @@ type ChartLegendContentProps = React.ComponentProps<"div"> & {
 	payload?: ChartPayloadItem[];
 	verticalAlign?: "top" | "middle" | "bottom";
 };
+
+function ChartColorIndicator({
+	color,
+	indicator,
+	nestLabel,
+}: {
+	color?: string;
+	indicator: "line" | "dot" | "dashed";
+	nestLabel: boolean;
+}) {
+	if (!color) {
+		return null;
+	}
+
+	if (indicator === "line") {
+		return (
+			<svg
+				className="shrink-0"
+				width="4"
+				height="16"
+				viewBox="0 0 4 16"
+				aria-hidden="true"
+			>
+				<line x1="2" y1="0" x2="2" y2="16" stroke={color} strokeWidth="3" />
+			</svg>
+		);
+	}
+
+	if (indicator === "dashed") {
+		return (
+			<svg
+				className={cn("shrink-0", nestLabel && "my-0.5")}
+				width="4"
+				height="16"
+				viewBox="0 0 4 16"
+				aria-hidden="true"
+			>
+				<line
+					x1="2"
+					y1="0"
+					x2="2"
+					y2="16"
+					stroke={color}
+					strokeWidth="3"
+					strokeDasharray="4 3"
+				/>
+			</svg>
+		);
+	}
+
+	return (
+		<svg
+			className="h-2.5 w-2.5 shrink-0"
+			viewBox="0 0 10 10"
+			aria-hidden="true"
+		>
+			<rect x="0" y="0" width="10" height="10" rx="2" fill={color} />
+		</svg>
+	);
+}
 
 const ChartTooltipContent = React.forwardRef<
 	HTMLDivElement,
@@ -146,6 +216,8 @@ const ChartTooltipContent = React.forwardRef<
 		nameKey,
 		labelKey,
 	} = props as ChartTooltipContentProps;
+	const tooltipLabelFormatter = labelFormatter as TooltipLabelFormatter | undefined;
+	const tooltipValueFormatter = formatter as TooltipValueFormatter | undefined;
 	const { config } = useChart();
 
 	const tooltipLabel = React.useMemo(() => {
@@ -161,10 +233,10 @@ const ChartTooltipContent = React.forwardRef<
 				? config[label as keyof typeof config]?.label || label
 				: itemConfig?.label;
 
-		if (labelFormatter) {
+		if (tooltipLabelFormatter) {
 			return (
 				<div className={cn("font-medium", labelClassName)}>
-					{labelFormatter(value, payload)}
+					{tooltipLabelFormatter(value, payload)}
 				</div>
 			);
 		}
@@ -176,7 +248,7 @@ const ChartTooltipContent = React.forwardRef<
 		return <div className={cn("font-medium", labelClassName)}>{value}</div>;
 	}, [
 		label,
-		labelFormatter,
+		tooltipLabelFormatter,
 		payload,
 		hideLabel,
 		labelClassName,
@@ -213,31 +285,24 @@ const ChartTooltipContent = React.forwardRef<
 								indicator === "dot" && "items-center",
 							)}
 						>
-							{formatter && item?.value !== undefined && item.name ? (
-								formatter(item.value, item.name, item, index, item.payload)
+							{tooltipValueFormatter && item?.value !== undefined && item.name ? (
+								tooltipValueFormatter(
+									item.value,
+									item.name,
+									item,
+									index,
+									item.payload,
+								)
 							) : (
 								<>
 									{itemConfig?.icon ? (
 										<itemConfig.icon />
 									) : (
 										!hideIndicator && (
-											<div
-												className={cn(
-													"shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]",
-													{
-														"h-2.5 w-2.5": indicator === "dot",
-														"w-1": indicator === "line",
-														"w-0 border-[1.5px] border-dashed bg-transparent":
-															indicator === "dashed",
-														"my-0.5": nestLabel && indicator === "dashed",
-													},
-												)}
-												style={
-													{
-														"--color-bg": indicatorColor,
-														"--color-border": indicatorColor,
-													} as React.CSSProperties
-												}
+											<ChartColorIndicator
+												color={indicatorColor}
+												indicator={indicator}
+												nestLabel={nestLabel}
 											/>
 										)
 									)}
@@ -309,11 +374,10 @@ const ChartLegendContent = React.forwardRef<
 							{itemConfig?.icon && !hideIcon ? (
 								<itemConfig.icon />
 							) : (
-								<div
-									className="h-2 w-2 shrink-0 rounded-[2px]"
-									style={{
-										backgroundColor: item.color,
-									}}
+								<ChartColorIndicator
+									color={item.color}
+									indicator="dot"
+									nestLabel={false}
 								/>
 							)}
 							{itemConfig?.label}
@@ -366,10 +430,11 @@ function getPayloadConfigFromPayload(
 }
 
 export {
-	ChartContainer,
-	ChartLegend,
-	ChartLegendContent,
-	ChartStyle,
-	ChartTooltip,
-	ChartTooltipContent,
+    ChartContainer,
+    ChartLegend,
+    ChartLegendContent,
+    ChartStyle,
+    ChartTooltip,
+    ChartTooltipContent
 };
+

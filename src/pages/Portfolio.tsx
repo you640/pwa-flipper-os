@@ -1,14 +1,41 @@
 import {
-	closestCorners,
-	DndContext,
-	type DragEndEvent,
-	type DragOverEvent,
-	DragOverlay,
-	type DragStartEvent,
-	KeyboardSensor,
-	PointerSensor,
-	useSensor,
-	useSensors,
+    COLUMN_IDS,
+    type ColumnId,
+    COLUMNS,
+    type PwaProject,
+} from "@/components/kanban/data";
+import { KanbanColumn } from "@/components/kanban/KanbanColumn";
+import { ProjectCard } from "@/components/kanban/ProjectCard";
+import { AppLayout } from "@/components/layout/AppLayout";
+import {
+    ProjectFormDialog,
+    type ProjectFormValue,
+} from "@/components/portfolio/ProjectFormDialog";
+import { SEO } from "@/components/seo/SEO";
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
+import { supabase } from "@/integrations/supabase/client";
+import {
+    closestCorners,
+    DndContext,
+    type DragEndEvent,
+    type DragOverEvent,
+    DragOverlay,
+    type DragStartEvent,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
 } from "@dnd-kit/core";
 import { arrayMove, sortableKeyboardCoordinates } from "@dnd-kit/sortable";
 import { motion } from "framer-motion";
@@ -16,33 +43,6 @@ import { Plus } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import {
-	COLUMN_IDS,
-	COLUMNS,
-	type ColumnId,
-	type PwaProject,
-} from "@/components/kanban/data";
-import { KanbanColumn } from "@/components/kanban/KanbanColumn";
-import { ProjectCard } from "@/components/kanban/ProjectCard";
-import { AppLayout } from "@/components/layout/AppLayout";
-import {
-	ProjectFormDialog,
-	type ProjectFormValue,
-} from "@/components/portfolio/ProjectFormDialog";
-import { SEO } from "@/components/seo/SEO";
-import {
-	AlertDialog,
-	AlertDialogAction,
-	AlertDialogCancel,
-	AlertDialogContent,
-	AlertDialogDescription,
-	AlertDialogFooter,
-	AlertDialogHeader,
-	AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
-import { supabase } from "@/integrations/supabase/client";
 
 interface PortfolioRow {
 	id: string;
@@ -50,7 +50,16 @@ interface PortfolioRow {
 	mrr: number;
 	expenses: number;
 	asking_price: number;
-	status: ColumnId;
+	status: ColumnId | "For Sale";
+}
+
+const PORTFOLIO_CARD_SKELETON_KEYS = [
+	"portfolio-card-skeleton-1",
+	"portfolio-card-skeleton-2",
+] as const;
+
+function normalizeColumnId(status: PortfolioRow["status"]): ColumnId {
+	return status === "For Sale" ? "Listed" : status;
 }
 
 export default function Portfolio() {
@@ -141,7 +150,7 @@ export default function Portfolio() {
 					askingPrice: r.asking_price,
 					mrr: r.mrr,
 					expenses: r.expenses,
-					column: r.status,
+					column: normalizeColumnId(r.status),
 				})),
 			);
 			setLoading(false);
@@ -314,9 +323,9 @@ export default function Portfolio() {
 								className="glass space-y-3 rounded-xl p-4 shadow-elegant"
 							>
 								<Skeleton className="h-5 w-24" />
-								{Array.from({ length: 2 }).map((_, i) => (
+								{PORTFOLIO_CARD_SKELETON_KEYS.map((skeletonKey) => (
 									<Skeleton
-										key={`skeleton-${c.id}-${i}`}
+										key={`${c.id}-${skeletonKey}`}
 										className="h-24 w-full"
 									/>
 								))}

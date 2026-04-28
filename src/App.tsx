@@ -1,14 +1,18 @@
+// biome-ignore assist/source/organizeImports: custom import order for shadcn components
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { Toaster } from "@/components/ui/toaster";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { supabase } from "@/integrations/supabase/client";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { lazy, Suspense, useEffect } from "react";
 import { HelmetProvider } from "react-helmet-async";
 import { useTranslation } from "react-i18next";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
-import { Toaster as Sonner } from "@/components/ui/sonner";
-import { Toaster } from "@/components/ui/toaster";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { supabase } from "@/integrations/supabase/client";
 import { AdminGuard } from "./components/admin/AdminGuard.tsx";
 import { AuthGuard } from "./components/auth/AuthGuard.tsx";
+import Landing from "./pages/Landing.tsx";
+import Login from "./pages/Login.tsx";
+import NotFound from "./pages/NotFound.tsx";
 
 // Lazy-loaded pages
 const Admin = lazy(() => import("./pages/Admin.tsx"));
@@ -17,10 +21,7 @@ const CRM = lazy(() => import("./pages/CRM.tsx"));
 const DealRoom = lazy(() => import("./pages/DealRoom.tsx"));
 const Docs = lazy(() => import("./pages/Docs.tsx"));
 const Index = lazy(() => import("./pages/Index.tsx"));
-const Landing = lazy(() => import("./pages/Landing.tsx"));
-const Login = lazy(() => import("./pages/Login.tsx"));
 const Market = lazy(() => import("./pages/Market.tsx"));
-const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 const Portfolio = lazy(() => import("./pages/Portfolio.tsx"));
 const Profile = lazy(() => import("./pages/Profile.tsx"));
 const Settings = lazy(() => import("./pages/Settings.tsx"));

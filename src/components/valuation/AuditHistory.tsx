@@ -1,14 +1,14 @@
-import { History, Sparkles } from "lucide-react";
-import { useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type {
-	AiValuationReport,
-	ValuationInputs,
+    AiValuationReport,
+    ValuationInputs,
 } from "@/hooks/useAiValuation";
 import { supabase } from "@/integrations/supabase/client";
+import { History, Sparkles } from "lucide-react";
+import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 interface AuditRow {
 	id: string;
@@ -16,6 +16,12 @@ interface AuditRow {
 	inputs: ValuationInputs;
 	ai_report: AiValuationReport;
 }
+
+const AUDIT_HISTORY_SKELETON_KEYS = [
+	"audit-history-skeleton-1",
+	"audit-history-skeleton-2",
+	"audit-history-skeleton-3",
+] as const;
 
 const formatUSD = (n: number) =>
 	new Intl.NumberFormat("en-US", {
@@ -36,6 +42,7 @@ export function AuditHistory({
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
+		void refreshKey;
 		let cancelled = false;
 		(async () => {
 			setLoading(true);
@@ -51,7 +58,7 @@ export function AuditHistory({
 		return () => {
 			cancelled = true;
 		};
-	}, []);
+	}, [refreshKey]);
 
 	return (
 		<Card className="glass p-5 shadow-elegant">
@@ -67,8 +74,8 @@ export function AuditHistory({
 
 			<div className="mt-4 space-y-2">
 				{loading ? (
-					Array.from({ length: 3 }).map((_, i) => (
-						<Skeleton key={i} className="h-16 w-full" />
+					AUDIT_HISTORY_SKELETON_KEYS.map((itemKey) => (
+						<Skeleton key={itemKey} className="h-16 w-full" />
 					))
 				) : rows.length === 0 ? (
 					<div className="rounded-md border border-dashed border-border/60 p-4 text-center text-xs text-muted-foreground">
@@ -81,6 +88,7 @@ export function AuditHistory({
 						const score = r.ai_report?.code_quality_score ?? 0;
 						return (
 							<button
+								type="button"
 								key={r.id}
 								onClick={() => onPick(r)}
 								className="group block w-full rounded-lg border border-border/60 bg-card/40 p-3 text-left transition-colors hover:border-primary/40 hover:bg-card/60"

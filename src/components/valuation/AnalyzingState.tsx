@@ -20,6 +20,11 @@ const SNIPPETS = [
 	"tailwind.config",
 ];
 
+const FLOATING_SNIPPETS = [...SNIPPETS, ...SNIPPETS].map((snippet, index) => ({
+	id: `analyzing-snippet-${index + 1}-${snippet}`,
+	snippet,
+}));
+
 export function AnalyzingState() {
 	const { t } = useTranslation();
 	return (
@@ -45,9 +50,9 @@ export function AnalyzingState() {
 			{/* Floating code snippet stream */}
 			<div className="relative h-12 overflow-hidden rounded-lg border border-border/40 bg-card/20">
 				<div className="absolute inset-0 flex items-center">
-					{[...SNIPPETS, ...SNIPPETS].map((s, i) => (
+					{FLOATING_SNIPPETS.map(({ id, snippet }, index) => (
 						<motion.span
-							key={i}
+							key={id}
 							className="mx-3 whitespace-nowrap font-mono text-[11px] text-primary/60"
 							initial={{ x: 0 }}
 							animate={{ x: -800 }}
@@ -55,10 +60,10 @@ export function AnalyzingState() {
 								duration: 14,
 								repeat: Infinity,
 								ease: "linear",
-								delay: i * 0.1,
+								delay: index * 0.1,
 							}}
 						>
-							{s}
+							{snippet}
 						</motion.span>
 					))}
 				</div>

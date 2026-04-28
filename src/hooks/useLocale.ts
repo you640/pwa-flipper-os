@@ -1,7 +1,8 @@
-import { useCallback } from "react";
-import { useTranslation } from "react-i18next";
 import type { SupportedLanguage } from "@/i18n";
 import { supabase } from "@/integrations/supabase/client";
+import { useCallback } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 export function useLocale() {
 	const { i18n, t } = useTranslation();
@@ -20,20 +21,25 @@ export function useLocale() {
 				/* ignore */
 			}
 			document.documentElement.lang = lng;
-			// Persist for signed-in user (best-effort)
+			// Persist for signed-in user
 			try {
 				const { data } = await supabase.auth.getUser();
 				if (data.user) {
-					await supabase
+					const { error } = await supabase
 						.from("profiles")
 						.update({ locale: lng })
 						.eq("id", data.user.id);
+
+					if (error) {
+						console.warn("Failed to sync locale to profile:", error);
+						toast.error(t("settings.localeUpdateFailed") ?? "Failed to save language preference");
+					}
 				}
-			} catch {
-				/* ignore */
+			} catch (err) {
+				console.warn("Failed to sync locale:", err);
 			}
 		},
-		[i18n],
+		[i18n, t],
 	);
 
 	const formatCurrency = useCallback(

@@ -1,57 +1,57 @@
-import { motion } from "framer-motion";
-import {
-	ArrowDown,
-	ArrowUp,
-	ArrowUpDown,
-	MoreHorizontal,
-	Plus,
-	Radar,
-	Search,
-} from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SEO } from "@/components/seo/SEO";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog";
 import {
-	DropdownMenu,
-	DropdownMenuContent,
-	DropdownMenuItem,
-	DropdownMenuSeparator,
-	DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import {
+    ArrowDown,
+    ArrowUp,
+    ArrowUpDown,
+    MoreHorizontal,
+    Plus,
+    Radar,
+    Search,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 type Source = "acquire" | "flippa";
 
@@ -76,6 +76,15 @@ const formatUSD = (n: number) =>
 
 const calcMultiplier = (price: number, mrr: number) =>
 	mrr > 0 ? +(price / mrr).toFixed(1) : null;
+
+const MARKET_SKELETON_ROW_KEYS = [
+	"market-skeleton-1",
+	"market-skeleton-2",
+	"market-skeleton-3",
+	"market-skeleton-4",
+	"market-skeleton-5",
+	"market-skeleton-6",
+] as const;
 
 export default function Market() {
 	const { t } = useTranslation();
@@ -299,9 +308,9 @@ export default function Market() {
 								</TableHeader>
 								<TableBody>
 									{loading &&
-										Array.from({ length: 6 }).map((_, i) => (
+										MARKET_SKELETON_ROW_KEYS.map((rowKey) => (
 											<TableRow
-												key={`sk-${i}`}
+												key={rowKey}
 												className="border-b border-border/40 hover:bg-transparent"
 											>
 												<TableCell className="py-3.5">
@@ -387,6 +396,7 @@ export default function Market() {
 														<DropdownMenu>
 															<DropdownMenuTrigger asChild>
 																<button
+																	type="button"
 																	title="Actions"
 																	className="flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
 																>
@@ -431,6 +441,7 @@ function SortBtn({
 }) {
 	return (
 		<button
+			type="button"
 			onClick={onClick}
 			className={cn(
 				"ml-auto inline-flex items-center gap-1 text-xs uppercase tracking-wider transition-colors",

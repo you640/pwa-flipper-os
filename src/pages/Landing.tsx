@@ -1,26 +1,3 @@
-import { AnimatePresence, motion } from "framer-motion";
-import {
-	ArrowRight,
-	BarChart2,
-	Brain,
-	CheckCircle2,
-	FileText,
-	Github,
-	LayoutDashboard,
-	Lock,
-	Rocket,
-	Share2,
-	ShieldCheck,
-	Sparkles,
-	Store,
-	TrendingUp,
-	Users,
-} from "lucide-react";
-import { useEffect, useState } from "react";
-import { Helmet } from "react-helmet-async";
-import { useTranslation } from "react-i18next";
-import { Link, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { PricingTab } from "@/components/pricing/PricingTab";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -32,9 +9,38 @@ import { type AiValuationReport, useAiValuation } from "@/hooks/useAiValuation";
 import { supabase } from "@/integrations/supabase/client";
 import { downloadBlob, generateShareImage } from "@/lib/shareImage";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+    ArrowRight,
+    BarChart2,
+    Brain,
+    CheckCircle2,
+    FileText,
+    Github,
+    LayoutDashboard,
+    Lock,
+    Rocket,
+    Share2,
+    ShieldCheck,
+    Sparkles,
+    Store,
+    TrendingUp,
+    Users,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Helmet } from "react-helmet-async";
+import { useTranslation } from "react-i18next";
+import { Link, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 const GITHUB_RE = /^https?:\/\/(www\.)?github\.com\/[\w.-]+\/[\w.-]+\/?$/i;
 const ANON_USED_KEY = "rd_anon_audit_used";
+
+const TEASER_PLACEHOLDER_IDS = [
+	"teaser-placeholder-1",
+	"teaser-placeholder-2",
+	"teaser-placeholder-3",
+] as const;
 
 const formatEUR = (n: number) =>
 	new Intl.NumberFormat("de-DE", {
@@ -494,34 +500,34 @@ function TeaserResult({
 						<div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
 							{t("valuation.ai.report.refactorTips")}
 						</div>
-						{[1, 2, 3].map((i) => (
+						{TEASER_PLACEHOLDER_IDS.map((placeholderId, index) => (
 							<div
-								key={i}
+								key={placeholderId}
 								className="rounded-lg border border-border/50 bg-card/40 p-3"
 							>
 								<div className="text-sm font-medium">
-									Refactor opportunity #{i}
+									Refactor opportunity #{index + 1}
 								</div>
 								<div className="mt-1 text-xs text-muted-foreground">
-									Lorem ipsum dolor sit amet consectetur adipiscing elit sed do
-									eiusmod tempor incididunt.
+									Clean up duplicated flows, tighten onboarding, and remove
+									manual review steps before launch.
 								</div>
 							</div>
 						))}
 						<div className="text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
 							{t("valuation.ai.report.valueUpTips")}
 						</div>
-						{[1, 2, 3].map((i) => (
+						{TEASER_PLACEHOLDER_IDS.map((placeholderId, index) => (
 							<div
-								key={i}
+								key={`${placeholderId}-value-up`}
 								className="rounded-lg border border-border/50 bg-card/40 p-3"
 							>
 								<div className="text-sm font-medium">
-									Value-up opportunity #{i}
+									Value-up opportunity #{index + 1}
 								</div>
 								<div className="mt-1 text-xs text-muted-foreground">
-									Lorem ipsum dolor sit amet consectetur adipiscing elit sed do
-									eiusmod.
+									Improve retention loops, add monetization hooks, and package
+									the offer for faster buyer diligence.
 								</div>
 							</div>
 						))}

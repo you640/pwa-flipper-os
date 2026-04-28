@@ -13,10 +13,18 @@ import en from "@/i18n/locales/en";
 import sk from "@/i18n/locales/sk";
 import { NEWS_I18N_KEYS } from "@/i18n/newsKeys";
 
+type MotionPassthroughProps = React.HTMLAttributes<HTMLElement> & {
+	variants?: unknown;
+	initial?: unknown;
+	animate?: unknown;
+	whileHover?: unknown;
+	transition?: unknown;
+};
+
 // Stub framer-motion to keep the DOM simple and synchronous in jsdom.
 vi.mock("framer-motion", () => {
 	const passthrough = (tag: string) =>
-		React.forwardRef<HTMLElement, React.HTMLAttributes<HTMLElement>>(
+		React.forwardRef<HTMLElement, MotionPassthroughProps>(
 			(props, ref) => {
 				const {
 					children,

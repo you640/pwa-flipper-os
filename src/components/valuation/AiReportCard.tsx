@@ -1,35 +1,36 @@
-import { motion } from "framer-motion";
-import {
-	AlertTriangle,
-	CheckCircle2,
-	ChevronDown,
-	FileDown,
-	ShieldAlert,
-	Sparkles,
-	Tag,
-	TrendingUp,
-	Wrench,
-	Zap,
-} from "lucide-react";
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-	Collapsible,
-	CollapsibleContent,
-	CollapsibleTrigger,
+    Collapsible,
+    CollapsibleContent,
+    CollapsibleTrigger,
 } from "@/components/ui/collapsible";
 import { Switch } from "@/components/ui/switch";
 import type {
-	AiValuationReport,
-	ValuationInputs,
+    AiValuationReport,
+    ValuationInputs,
+    ValueUpTip,
 } from "@/hooks/useAiValuation";
 import { useLocale } from "@/hooks/useLocale";
 import { supabase } from "@/integrations/supabase/client";
 import { exportInvestorPdf } from "@/lib/exportInvestorPdf";
 import { cn } from "@/lib/utils";
+import { motion } from "framer-motion";
+import {
+    AlertTriangle,
+    CheckCircle2,
+    ChevronDown,
+    FileDown,
+    ShieldAlert,
+    Sparkles,
+    Tag,
+    TrendingUp,
+    Wrench,
+    Zap,
+} from "lucide-react";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 import { CodeHealthGauge } from "./CodeHealthGauge";
 
 const formatUSD = (n: number) =>
@@ -45,6 +46,34 @@ const IMPACT_CLR = {
 	medium: "text-primary bg-primary/15 ring-primary/30",
 	low: "text-muted-foreground bg-muted/30 ring-border/60",
 } as const;
+
+function normalizeKeyFragment(value: string) {
+	return value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "item";
+}
+
+function buildStringKeyedItems(items: string[], prefix: string) {
+	const seen = new Map<string, number>();
+
+	return items.map((value) => {
+		const base = `${prefix}-${normalizeKeyFragment(value)}`;
+		const count = (seen.get(base) ?? 0) + 1;
+		seen.set(base, count);
+
+		return { key: `${base}-${count}`, value };
+	});
+}
+
+function buildTipKeyedItems(tips: ValueUpTip[], prefix: string) {
+	const seen = new Map<string, number>();
+
+	return tips.map((tip) => {
+		const base = `${prefix}-${normalizeKeyFragment(tip.title)}-${tip.impact}-${normalizeKeyFragment(tip.detail)}`;
+		const count = (seen.get(base) ?? 0) + 1;
+		seen.set(base, count);
+
+		return { key: `${base}-${count}`, tip };
+	});
+}
 
 function riskColor(score: number) {
 	if (score <= 3) return "text-success";
@@ -78,6 +107,14 @@ export function AiReportCard({
 	const range = Math.max(high - low, 1);
 	const midPct = ((mid - low) / range) * 100;
 	const audit = report.tech_stack_audit;
+	const keyedExcellence = audit
+		? buildStringKeyedItems(audit.excellence, "excellence")
+		: [];
+	const keyedTechDebt = audit
+		? buildStringKeyedItems(audit.tech_debt, "tech-debt")
+		: [];
+	const keyedRefactorTips = buildTipKeyedItems(report.refactor_tips ?? [], "refactor");
+	const keyedValueUpTips = buildTipKeyedItems(report.value_up_tips, "value-up");
 
 	const handleDownloadPdf = async () => {
 		if (!inputs) {
@@ -201,13 +238,13 @@ export function AiReportCard({
 						{t("valuation.ai.report.techExcellence")}
 					</div>
 					<ul className="space-y-1.5">
-						{audit.excellence.map((item, i) => (
+						{keyedExcellence.map(({ key, value }) => (
 							<li
-								key={i}
+								key={key}
 								className="flex items-start gap-1.5 text-xs text-foreground/90"
 							>
 								<span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-success" />
-								{item}
+								{value}
 							</li>
 						))}
 					</ul>
@@ -218,13 +255,13 @@ export function AiReportCard({
 						{t("valuation.ai.report.techDebt")}
 					</div>
 					<ul className="space-y-1.5">
-						{audit.tech_debt.map((item, i) => (
+						{keyedTechDebt.map(({ key, value }) => (
 							<li
-								key={i}
+								key={key}
 								className="flex items-start gap-1.5 text-xs text-foreground/90"
 							>
 								<span className="mt-1 h-1 w-1 shrink-0 rounded-full bg-destructive" />
-								{item}
+								{value}
 							</li>
 						))}
 					</ul>
@@ -273,11 +310,11 @@ export function AiReportCard({
 					{t("valuation.ai.report.refactorTips")}
 				</div>
 				<div className="space-y-2">
-					{report.refactor_tips?.map((tip, i) => {
+					{keyedRefactorTips.map(({ key, tip }, index) => {
 						const Icon = IMPACT_ICON[tip.impact] ?? Sparkles;
 						return (
-							<Collapsible key={`r-${i}`}>
-								<Tip tip={tip} index={i} Icon={Icon} />
+							<Collapsible key={key}>
+								<Tip tip={tip} index={index} Icon={Icon} />
 							</Collapsible>
 						);
 					})}
@@ -290,11 +327,11 @@ export function AiReportCard({
 					{t("valuation.ai.report.valueUpTips")}
 				</div>
 				<div className="space-y-2">
-					{report.value_up_tips.map((tip, i) => {
+					{keyedValueUpTips.map(({ key, tip }, index) => {
 						const Icon = IMPACT_ICON[tip.impact] ?? Sparkles;
 						return (
-							<Collapsible key={`v-${i}`}>
-								<Tip tip={tip} index={i} Icon={Icon} />
+							<Collapsible key={key}>
+								<Tip tip={tip} index={index} Icon={Icon} />
 							</Collapsible>
 						);
 					})}

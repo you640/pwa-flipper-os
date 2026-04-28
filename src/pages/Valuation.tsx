@@ -35,6 +35,7 @@ import { AiReportCard } from "@/components/valuation/AiReportCard";
 import { AnalyzingState } from "@/components/valuation/AnalyzingState";
 import { useAiValuation } from "@/hooks/useAiValuation";
 import { supabase } from "@/integrations/supabase/client";
+import type { Json, TablesInsert } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
 
 type Niche = "b2b" | "ecommerce" | "booking" | "devtool";
@@ -156,12 +157,16 @@ export default function Valuation() {
 			setSavedPortfolioId(pf.id);
 		}
 
-		const { error: aErr } = await supabase.from("portfolio_audits").insert({
+		const auditInsert: TablesInsert<"portfolio_audits"> = {
 			portfolio_id: portfolioId,
-			inputs: aiInputs,
-			ai_report: report,
+			inputs: aiInputs as unknown as Json,
+			ai_report: report as unknown as Json,
 			user_id: user.id,
-		});
+		};
+
+		const { error: aErr } = await supabase
+			.from("portfolio_audits")
+			.insert(auditInsert);
 		setApplying(false);
 
 		if (aErr) {

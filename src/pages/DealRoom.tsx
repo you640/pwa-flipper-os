@@ -45,6 +45,15 @@ const formatUSD = (n: number) =>
 		maximumFractionDigits: 0,
 	}).format(n);
 
+const DEAL_ROOM_SKELETON_KEYS = [
+	"deal-room-skeleton-1",
+	"deal-room-skeleton-2",
+	"deal-room-skeleton-3",
+	"deal-room-skeleton-4",
+	"deal-room-skeleton-5",
+	"deal-room-skeleton-6",
+] as const;
+
 export default function DealRoom() {
 	const { t } = useTranslation();
 	const [listings, setListings] = useState<Listing[]>([]);
@@ -170,8 +179,8 @@ export default function DealRoom() {
 				<section className="mt-10">
 					{loading ? (
 						<div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-							{Array.from({ length: 6 }).map((_, i) => (
-								<Skeleton key={i} className="h-44 w-full rounded-2xl" />
+							{DEAL_ROOM_SKELETON_KEYS.map((skeletonKey) => (
+								<Skeleton key={skeletonKey} className="h-44 w-full rounded-2xl" />
 							))}
 						</div>
 					) : filtered.length === 0 ? (

@@ -56,20 +56,24 @@ export default function Docs() {
 	const { isAdmin, loading, user, profile, displayName } = useProfile();
 	const { language, intlLocale, formatDate } = useLocale();
 
-	const steps = [0, 1, 2, 3].map((i) => ({
-		Icon: stepIcons[i],
-		title: t(`docs.manual.steps.${i + 1}.title`),
-		desc: t(`docs.manual.steps.${i + 1}.desc`),
-		tip: t(`docs.manual.steps.${i + 1}.tip`),
+	const steps = [0, 1, 2, 3].map((stepIndex) => ({
+		id: `manual-step-${stepIndex + 1}`,
+		number: stepIndex + 1,
+		Icon: stepIcons[stepIndex],
+		title: t(`docs.manual.steps.${stepIndex + 1}.title`),
+		desc: t(`docs.manual.steps.${stepIndex + 1}.desc`),
+		tip: t(`docs.manual.steps.${stepIndex + 1}.tip`),
 	}));
 
-	const faqItems = [1, 2, 3, 4, 5, 6, 7, 8].map((i) => ({
-		q: t(`docs.faq.items.${i}.q`),
-		a: t(`docs.faq.items.${i}.a`),
+	const faqItems = [1, 2, 3, 4, 5, 6, 7, 8].map((faqIndex) => ({
+		id: `faq-item-${faqIndex}`,
+		q: t(`docs.faq.items.${faqIndex}.q`),
+		a: t(`docs.faq.items.${faqIndex}.a`),
 	}));
 
 	const ceoSections = (["market", "leads", "scale", "ops"] as const).map(
 		(k, i) => ({
+			id: `ceo-section-${k}`,
 			Icon: ceoIcons[i],
 			title: t(`docs.ceo.sections.${k}.title`),
 			body: t(`docs.ceo.sections.${k}.body`),
@@ -81,6 +85,7 @@ export default function Docs() {
 			returnObjects: true,
 		}) as string[];
 		return {
+			id: `changelog-entry-${i}`,
 			version: t(`docs.changelog.entries.${i}.version`),
 			date: t(`docs.changelog.entries.${i}.date`),
 			title: t(`docs.changelog.entries.${i}.title`),
@@ -169,9 +174,9 @@ export default function Docs() {
 							variants={{ show: { transition: { staggerChildren: 0.06 } } }}
 							className="grid gap-4 sm:grid-cols-2"
 						>
-							{steps.map((s, i) => (
+							{steps.map((s) => (
 								<motion.div
-									key={i}
+									key={s.id}
 									variants={fade}
 									className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-5 backdrop-blur-xl shadow-xl"
 								>
@@ -183,7 +188,7 @@ export default function Docs() {
 										<div className="min-w-0">
 											<div className="flex items-center gap-2">
 												<span className="text-[10px] font-semibold uppercase tracking-[0.18em] text-muted-foreground">
-													{t("docs.manual.stepLabel", { n: i + 1 })}
+													{t("docs.manual.stepLabel", { n: s.number })}
 												</span>
 											</div>
 											<h3 className="mt-1 text-base font-semibold text-foreground">
@@ -223,10 +228,10 @@ export default function Docs() {
 							className="rounded-2xl border border-border/60 bg-card/40 p-2 sm:p-4 backdrop-blur-xl shadow-xl"
 						>
 							<Accordion type="single" collapsible className="w-full">
-								{faqItems.map((item, i) => (
+								{faqItems.map((item) => (
 									<AccordionItem
-										key={i}
-										value={`item-${i}`}
+										key={item.id}
+										value={item.id}
 										className="border-border/50"
 									>
 										<AccordionTrigger className="px-3 text-left text-sm font-medium hover:no-underline">
@@ -257,9 +262,9 @@ export default function Docs() {
 							</motion.div>
 
 							<div className="space-y-4">
-								{changelogEntries.map((entry, i) => (
+								{changelogEntries.map((entry) => (
 									<motion.div
-										key={i}
+										key={entry.id}
 										variants={fade}
 										className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/40 p-5 backdrop-blur-xl shadow-xl"
 									>
@@ -283,7 +288,7 @@ export default function Docs() {
 														highlightIcons[hi % highlightIcons.length];
 													return (
 														<li
-															key={hi}
+															key={`${entry.id}-${h}`}
 															className="flex items-start gap-2 text-sm text-muted-foreground"
 														>
 															<HIcon className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
@@ -351,9 +356,9 @@ export default function Docs() {
 									variants={fade}
 									className="grid gap-4 sm:grid-cols-2"
 								>
-									{ceoSections.map((s, i) => (
+									{ceoSections.map((s) => (
 										<div
-											key={i}
+											key={s.id}
 											className="relative overflow-hidden rounded-2xl border border-destructive/30 bg-card/40 p-5 backdrop-blur-xl shadow-xl"
 										>
 											<div className="pointer-events-none absolute -right-16 -top-16 h-40 w-40 rounded-full bg-destructive/10 blur-3xl" />

@@ -1,16 +1,3 @@
-import { AnimatePresence, motion } from "framer-motion";
-import {
-	Building2,
-	Copy,
-	Loader2,
-	Mail,
-	Plus,
-	Search,
-	Sparkles,
-} from "lucide-react";
-import { useEffect, useMemo, useState } from "react";
-import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
 import { OutreachTab } from "@/components/crm/OutreachTab";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SEO } from "@/components/seo/SEO";
@@ -18,43 +5,56 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
-	Dialog,
-	DialogContent,
-	DialogDescription,
-	DialogFooter,
-	DialogHeader,
-	DialogTitle,
-	DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
-	Select,
-	SelectContent,
-	SelectItem,
-	SelectTrigger,
-	SelectValue,
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
 } from "@/components/ui/select";
 import {
-	Sheet,
-	SheetContent,
-	SheetDescription,
-	SheetHeader,
-	SheetTitle,
+    Sheet,
+    SheetContent,
+    SheetDescription,
+    SheetHeader,
+    SheetTitle,
 } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-	Table,
-	TableBody,
-	TableCell,
-	TableHead,
-	TableHeader,
-	TableRow,
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
+    TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+    Building2,
+    Copy,
+    Loader2,
+    Mail,
+    Plus,
+    Search,
+    Sparkles,
+} from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
+import { toast } from "sonner";
 
 type LeadStatus = "Lead" | "Contacted" | "Demo" | "Rejected";
 
@@ -79,6 +79,14 @@ const STATUS_META: Record<LeadStatus, string> = {
 	Demo: "bg-warning/15 text-warning ring-warning/30",
 	Rejected: "bg-destructive/15 text-destructive ring-destructive/30",
 };
+
+const CRM_SKELETON_ROW_KEYS = [
+	"crm-skeleton-1",
+	"crm-skeleton-2",
+	"crm-skeleton-3",
+	"crm-skeleton-4",
+	"crm-skeleton-5",
+] as const;
 
 const formatUSD = (n: number) =>
 	new Intl.NumberFormat("en-US", {
@@ -254,9 +262,9 @@ export default function CRM() {
 								</TableHeader>
 								<TableBody>
 									{loading &&
-										Array.from({ length: 5 }).map((_, i) => (
+										CRM_SKELETON_ROW_KEYS.map((rowKey) => (
 											<TableRow
-												key={`sk-${i}`}
+												key={rowKey}
 												className="border-b border-border/40 hover:bg-transparent"
 											>
 												<TableCell>
@@ -457,7 +465,6 @@ function PitchPanel({ lead, apps }: { lead: Lead; apps: PortfolioApp[] }) {
 			setGenerating(false);
 		}, 600);
 		return () => clearTimeout(timer);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [lead.id, selectedApp, lead]);
 
 	const handleCopy = async () => {

@@ -1,12 +1,12 @@
+import { cn } from "@/lib/utils";
 import { useDroppable } from "@dnd-kit/core";
 import {
-	SortableContext,
-	verticalListSortingStrategy,
+    SortableContext,
+    verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { motion } from "framer-motion";
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { cn } from "@/lib/utils";
 import type { KanbanColumn as KColumn, PwaProject } from "./data";
 import { ProjectCard } from "./ProjectCard";
 
@@ -59,6 +59,8 @@ export function KanbanColumn({
 						</span>
 					</div>
 					<button
+						type="button"
+						onClick={() => onAdd?.(column.id)}
 						className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
 						aria-label={t("portfolio.addProject")}
 					>

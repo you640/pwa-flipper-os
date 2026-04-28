@@ -63,8 +63,6 @@ const BreadcrumbPage = React.forwardRef<
 >(({ className, ...props }, ref) => (
 	<span
 		ref={ref}
-		role="link"
-		aria-disabled="true"
 		aria-current="page"
 		className={cn("font-normal text-foreground", className)}
 		{...props}
@@ -105,11 +103,12 @@ const BreadcrumbEllipsis = ({
 BreadcrumbEllipsis.displayName = "BreadcrumbElipssis";
 
 export {
-	Breadcrumb,
-	BreadcrumbEllipsis,
-	BreadcrumbItem,
-	BreadcrumbLink,
-	BreadcrumbList,
-	BreadcrumbPage,
-	BreadcrumbSeparator,
+    Breadcrumb,
+    BreadcrumbEllipsis,
+    BreadcrumbItem,
+    BreadcrumbLink,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbSeparator
 };
+
