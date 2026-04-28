@@ -44,6 +44,7 @@ const sk: Translations = {
     valuation: "Oceňovací nástroj",
     market: "Trhové dáta",
     crm: "CRM kupujúcich",
+    dealRoom: "Deal Room",
     settings: "Nastavenia",
     docs: "Dokumentácia",
     adminPanel: "Admin Panel",
@@ -400,11 +401,22 @@ const sk: Translations = {
     subtitle: "Plán, faktúry a využitie.",
     planFounder: "Founder — Neobmedzený",
     planFounderDesc: "Neobmedzené kredity, prioritná podpora, plný admin prístup.",
-    planStarter: "Starter",
+    planStarter: "Free",
     planStarterDesc: "Bezplatná úroveň. Upgradujte pre vyššie limity a prémiové funkcie.",
-    upgrade: "Upgradovať",
+    planPro: "Pro",
+    planProDesc: "Prioritné AI audity, Resend outreach, hromadný import trhových dát.",
+    upgrade: "Upgradovať na Pro",
+    manage: "Spravovať predplatné",
+    openPortal: "Otvoriť fakturačný portál",
+    renewsOn: "Obnovuje sa {{date}}",
     invoices: "Faktúry",
-    noInvoices: "Zatiaľ žiadne faktúry. Zobrazia sa tu po aktivácii fakturácie.",
+    noInvoices: "Zatiaľ žiadne faktúry.",
+    invoicesHint: "Spravujte faktúry a platobné metódy vo fakturačnom portáli.",
+    successToast: "Ste na Pro! Vitajte v plnej verzii.",
+    canceledToast: "Checkout zrušený. Váš plán nebol zmenený.",
+    alreadyActive: "Pro je na vašom účte už aktívne.",
+    checkoutFailed: "Checkout sa nepodarilo spustiť. Skúste znova.",
+    portalFailed: "Fakturačný portál sa nepodarilo otvoriť. Skúste znova.",
   },
   seo: {
     indexTitle: "Riadiace centrum | RUBBERDUCK.SPACE",
@@ -630,6 +642,18 @@ const sk: Translations = {
       sub: "Pridajte sa k solo zakladateľom predávajúcim micro-SaaS cez RUBBERDUCK.SPACE.",
       btn: "Vytvoriť účet zdarma",
     },
+    features: {
+      title: "Všetko čo potrebujete na inteligentný flip",
+      sub: "Postavené pre solo zakladateľov, ktorí berú exity vážne.",
+      items: [
+        { icon: "Brain", title: "AI ocenenie", desc: "GitHub audit kódu s rozsahom exit hodnoty, skóre rizika a hodnotením kvality kódu." },
+        { icon: "LayoutDashboard", title: "Portfolio Kanban", desc: "Sledujte každú aplikáciu — Vývoj → Na predaj → Predané — s MRR a výdavkovými metrikami." },
+        { icon: "Store", title: "Deal Room", desc: "Verejný marketplace kde kvalifikovaní kupujúci prehliadajú a odosielajú dopyty priamo na vaší listing." },
+        { icon: "Users", title: "CRM + AI outreach", desc: "Spravujte leady a generujte personalizované cold-emaily jedným kliknutím." },
+        { icon: "BarChart2", title: "Trhová inteligencia", desc: "Sledujte comps z Acquire.com a Flippa. Poznajte trh pred tým, ako stanovíte cenu." },
+        { icon: "FileText", title: "Investorská PDF prezentácia", desc: "Exportujte brandovaný report v angličtine alebo slovenčine — pripravený na priloženie k dealom." },
+      ],
+    },
     footer: { tagline: "AI broker pre micro-SaaS" },
     seo: {
       title: "Akú hodnotu má vaše PWA? · GitHub Code Audit | RUBBERDUCK.SPACE",
@@ -646,7 +670,7 @@ const sk: Translations = {
     tiers: {
       free: {
         name: "Free",
-        price: "0 $",
+        price: "0 €",
         tagline: "Pre solo builderov ktorí skúšajú vody.",
         features: [
           "Neobmedzené ocenenia (po prihlásení)",
@@ -657,7 +681,7 @@ const sk: Translations = {
       },
       pro: {
         name: "Pro",
-        price: "29 $",
+        price: "29 €",
         tagline: "Pre zakladateľov so živým portfóliom.",
         features: [
           "Všetko z Free",
