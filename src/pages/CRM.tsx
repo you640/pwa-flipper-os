@@ -55,15 +55,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import {
-	Building2,
-	Copy,
-	Loader2,
-	Mail,
-	Plus,
-	Search,
-	Sparkles,
-} from "lucide-react";
 
 type LeadStatus = "Lead" | "Contacted" | "Demo" | "Rejected";
 
