@@ -282,6 +282,9 @@ const sk: Translations = {
 		dialogDesc: "Zaznamenajte konkurenčnú ponuku z Acquire alebo Flippa.",
 		appNamePh: "napr. SalonSync",
 		saveBtn: "Uložiť dáta",
+		exportCsv: "Exportovať CSV",
+		exportEmpty: "Niet čo exportovať",
+		exported: "Exportovaných {{count}} riadkov",
 	},
 	crm: {
 		title: "CRM",

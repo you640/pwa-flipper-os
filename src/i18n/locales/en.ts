@@ -281,6 +281,9 @@ const en = {
 		dialogDesc: "Log a competitor listing you spotted on Acquire or Flippa.",
 		appNamePh: "e.g. SalonSync",
 		saveBtn: "Save Intel",
+		exportCsv: "Export CSV",
+		exportEmpty: "Nothing to export",
+		exported: "Exported {{count}} rows",
 	},
 	crm: {
 		title: "Buyer",
