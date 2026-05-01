@@ -165,6 +165,12 @@ const sk: Translations = {
 		multiplierLabel: "× zisk",
 		liveReport: "Živá správa o ocenení",
 		untitled: "Projekt bez názvu",
+		history: {
+			title: "Posledné audity",
+			subtitle: "Vašich 5 posledných AI ocenení. Kliknutím znovu načítate.",
+			empty: "Zatiaľ žiadne audity. Spustite prvé ocenenie vyššie.",
+			loaded: "Načítaný audit pre {{name}}",
+		},
 		netProfit: "Čistý zisk (mesačne)",
 		industryMultiplier: "Násobiteľ odvetvia",
 		estimated: "Odhadovaná predajná cena",
