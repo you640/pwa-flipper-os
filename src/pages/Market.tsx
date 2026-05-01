@@ -291,16 +291,37 @@ export default function Market() {
 								/>
 							</div>
 
-							<Dialog open={open} onOpenChange={setOpen}>
-								<DialogTrigger asChild>
-									<Button className="group relative h-10 overflow-hidden bg-gradient-primary font-semibold text-primary-foreground shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-[0_0_40px_-8px_hsl(var(--primary)/0.7)]">
-										<span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-										<Plus className="mr-1 h-4 w-4" />
-										{t("market.addIntel")}
-									</Button>
-								</DialogTrigger>
-								<AddIntelDialog onSubmit={handleAdd} />
-							</Dialog>
+							<div className="flex items-center gap-2">
+								<Button
+									variant="outline"
+									className="h-10"
+									disabled={filtered.length === 0}
+									onClick={() => {
+										if (filtered.length === 0) {
+											toast.error(t("market.exportEmpty"));
+											return;
+										}
+										exportToCsv(filtered);
+										toast.success(
+											t("market.exported", { count: filtered.length }),
+										);
+									}}
+								>
+									<Download className="mr-1.5 h-4 w-4" />
+									{t("market.exportCsv")}
+								</Button>
+
+								<Dialog open={open} onOpenChange={setOpen}>
+									<DialogTrigger asChild>
+										<Button className="group relative h-10 overflow-hidden bg-gradient-primary font-semibold text-primary-foreground shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-[0_0_40px_-8px_hsl(var(--primary)/0.7)]">
+											<span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+											<Plus className="mr-1 h-4 w-4" />
+											{t("market.addIntel")}
+										</Button>
+									</DialogTrigger>
+									<AddIntelDialog onSubmit={handleAdd} />
+								</Dialog>
+							</div>
 						</div>
 
 						{/* Table */}
