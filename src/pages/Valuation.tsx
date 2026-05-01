@@ -34,7 +34,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { AiReportCard } from "@/components/valuation/AiReportCard";
 import { AnalyzingState } from "@/components/valuation/AnalyzingState";
 import { AuditHistory } from "@/components/valuation/AuditHistory";
-import { useAiValuation } from "@/hooks/useAiValuation";
+import {
+	type AiValuationReport,
+	useAiValuation,
+	type ValuationInputs,
+} from "@/hooks/useAiValuation";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, TablesInsert } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
