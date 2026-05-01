@@ -191,7 +191,30 @@ export default function Valuation() {
 			},
 		);
 
+		// Refresh history list
+		setAuditRefreshKey((k) => k + 1);
+
 		// Keep report + form so user can toggle "List for Sale" or download PDF.
+	};
+
+	const handlePickHistory = (row: {
+		inputs: ValuationInputs;
+		ai_report: AiValuationReport;
+	}) => {
+		const i = row.inputs;
+		setForm({
+			name: i.name ?? "",
+			url: i.url ?? "",
+			githubUrl: i.github_url ?? "",
+			mrr: i.mrr ? String(i.mrr) : "",
+			expenses: i.expenses ? String(i.expenses) : "",
+			niche: (NICHES.find((n) => t(`valuation.niches.${n.id}`) === i.niche)?.id ??
+				"b2b") as Niche,
+			techStack: i.tech_stack ?? "",
+			notes: i.notes ?? "",
+		});
+		loadFromHistory(row.ai_report, i);
+		toast.success(t("valuation.history.loaded", { name: i.name }));
 	};
 
 	return (
