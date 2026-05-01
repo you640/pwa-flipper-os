@@ -3,6 +3,7 @@ import {
 	ArrowDown,
 	ArrowUp,
 	ArrowUpDown,
+	Download,
 	MoreHorizontal,
 	Plus,
 	Radar,
@@ -76,6 +77,37 @@ const formatUSD = (n: number) =>
 
 const calcMultiplier = (price: number, mrr: number) =>
 	mrr > 0 ? +(price / mrr).toFixed(1) : null;
+
+// Escape a single CSV field per RFC 4180
+const csvEscape = (val: unknown): string => {
+	const s = String(val ?? "");
+	return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+const exportToCsv = (rows: IntelRow[]) => {
+	const headers = ["App", "Niche", "Source", "MRR", "Listed Price", "Multiplier"];
+	const body = rows.map((r) => [
+		r.name,
+		r.niche,
+		r.source,
+		r.mrr,
+		r.price,
+		calcMultiplier(r.price, r.mrr) ?? "",
+	]);
+	const csv = [headers, ...body]
+		.map((row) => row.map(csvEscape).join(","))
+		.join("\r\n");
+	const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	const stamp = new Date().toISOString().slice(0, 10);
+	a.href = url;
+	a.download = `market-intel-${stamp}.csv`;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+};
 
 const MARKET_SKELETON_ROW_KEYS = [
 	"market-skeleton-1",
