@@ -33,6 +33,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { AiReportCard } from "@/components/valuation/AiReportCard";
 import { AnalyzingState } from "@/components/valuation/AnalyzingState";
+import { AuditHistory } from "@/components/valuation/AuditHistory";
 import { useAiValuation } from "@/hooks/useAiValuation";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, TablesInsert } from "@/integrations/supabase/types";
@@ -72,12 +73,14 @@ export default function Valuation() {
 	const [form, setForm] = useState(initialState);
 	const [applying, setApplying] = useState(false);
 	const [savedPortfolioId, setSavedPortfolioId] = useState<string | null>(null);
+	const [auditRefreshKey, setAuditRefreshKey] = useState(0);
 
 	const {
 		run,
 		loading: aiLoading,
 		report,
 		inputs: aiInputs,
+		loadFromHistory,
 	} = useAiValuation();
 
 	const mrrNum = Number(form.mrr) || 0;
