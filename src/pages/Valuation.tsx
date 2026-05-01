@@ -410,6 +410,13 @@ export default function Valuation() {
 								</Button>
 							</div>
 						</Card>
+
+						<div className="mt-5">
+							<AuditHistory
+								refreshKey={auditRefreshKey}
+								onPick={handlePickHistory}
+							/>
+						</div>
 					</motion.div>
 
 					{/* RIGHT — Report */}
