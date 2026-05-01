@@ -33,7 +33,12 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { AiReportCard } from "@/components/valuation/AiReportCard";
 import { AnalyzingState } from "@/components/valuation/AnalyzingState";
-import { useAiValuation } from "@/hooks/useAiValuation";
+import { AuditHistory } from "@/components/valuation/AuditHistory";
+import {
+	type AiValuationReport,
+	useAiValuation,
+	type ValuationInputs,
+} from "@/hooks/useAiValuation";
 import { supabase } from "@/integrations/supabase/client";
 import type { Json, TablesInsert } from "@/integrations/supabase/types";
 import { cn } from "@/lib/utils";
@@ -72,12 +77,14 @@ export default function Valuation() {
 	const [form, setForm] = useState(initialState);
 	const [applying, setApplying] = useState(false);
 	const [savedPortfolioId, setSavedPortfolioId] = useState<string | null>(null);
+	const [auditRefreshKey, setAuditRefreshKey] = useState(0);
 
 	const {
 		run,
 		loading: aiLoading,
 		report,
 		inputs: aiInputs,
+		loadFromHistory,
 	} = useAiValuation();
 
 	const mrrNum = Number(form.mrr) || 0;
@@ -188,7 +195,30 @@ export default function Valuation() {
 			},
 		);
 
+		// Refresh history list
+		setAuditRefreshKey((k) => k + 1);
+
 		// Keep report + form so user can toggle "List for Sale" or download PDF.
+	};
+
+	const handlePickHistory = (row: {
+		inputs: ValuationInputs;
+		ai_report: AiValuationReport;
+	}) => {
+		const i = row.inputs;
+		setForm({
+			name: i.name ?? "",
+			url: i.url ?? "",
+			githubUrl: i.github_url ?? "",
+			mrr: i.mrr ? String(i.mrr) : "",
+			expenses: i.expenses ? String(i.expenses) : "",
+			niche: (NICHES.find((n) => t(`valuation.niches.${n.id}`) === i.niche)?.id ??
+				"b2b") as Niche,
+			techStack: i.tech_stack ?? "",
+			notes: i.notes ?? "",
+		});
+		loadFromHistory(row.ai_report, i);
+		toast.success(t("valuation.history.loaded", { name: i.name }));
 	};
 
 	return (
@@ -380,6 +410,13 @@ export default function Valuation() {
 								</Button>
 							</div>
 						</Card>
+
+						<div className="mt-5">
+							<AuditHistory
+								refreshKey={auditRefreshKey}
+								onPick={handlePickHistory}
+							/>
+						</div>
 					</motion.div>
 
 					{/* RIGHT — Report */}

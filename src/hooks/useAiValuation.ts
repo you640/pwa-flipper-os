@@ -141,5 +141,13 @@ export function useAiValuation() {
 		setInputs(null);
 	};
 
-	return { run, loading, report, inputs, reset };
+	const loadFromHistory = (
+		nextReport: AiValuationReport,
+		nextInputs: ValuationInputs,
+	) => {
+		setReport(nextReport);
+		setInputs(nextInputs);
+	};
+
+	return { run, loading, report, inputs, reset, loadFromHistory };
 }

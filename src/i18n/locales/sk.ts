@@ -165,6 +165,12 @@ const sk: Translations = {
 		multiplierLabel: "× zisk",
 		liveReport: "Živá správa o ocenení",
 		untitled: "Projekt bez názvu",
+		history: {
+			title: "Posledné audity",
+			subtitle: "Vašich 5 posledných AI ocenení. Kliknutím znovu načítate.",
+			empty: "Zatiaľ žiadne audity. Spustite prvé ocenenie vyššie.",
+			loaded: "Načítaný audit pre {{name}}",
+		},
 		netProfit: "Čistý zisk (mesačne)",
 		industryMultiplier: "Násobiteľ odvetvia",
 		estimated: "Odhadovaná predajná cena",
@@ -282,6 +288,9 @@ const sk: Translations = {
 		dialogDesc: "Zaznamenajte konkurenčnú ponuku z Acquire alebo Flippa.",
 		appNamePh: "napr. SalonSync",
 		saveBtn: "Uložiť dáta",
+		exportCsv: "Exportovať CSV",
+		exportEmpty: "Niet čo exportovať",
+		exported: "Exportovaných {{count}} riadkov",
 	},
 	crm: {
 		title: "CRM",

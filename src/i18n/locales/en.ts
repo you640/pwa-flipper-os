@@ -163,6 +163,12 @@ const en = {
 		multiplierLabel: "× profit",
 		liveReport: "Live Valuation Report",
 		untitled: "Untitled Project",
+		history: {
+			title: "Recent Audits",
+			subtitle: "Your last 5 AI valuations. Click to reload.",
+			empty: "No audits yet. Run your first valuation above.",
+			loaded: "Loaded audit for {{name}}",
+		},
 		netProfit: "Net Profit (Monthly)",
 		industryMultiplier: "Industry Multiplier",
 		estimated: "Estimated Asking Price",
@@ -281,6 +287,9 @@ const en = {
 		dialogDesc: "Log a competitor listing you spotted on Acquire or Flippa.",
 		appNamePh: "e.g. SalonSync",
 		saveBtn: "Save Intel",
+		exportCsv: "Export CSV",
+		exportEmpty: "Nothing to export",
+		exported: "Exported {{count}} rows",
 	},
 	crm: {
 		title: "Buyer",

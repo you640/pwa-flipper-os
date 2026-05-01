@@ -3,6 +3,7 @@ import {
 	ArrowDown,
 	ArrowUp,
 	ArrowUpDown,
+	Download,
 	MoreHorizontal,
 	Plus,
 	Radar,
@@ -76,6 +77,37 @@ const formatUSD = (n: number) =>
 
 const calcMultiplier = (price: number, mrr: number) =>
 	mrr > 0 ? +(price / mrr).toFixed(1) : null;
+
+// Escape a single CSV field per RFC 4180
+const csvEscape = (val: unknown): string => {
+	const s = String(val ?? "");
+	return /[",\n\r]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+};
+
+const exportToCsv = (rows: IntelRow[]) => {
+	const headers = ["App", "Niche", "Source", "MRR", "Listed Price", "Multiplier"];
+	const body = rows.map((r) => [
+		r.name,
+		r.niche,
+		r.source,
+		r.mrr,
+		r.price,
+		calcMultiplier(r.price, r.mrr) ?? "",
+	]);
+	const csv = [headers, ...body]
+		.map((row) => row.map(csvEscape).join(","))
+		.join("\r\n");
+	const blob = new Blob([`\uFEFF${csv}`], { type: "text/csv;charset=utf-8" });
+	const url = URL.createObjectURL(blob);
+	const a = document.createElement("a");
+	const stamp = new Date().toISOString().slice(0, 10);
+	a.href = url;
+	a.download = `market-intel-${stamp}.csv`;
+	document.body.appendChild(a);
+	a.click();
+	document.body.removeChild(a);
+	URL.revokeObjectURL(url);
+};
 
 const MARKET_SKELETON_ROW_KEYS = [
 	"market-skeleton-1",
@@ -259,16 +291,37 @@ export default function Market() {
 								/>
 							</div>
 
-							<Dialog open={open} onOpenChange={setOpen}>
-								<DialogTrigger asChild>
-									<Button className="group relative h-10 overflow-hidden bg-gradient-primary font-semibold text-primary-foreground shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-[0_0_40px_-8px_hsl(var(--primary)/0.7)]">
-										<span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
-										<Plus className="mr-1 h-4 w-4" />
-										{t("market.addIntel")}
-									</Button>
-								</DialogTrigger>
-								<AddIntelDialog onSubmit={handleAdd} />
-							</Dialog>
+							<div className="flex items-center gap-2">
+								<Button
+									variant="outline"
+									className="h-10"
+									disabled={filtered.length === 0}
+									onClick={() => {
+										if (filtered.length === 0) {
+											toast.error(t("market.exportEmpty"));
+											return;
+										}
+										exportToCsv(filtered);
+										toast.success(
+											t("market.exported", { count: filtered.length }),
+										);
+									}}
+								>
+									<Download className="mr-1.5 h-4 w-4" />
+									{t("market.exportCsv")}
+								</Button>
+
+								<Dialog open={open} onOpenChange={setOpen}>
+									<DialogTrigger asChild>
+										<Button className="group relative h-10 overflow-hidden bg-gradient-primary font-semibold text-primary-foreground shadow-glow transition-all hover:-translate-y-0.5 hover:shadow-[0_0_40px_-8px_hsl(var(--primary)/0.7)]">
+											<span className="absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/20 to-transparent transition-transform duration-700 group-hover:translate-x-full" />
+											<Plus className="mr-1 h-4 w-4" />
+											{t("market.addIntel")}
+										</Button>
+									</DialogTrigger>
+									<AddIntelDialog onSubmit={handleAdd} />
+								</Dialog>
+							</div>
 						</div>
 
 						{/* Table */}
