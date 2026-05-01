@@ -52,15 +52,6 @@ import {
 } from "@/components/ui/table";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import {
-	ArrowDown,
-	ArrowUp,
-	ArrowUpDown,
-	MoreHorizontal,
-	Plus,
-	Radar,
-	Search,
-} from "lucide-react";
 
 type Source = "acquire" | "flippa";
 
