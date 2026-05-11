@@ -5,13 +5,13 @@
  * renaming a key requires touching this file plus both locale files.
  */
 export const NEWS_I18N_KEYS = {
-	title: "dashboard.newsTitle",
-	source: "dashboard.newsSource",
-	liveBadge: "dashboard.newsLiveBadge",
-	showMore: "dashboard.newsShowMore",
-	showLess: "dashboard.newsShowLess",
-	error: "dashboard.newsError",
-	readArticle: "dashboard.readArticle",
+  title: "dashboard.newsTitle",
+  source: "dashboard.newsSource",
+  liveBadge: "dashboard.newsLiveBadge",
+  showMore: "dashboard.newsShowMore",
+  showLess: "dashboard.newsShowLess",
+  error: "dashboard.newsError",
+  readArticle: "dashboard.readArticle",
 } as const;
 
 export type NewsI18nKey = (typeof NEWS_I18N_KEYS)[keyof typeof NEWS_I18N_KEYS];
