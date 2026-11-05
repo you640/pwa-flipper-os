@@ -393,6 +393,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_public_audit_by_slug: {
+        Args: { _slug: string }
+        Returns: {
+          app_name: string
+          audit_id: string
+          created_at: string
+          slug: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
