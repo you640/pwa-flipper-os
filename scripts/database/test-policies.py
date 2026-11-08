@@ -63,7 +63,10 @@ for legacy in [False, True]:
         results=list(pool.map(lambda _: sql("SET ROLE service_role; SELECT public.reserve_ai_audit('concurrent-ip',1)",db).splitlines()[-1], range(12)))
     assert results.count('t') == 1, results
     assert results.count('f') == 11, results
+    sql(f"INSERT INTO public.pricing_waitlist(user_id,email,tier) VALUES ('{A}','a@test.invalid','pro')", db)
     sql(f"DELETE FROM auth.users WHERE id='{A}'",db)
+    assert sql("SELECT count(*) FROM public.pricing_waitlist WHERE email='a@test.invalid' AND user_id IS NULL", db) == '1'
+    print('Waitlist retention: PASS (e-mail retained and user link cleared)')
     assert user(A,'SELECT count(*) FROM public.portfolio_audits') == '0'
     assert sql("SELECT count(*) FROM public.public_audits",db) == '0'
     assert sql("SELECT count(*) FROM public.deal_inquiries",db) == '0'

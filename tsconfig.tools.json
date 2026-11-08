@@ -2,6 +2,8 @@
   "extends": "./tsconfig.node.json",
   "include": [
     "vitest.config.ts",
-    "tailwind.config.ts"
+    "tailwind.config.ts",
+    "playwright.config.ts",
+    "e2e/**/*.ts"
   ]
 }
