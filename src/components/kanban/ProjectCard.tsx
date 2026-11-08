@@ -19,9 +19,11 @@ interface ProjectCardProps {
   project: PwaProject;
   isOverlay?: boolean;
   index?: number;
+  onEdit?: (p: PwaProject) => void;
+  onDelete?: (p: PwaProject) => void;
 }
 
-export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCardProps) {
+export function ProjectCard({ project, isOverlay = false, index = 0, onEdit, onDelete }: ProjectCardProps) {
   const { t } = useTranslation();
   const { formatCurrency } = useLocale();
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
@@ -69,7 +71,8 @@ export function ProjectCard({ project, isOverlay = false, index = 0 }: ProjectCa
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuItem>{t("portfolio.viewDetails")}</DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => onEdit?.(project)}>{t("portfolio.crud.edit")}</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive" onSelect={() => onDelete?.(project)}>{t("portfolio.crud.del")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

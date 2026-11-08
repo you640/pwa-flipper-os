@@ -27,6 +27,14 @@ import {
   type PwaProject,
 } from "@/components/kanban/data";
 import { supabase } from "@/integrations/supabase/client";
+import { ProjectDialog } from "@/components/kanban/ProjectDialog";
+import type { ProjectForm } from "@/components/kanban/validateProject";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PortfolioRow {
   id: string;
@@ -42,6 +50,39 @@ export default function Portfolio() {
   const [projects, setProjects] = useState<PwaProject[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editing, setEditing] = useState<PwaProject | null>(null);
+  const [defaultCol, setDefaultCol] = useState<ColumnId>("Building");
+  const [toDelete, setToDelete] = useState<PwaProject | null>(null);
+
+  const openAdd = (col: ColumnId = "Building") => { setEditing(null); setDefaultCol(col); setDialogOpen(true); };
+  const openEdit = (p: PwaProject) => { setEditing(p); setDialogOpen(true); };
+
+  const saveProject = async (f: ProjectForm): Promise<boolean> => {
+    const row = { name: f.name, mrr: Math.round(f.mrr), expenses: Math.round(f.expenses), asking_price: Math.round(f.askingPrice), status: f.column };
+    if (editing) {
+      const prev = projects;
+      setProjects((ps) => ps.map((p) => p.id === editing.id ? { ...p, name: row.name, mrr: row.mrr, expenses: row.expenses, askingPrice: row.asking_price, column: f.column } : p));
+      const { error } = await supabase.from("portfolio").update(row).eq("id", editing.id);
+      if (error) { setProjects(prev); toast.error(t("portfolio.crud.failed")); return false; }
+      toast.success(t("portfolio.crud.updated")); return true;
+    }
+    const { data: u } = await supabase.auth.getUser();
+    const { data, error } = await supabase.from("portfolio").insert({ ...row, user_id: u.user?.id }).select("id").single();
+    if (error || !data) { toast.error(t("portfolio.crud.failed")); return false; }
+    setProjects((ps) => [{ id: data.id, name: row.name, mrr: row.mrr, expenses: row.expenses, askingPrice: row.asking_price, column: f.column }, ...ps]);
+    toast.success(t("portfolio.crud.created")); return true;
+  };
+
+  const confirmDelete = async () => {
+    if (!toDelete) return;
+    const target = toDelete; const prev = projects;
+    setToDelete(null);
+    setProjects((ps) => ps.filter((p) => p.id !== target.id));
+    const { error } = await supabase.from("portfolio").delete().eq("id", target.id);
+    if (error) { setProjects(prev); toast.error(t("portfolio.crud.failed")); return; }
+    toast.success(t("portfolio.crud.deleted"));
+  };
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -205,6 +246,8 @@ export default function Portfolio() {
               {t("portfolio.subtitle")}
             </p>
           </div>
+          <div className="flex items-center gap-2">
+          <Button size="sm" onClick={() => openAdd()}><Plus className="mr-1 h-4 w-4" />{t("portfolio.crud.add")}</Button>
           <div className="flex items-center gap-2 rounded-full border border-border/60 bg-card/50 px-3 py-1.5 text-xs text-muted-foreground">
             {loading
               ? t("common.loading")
@@ -212,6 +255,7 @@ export default function Portfolio() {
                   count: projects.length,
                   sold: projects.filter((p) => p.column === "Sold").length,
                 })}
+          </div>
           </div>
         </motion.header>
 
@@ -242,6 +286,9 @@ export default function Portfolio() {
                   column={col}
                   projects={projectsByColumn[col.id]}
                   index={i}
+                  onAdd={openAdd}
+                  onEdit={openEdit}
+                  onDelete={setToDelete}
                 />
               ))}
             </div>
@@ -263,6 +310,19 @@ export default function Portfolio() {
           </div>
         )}
       </div>
+      <ProjectDialog open={dialogOpen} onOpenChange={setDialogOpen} project={editing} defaultColumn={defaultCol} onSubmit={saveProject} />
+      <AlertDialog open={!!toDelete} onOpenChange={(o) => !o && setToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{t("portfolio.crud.confirmTitle")}</AlertDialogTitle>
+            <AlertDialogDescription>{toDelete?.name} — {t("portfolio.crud.confirmBody")}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{t("portfolio.crud.cancel")}</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmDelete}>{t("portfolio.crud.del")}</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }

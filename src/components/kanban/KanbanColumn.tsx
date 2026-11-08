@@ -11,9 +11,12 @@ interface ColumnProps {
   column: KColumn;
   projects: PwaProject[];
   index: number;
+  onAdd?: (c: KColumn["id"]) => void;
+  onEdit?: (p: PwaProject) => void;
+  onDelete?: (p: PwaProject) => void;
 }
 
-export function KanbanColumn({ column, projects, index }: ColumnProps) {
+export function KanbanColumn({ column, projects, index, onAdd, onEdit, onDelete }: ColumnProps) {
   const { t } = useTranslation();
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
@@ -45,6 +48,7 @@ export function KanbanColumn({ column, projects, index }: ColumnProps) {
           <button
             className="flex h-6 w-6 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
             aria-label={t("portfolio.addProject")}
+            onClick={() => onAdd?.(column.id)}
           >
             <Plus className="h-4 w-4" />
           </button>
@@ -63,7 +67,7 @@ export function KanbanColumn({ column, projects, index }: ColumnProps) {
             strategy={verticalListSortingStrategy}
           >
             {projects.map((project, i) => (
-              <ProjectCard key={project.id} project={project} index={i} />
+              <ProjectCard key={project.id} project={project} index={i} onEdit={onEdit} onDelete={onDelete} />
             ))}
           </SortableContext>
 
