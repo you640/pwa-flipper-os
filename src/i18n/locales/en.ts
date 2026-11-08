@@ -121,6 +121,14 @@ const en = {
     },
   },
   portfolio: {
+    crud: {
+      add: "Add project", edit: "Edit project", del: "Delete", save: "Save", cancel: "Cancel",
+      name: "Name", mrr: "MRR (€/month)", expenses: "Expenses (€/month)", asking: "Asking price (€)", status: "Stage",
+      nameRequired: "Name is required", invalidNumber: "Numbers must be 0 or more",
+      created: "Project added", updated: "Project saved", deleted: "Project deleted", failed: "Could not save. Please try again.",
+      confirmTitle: "Delete this project?", confirmBody: "This removes the project and cannot be undone.",
+      history: "Audit history", noHistory: "No AI audits yet for this project.", score: "Code score",
+    },
     title: "Portfolio",
     titleAccent: "Kanban",
     subtitle: "Drag projects across stages — changes save automatically.",
