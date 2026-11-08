@@ -22,3 +22,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+.env
+.env.*
+!.env.example
+playwright-report/
+test-results/
+
+# Supabase CLI generated local cache
+supabase/.temp/

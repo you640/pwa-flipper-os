@@ -1,6 +1,6 @@
 import type { Translations } from "./en";
-
 const sk: Translations = {
+  recovery: {"title": "Obnoviť heslo", "newPassword": "Nové heslo", "confirm": "Potvrďte heslo", "passwordRule": "Použite aspoň 12 znakov a zhodné heslá.", "updated": "Heslo bolo zmenené. Môžete sa prihlásiť novým heslom.", "sent": "Ak účet s touto adresou existuje, čoskoro príde odkaz na obnovu.", "failed": "Obnova zlyhala. Vyžiadajte nový odkaz alebo skúste neskôr.", "save": "Uložiť nové heslo", "send": "Odoslať odkaz na obnovu"},
   common: {
     loading: "Načítava sa…",
     save: "Uložiť",

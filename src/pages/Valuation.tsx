@@ -1,3 +1,4 @@
+import type { Json } from "@/integrations/supabase/types";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { SEO } from "@/components/seo/SEO";
 import { motion, AnimatePresence, useMotionValue, useTransform, animate } from "framer-motion";
@@ -140,8 +141,8 @@ export default function Valuation() {
 
     const { error: aErr } = await supabase.from("portfolio_audits").insert({
       portfolio_id: portfolioId,
-      inputs: aiInputs as any,
-      ai_report: report as any,
+      inputs: JSON.parse(JSON.stringify(aiInputs)) as Json,
+      ai_report: JSON.parse(JSON.stringify(report)) as Json,
       user_id: user.id,
     });
     setApplying(false);

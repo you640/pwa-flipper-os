@@ -8,7 +8,7 @@ interface Props {
   currentMRR: number;
 }
 
-function CustomTooltip({ active, payload, label }: any) {
+function CustomTooltip({ active, payload, label }: { active?: boolean; payload?: readonly { value?: number | string }[]; label?: string | number }) {
   if (!active || !payload?.length) return null;
   return (
     <div className="rounded-lg border border-border/60 bg-popover/95 px-3 py-2 shadow-elegant backdrop-blur-md">

@@ -1,0 +1,14 @@
+[
+  {
+    "variable": "VITE_SUPABASE_PROJECT_ID",
+    "classification": "configuration"
+  },
+  {
+    "variable": "VITE_SUPABASE_PUBLISHABLE_KEY",
+    "classification": "JWT role: anon"
+  },
+  {
+    "variable": "VITE_SUPABASE_URL",
+    "classification": "configuration"
+  }
+]

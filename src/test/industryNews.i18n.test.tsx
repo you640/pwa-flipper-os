@@ -7,16 +7,16 @@ import { NEWS_I18N_KEYS } from "@/i18n/newsKeys";
 import { IndustryNews } from "@/components/dashboard/IndustryNews";
 
 // Stub framer-motion to keep the DOM simple and synchronous in jsdom.
-vi.mock("framer-motion", () => {
-  const React = require("react");
+vi.mock("framer-motion", async () => {
+  const React = await import("react");
   const passthrough = (tag: string) =>
-    React.forwardRef((props: any, ref: any) => {
+    React.forwardRef((props: React.PropsWithChildren<Record<string, unknown>>, ref: React.ForwardedRef<HTMLElement>) => {
       const { children, variants, initial, animate, whileHover, transition, ...rest } = props;
       return React.createElement(tag, { ref, ...rest }, children);
     });
   return {
     motion: new Proxy({}, { get: (_t, key: string) => passthrough(key) }),
-    AnimatePresence: ({ children }: any) => children,
+    AnimatePresence: ({ children }: React.PropsWithChildren) => children,
   };
 });
 
@@ -69,8 +69,8 @@ describe("IndustryNews i18n runtime", () => {
   }
 
   it("uses NEWS_I18N_KEYS that exist in both EN and SK dictionaries", () => {
-    const get = (obj: any, path: string) =>
-      path.split(".").reduce((o, k) => (o == null ? undefined : o[k]), obj);
+    const get = (obj: unknown, path: string) =>
+      path.split(".").reduce<unknown>((o, k) => (typeof o === "object" && o !== null ? (o as Record<string, unknown>)[k] : undefined), obj);
     for (const key of Object.values(NEWS_I18N_KEYS)) {
       expect(get(en, key), `EN missing ${key}`).toBeTypeOf("string");
       expect(get(sk, key), `SK missing ${key}`).toBeTypeOf("string");

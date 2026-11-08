@@ -53,3 +53,9 @@ export const formatUSD = (n: number, locale = "en-US") =>
     currency: "EUR",
     maximumFractionDigits: 0,
   }).format(n);
+
+/** Older saved valuations use the legacy database status. */
+export function normalizeColumn(status: string): ColumnId {
+  if (status == "For Sale") return "Listed";
+  return COLUMN_IDS.includes(status as ColumnId) ? status as ColumnId : "Building";
+}

@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
@@ -60,22 +61,32 @@ export function useAiValuation() {
     setLoading(true);
     setReport(null);
 
+    const controller = new AbortController();
     let timedOut = false;
     if (timeoutRef.current) clearTimeout(timeoutRef.current);
     timeoutRef.current = setTimeout(() => {
       timedOut = true;
+      controller.abort();
     }, TIMEOUT_MS);
 
     try {
       const { data, error } = await supabase.functions.invoke("valuate-pwa", {
         body: payload,
+        signal: controller.signal,
       });
       if (timedOut) {
         toast.error(t("valuation.ai.errors.timedOut"));
         return null;
       }
       if (error) {
-        const status = (error as any).context?.response?.status;
+        const status = error instanceof FunctionsHttpError ? error.context.status : undefined;
+        if (status === 429 && payload.anonymous && error instanceof FunctionsHttpError) {
+          const details = await error.context.clone().json().catch(() => null);
+          if (details?.error === "anon_limit") {
+            toast.error(t("landing.anonLimit"));
+            return { _anonLimit: true } as const;
+          }
+        }
         if (status === 429) toast.error(t("valuation.ai.errors.rateLimit"));
         else if (status === 402) toast.error(t("valuation.ai.errors.credits"));
         else toast.error(t("valuation.ai.errors.generic"), { description: error.message });
@@ -83,7 +94,7 @@ export function useAiValuation() {
       }
       if (data?.error === "anon_limit") {
         toast.error(t("landing.anonLimit"));
-        return { _anonLimit: true } as any;
+        return { _anonLimit: true } as const;
       }
       if (data?.error === "rate_limit") {
         toast.error(t("valuation.ai.errors.rateLimit"));
@@ -101,7 +112,7 @@ export function useAiValuation() {
       setInputs(data.inputs);
       return data.report as AiValuationReport;
     } catch (e) {
-      if (timedOut || (e as any)?.name === "AbortError") {
+      if (timedOut || (e instanceof Error && e.name === "AbortError")) {
         toast.error(t("valuation.ai.errors.timedOut"));
       } else {
         toast.error(t("valuation.ai.errors.generic"), {

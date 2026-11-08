@@ -12,18 +12,20 @@ export function AuthGuard({ children }: { children: ReactNode }) {
   const { t } = useTranslation();
 
   useEffect(() => {
+    let active = true;
+    let receivedEvent = false;
     // Set listener FIRST
     const { data: sub } = supabase.auth.onAuthStateChange((_event, newSession) => {
-      setSession(newSession);
+      receivedEvent = true;
+      if (active) { setSession(newSession); setChecking(false); }
     });
 
     // THEN load existing session
     supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setChecking(false);
-    });
+      if (active && !receivedEvent) { setSession(data.session); setChecking(false); }
+    }).catch(() => { if (active && !receivedEvent) { setSession(null); setChecking(false); } });
 
-    return () => sub.subscription.unsubscribe();
+    return () => { active = false; sub.subscription.unsubscribe(); };
   }, []);
 
   if (checking) {

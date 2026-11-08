@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
@@ -7,26 +7,27 @@ import { supabase } from "@/integrations/supabase/client";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./pages/Index.tsx";
-import Landing from "./pages/Landing.tsx";
-import NotFound from "./pages/NotFound.tsx";
-import Portfolio from "./pages/Portfolio.tsx";
-import Valuation from "./pages/Valuation.tsx";
-import Market from "./pages/Market.tsx";
-import CRM from "./pages/CRM.tsx";
-import Login from "./pages/Login.tsx";
-import Profile from "./pages/Profile.tsx";
-import Settings from "./pages/Settings.tsx";
-import Billing from "./pages/Billing.tsx";
-import Docs from "./pages/Docs.tsx";
-import Admin from "./pages/Admin.tsx";
+const Index = lazy(() => import("./pages/Index.tsx"));
+const Landing = lazy(() => import("./pages/Landing.tsx"));
+const NotFound = lazy(() => import("./pages/NotFound.tsx"));
+const Portfolio = lazy(() => import("./pages/Portfolio.tsx"));
+const Valuation = lazy(() => import("./pages/Valuation.tsx"));
+const Market = lazy(() => import("./pages/Market.tsx"));
+const CRM = lazy(() => import("./pages/CRM.tsx"));
+const PasswordRecovery = lazy(() => import("./pages/PasswordRecovery.tsx"));
+const Login = lazy(() => import("./pages/Login.tsx"));
+const Profile = lazy(() => import("./pages/Profile.tsx"));
+const Settings = lazy(() => import("./pages/Settings.tsx"));
+const Billing = lazy(() => import("./pages/Billing.tsx"));
+const Docs = lazy(() => import("./pages/Docs.tsx"));
+const Admin = lazy(() => import("./pages/Admin.tsx"));
 import { AuthGuard } from "./components/auth/AuthGuard.tsx";
 import { AdminGuard } from "./components/admin/AdminGuard.tsx";
 
 const queryClient = new QueryClient();
 
 const App = () => {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
 
   useEffect(() => {
     document.documentElement.lang = i18n.language?.startsWith("sk") ? "sk" : "en";
@@ -61,10 +62,12 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
+          <Suspense fallback={<div role="status" className="p-8">{t("common.workspaceLoading")}</div>}>
           <Routes>
             {/* PUBLIC routes (no auth required) */}
             <Route path="/" element={<Landing />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/reset-password" element={<PasswordRecovery />} />
 
             {/* AUTH-GATED routes */}
             <Route
@@ -104,6 +107,7 @@ const App = () => {
               }
             />
           </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

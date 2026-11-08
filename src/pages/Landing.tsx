@@ -81,7 +81,7 @@ export default function Landing() {
       expenses: 0,
       niche: "B2B SaaS",
     });
-    if ((result as any)?._anonLimit) {
+    if ((result && "_anonLimit" in result && result._anonLimit)) {
       localStorage.setItem(ANON_USED_KEY, "1");
       setAnonUsed(true);
       return;

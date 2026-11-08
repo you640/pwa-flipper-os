@@ -49,5 +49,5 @@ to authenticated
 using (public.has_role(auth.uid(), 'admin'));
 
 insert into public.user_roles (user_id, role)
-values ('cf5111a5-bd85-42e3-b038-8c4db1e59ab7', 'admin')
+select id, 'admin'::public.app_role from auth.users where id = 'cf5111a5-bd85-42e3-b038-8c4db1e59ab7'
 on conflict (user_id, role) do nothing;

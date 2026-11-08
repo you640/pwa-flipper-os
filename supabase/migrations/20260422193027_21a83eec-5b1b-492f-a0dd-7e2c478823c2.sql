@@ -4,9 +4,9 @@ alter table public.market_intel add column if not exists user_id uuid default au
 alter table public.crm_leads    add column if not exists user_id uuid default auth.uid() references auth.users(id) on delete cascade;
 
 -- 2. Backfill existing rows to the admin user so they don't disappear
-update public.portfolio    set user_id = 'cf5111a5-bd85-42e3-b038-8c4db1e59ab7' where user_id is null;
-update public.market_intel set user_id = 'cf5111a5-bd85-42e3-b038-8c4db1e59ab7' where user_id is null;
-update public.crm_leads    set user_id = 'cf5111a5-bd85-42e3-b038-8c4db1e59ab7' where user_id is null;
+update public.portfolio    set user_id = 'cf5111a5-bd85-42e3-b038-8c4db1e59ab7' where user_id is null AND EXISTS (SELECT 1 FROM auth.users WHERE id = 'cf5111a5-bd85-42e3-b038-8c4db1e59ab7');
+update public.market_intel set user_id = 'cf5111a5-bd85-42e3-b038-8c4db1e59ab7' where user_id is null AND EXISTS (SELECT 1 FROM auth.users WHERE id = 'cf5111a5-bd85-42e3-b038-8c4db1e59ab7');
+update public.crm_leads    set user_id = 'cf5111a5-bd85-42e3-b038-8c4db1e59ab7' where user_id is null AND EXISTS (SELECT 1 FROM auth.users WHERE id = 'cf5111a5-bd85-42e3-b038-8c4db1e59ab7');
 
 -- 3. Drop the old permissive policies
 drop policy if exists "Anyone can view portfolio"   on public.portfolio;

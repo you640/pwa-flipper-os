@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { PricingWaitlistDialog } from "@/components/pricing/PricingWaitlistDialog";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { SEO } from "@/components/seo/SEO";
 import { Badge } from "@/components/ui/badge";
@@ -7,7 +9,8 @@ import { useTranslation } from "react-i18next";
 import { useProfile } from "@/hooks/useProfile";
 
 export default function Billing() {
-  const { isAdmin } = useProfile();
+  const { isAdmin, user } = useProfile();
+  const [waitlistOpen, setWaitlistOpen] = useState(false);
   const { t } = useTranslation();
 
   const planName = isAdmin ? t("billing.planFounder") : t("billing.planStarter");
@@ -15,6 +18,7 @@ export default function Billing() {
 
   return (
     <AppLayout>
+      <PricingWaitlistDialog open={waitlistOpen} onOpenChange={setWaitlistOpen} tier="pro" defaultEmail={user?.email} />
       <SEO title={t("seo.billingTitle")} description={t("seo.billingDesc")} />
 
       <div className="mx-auto max-w-3xl space-y-6">
@@ -39,8 +43,8 @@ export default function Billing() {
               </div>
             </div>
             {!isAdmin && (
-              <Button className="bg-gradient-primary shadow-glow">
-                <Zap className="mr-2 h-4 w-4" /> {t("billing.upgrade")}
+              <Button onClick={() => setWaitlistOpen(true)} className="bg-gradient-primary shadow-glow">
+                <Zap className="mr-2 h-4 w-4" /> {t("pricing.waitlist.submit")}
               </Button>
             )}
           </div>

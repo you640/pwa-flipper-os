@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { SEO } from "@/components/seo/SEO";
 import { motion } from "framer-motion";
@@ -13,17 +13,21 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export default function Login() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const requested = location.state?.from;
+  const destination = typeof requested?.pathname === "string" && requested.pathname.startsWith("/") && !requested.pathname.startsWith("//") && requested.pathname !== "/login"
+    ? requested.pathname + (requested.search || "") + (requested.hash || "") : "/dashboard";
   const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
+  const [mode, setMode] = useState<"signin" | "signup">(() => new URLSearchParams(location.search).get("signup") === "1" ? "signup" : "signin");
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate("/", { replace: true });
+      if (data.session) navigate(destination, { replace: true });
     });
-  }, [navigate]);
+  }, [navigate, destination]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,7 +37,7 @@ export default function Login() {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast.success(t("auth.welcomeBack"));
-        navigate("/", { replace: true });
+        navigate(destination, { replace: true });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -42,9 +46,10 @@ export default function Login() {
         });
         if (error) throw error;
         toast.success(t("auth.accountCreated"));
-        navigate("/", { replace: true });
+        navigate(destination, { replace: true });
       }
-    } catch (err: any) {
+    } catch (caught: unknown) {
+      const err = caught instanceof Error ? caught as Error & { statusCode?: number; status?: number } : new Error("Unknown error");
       toast.error(err?.message ?? t("auth.authFailed"));
     } finally {
       setLoading(false);
@@ -138,6 +143,7 @@ export default function Login() {
             </Tabs>
           </div>
 
+          <Link to="/reset-password" className="mt-4 block text-center text-sm underline">{t("recovery.title")}</Link>
           <p className="mt-6 text-center text-xs text-muted-foreground">
             {t("auth.securedBy")}
           </p>
