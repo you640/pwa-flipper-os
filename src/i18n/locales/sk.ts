@@ -123,6 +123,14 @@ const sk: Translations = {
     },
   },
   portfolio: {
+    crud: {
+      add: "Pridať projekt", edit: "Upraviť projekt", del: "Zmazať", save: "Uložiť", cancel: "Zrušiť",
+      name: "Názov", mrr: "MRR (€/mesiac)", expenses: "Náklady (€/mesiac)", asking: "Požadovaná cena (€)", status: "Fáza",
+      nameRequired: "Názov je povinný", invalidNumber: "Čísla musia byť 0 alebo viac",
+      created: "Projekt pridaný", updated: "Projekt uložený", deleted: "Projekt zmazaný", failed: "Uloženie zlyhalo. Skúste znova.",
+      confirmTitle: "Zmazať tento projekt?", confirmBody: "Projekt bude odstránený natrvalo.",
+      history: "História auditov", noHistory: "Pre tento projekt zatiaľ nie sú AI audity.", score: "Skóre kódu",
+    },
     title: "Portfólio",
     titleAccent: "Kanban",
     subtitle: "Presúvajte projekty medzi fázami — zmeny sa ukladajú automaticky.",
