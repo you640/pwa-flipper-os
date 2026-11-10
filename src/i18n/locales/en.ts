@@ -1,4 +1,5 @@
 const en = {
+  recovery: {"title": "Reset password", "newPassword": "New password", "confirm": "Confirm password", "passwordRule": "Use at least 12 characters and matching passwords.", "updated": "Password updated. You can sign in with your new password.", "sent": "If an account exists for this email, a recovery link will arrive shortly.", "failed": "Recovery failed. Request a new link or try again later.", "save": "Save new password", "send": "Send recovery link"},
   common: {
     loading: "Loading…",
     save: "Save",

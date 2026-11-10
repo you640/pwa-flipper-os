@@ -1,3 +1,4 @@
+import { FunctionsHttpError } from "@supabase/supabase-js";
 import { useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useTranslation } from "react-i18next";
@@ -30,13 +31,14 @@ export function useAiOutreach() {
     try {
       const { data, error } = await supabase.functions.invoke("draft-outreach", {
         body: { lead_id, portfolio_id },
+        signal: controller.signal,
       });
       if (timedOut) {
         toast.error(t("crm.outreach.errors.timedOut"));
         return null;
       }
       if (error) {
-        const status = (error as any).context?.response?.status;
+        const status = error instanceof FunctionsHttpError ? error.context.status : undefined;
         if (status === 429) toast.error(t("crm.outreach.errors.rateLimit"));
         else if (status === 402) toast.error(t("crm.outreach.errors.credits"));
         else toast.error(t("crm.outreach.errors.generic"), { description: error.message });
@@ -57,7 +59,7 @@ export function useAiOutreach() {
       setDraft(data.draft);
       return data.draft as OutreachDraft;
     } catch (e) {
-      if (timedOut || (e as any)?.name === "AbortError") {
+      if (timedOut || (e instanceof Error && e.name === "AbortError")) {
         toast.error(t("crm.outreach.errors.timedOut"));
       } else {
         toast.error(t("crm.outreach.errors.generic"), {

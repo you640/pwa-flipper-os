@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SEO } from "@/components/seo/SEO";
 import {
@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { KanbanColumn } from "@/components/kanban/KanbanColumn";
 import { ProjectCard } from "@/components/kanban/ProjectCard";
 import {
+  normalizeColumn,
   COLUMNS,
   COLUMN_IDS,
   type ColumnId,
@@ -49,6 +50,7 @@ export default function Portfolio() {
   const { t } = useTranslation();
   const [projects, setProjects] = useState<PwaProject[]>([]);
   const [loading, setLoading] = useState(true);
+  const dragSnapshot = useRef<PwaProject[]>([]);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editing, setEditing] = useState<PwaProject | null>(null);
@@ -93,9 +95,12 @@ export default function Portfolio() {
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      const { data: auth } = await supabase.auth.getSession();
+      if (!auth.session) { setProjects([]); setLoading(false); return; }
       const { data, error } = await supabase
         .from("portfolio")
         .select("id,name,mrr,expenses,asking_price,status")
+        .eq("user_id", auth.session.user.id)
         .order("created_at", { ascending: false });
 
       if (cancelled) return;
@@ -112,7 +117,7 @@ export default function Portfolio() {
           askingPrice: r.asking_price,
           mrr: r.mrr,
           expenses: r.expenses,
-          column: r.status,
+          column: normalizeColumn(r.status),
         })),
       );
       setLoading(false);
@@ -120,7 +125,7 @@ export default function Portfolio() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [t]);
 
   const projectsByColumn = useMemo(() => {
     const map: Record<ColumnId, PwaProject[]> = {
@@ -165,6 +170,7 @@ export default function Portfolio() {
   };
 
   const handleDragStart = (event: DragStartEvent) => {
+    dragSnapshot.current = projects;
     setActiveId(String(event.active.id));
   };
 
@@ -189,13 +195,13 @@ export default function Portfolio() {
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
     setActiveId(null);
-    if (!over) return;
+    if (!over) { setProjects(dragSnapshot.current); return; }
 
     const activeIdStr = String(active.id);
     const overIdStr = String(over.id);
 
     // Find the original (pre-drag) status for rollback purposes
-    const draggedProject = projects.find((p) => p.id === activeIdStr);
+    const draggedProject = dragSnapshot.current.find((p) => p.id === activeIdStr);
     if (!draggedProject) return;
 
     const overIsColumn = COLUMN_IDS.includes(overIdStr as ColumnId);
@@ -214,18 +220,9 @@ export default function Portfolio() {
       });
     }
 
-    // Read what column the card is in NOW (after dragOver mutations)
-    setProjects((current) => {
-      const after = current.find((p) => p.id === activeIdStr);
-      const newStatus = after?.column ?? targetCol;
-      // We need to compare against the original snapshot — capture it from
-      // the closure variable `draggedProject` which still holds pre-drag state.
-      if (newStatus !== draggedProject.column) {
-        // Fire DB update (don't await — UI is already optimistic)
-        void persistStatus(activeIdStr, newStatus, draggedProject.column);
-      }
-      return current;
-    });
+    const newStatus = targetCol;
+    setProjects(current => current.map(p => p.id === activeIdStr ? { ...p, column: newStatus } : p));
+    if (newStatus !== draggedProject.column) void persistStatus(activeIdStr, newStatus, draggedProject.column);
   };
 
   return (
@@ -277,7 +274,7 @@ export default function Portfolio() {
             onDragStart={handleDragStart}
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
-            onDragCancel={() => setActiveId(null)}
+            onDragCancel={() => { setProjects(dragSnapshot.current); setActiveId(null); }}
           >
             <div className="flex gap-4 overflow-x-auto pb-2 lg:grid lg:grid-cols-4 lg:overflow-visible">
               {COLUMNS.map((col, i) => (

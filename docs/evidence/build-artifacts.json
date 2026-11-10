@@ -1,0 +1,294 @@
+[
+  {
+    "file": "favicon.ico",
+    "bytes": 20373
+  },
+  {
+    "file": "index.html",
+    "bytes": 2784
+  },
+  {
+    "file": "workbox-9c191d2f.js",
+    "bytes": 15112
+  },
+  {
+    "file": "registerSW.js",
+    "bytes": 134
+  },
+  {
+    "file": "robots.txt",
+    "bytes": 46
+  },
+  {
+    "file": "manifest.webmanifest",
+    "bytes": 482
+  },
+  {
+    "file": "sw.js",
+    "bytes": 4780
+  },
+  {
+    "file": "placeholder.svg",
+    "bytes": 28625
+  },
+  {
+    "file": "icons/icon-192.png",
+    "bytes": 12055
+  },
+  {
+    "file": "icons/icon-512.png",
+    "bytes": 9274
+  },
+  {
+    "file": "assets/rolldown-runtime-BWaJ3C7D.js",
+    "bytes": 911
+  },
+  {
+    "file": "assets/label-BFDx9KLo.js",
+    "bytes": 732
+  },
+  {
+    "file": "assets/avatar-C9epNR0T.js",
+    "bytes": 39142
+  },
+  {
+    "file": "assets/Profile-QjjxTB3G.js",
+    "bytes": 5960
+  },
+  {
+    "file": "assets/trending-up-Db2YdN_o.js",
+    "bytes": 204
+  },
+  {
+    "file": "assets/utils-BOZew0J0.js",
+    "bytes": 375753
+  },
+  {
+    "file": "assets/chevron-down-DKJOsX_R.js",
+    "bytes": 127
+  },
+  {
+    "file": "assets/jspdf.es.min-eMx1pM2Y.js",
+    "bytes": 398908
+  },
+  {
+    "file": "assets/table-C1ynzFZm.js",
+    "bytes": 1615
+  },
+  {
+    "file": "assets/Valuation-BGSSyk4e.js",
+    "bytes": 28710
+  },
+  {
+    "file": "assets/dist-B_QZRJZP.js",
+    "bytes": 15886
+  },
+  {
+    "file": "assets/github-CCK508nh.js",
+    "bytes": 407
+  },
+  {
+    "file": "assets/AreaChart-CWqXPoux.js",
+    "bytes": 358819
+  },
+  {
+    "file": "assets/html2canvas-muKNebnt.js",
+    "bytes": 199409
+  },
+  {
+    "file": "assets/PasswordRecovery-BkgCtF62.js",
+    "bytes": 2535
+  },
+  {
+    "file": "assets/tabs-Dj_EzxVS.js",
+    "bytes": 3614
+  },
+  {
+    "file": "assets/plus-cSGPjG2p.js",
+    "bytes": 153
+  },
+  {
+    "file": "assets/chunk-6KYCQHYJ-BHuTxbBm.js",
+    "bytes": 100609
+  },
+  {
+    "file": "assets/dialog-CoNjyevA.js",
+    "bytes": 2340
+  },
+  {
+    "file": "assets/mail-CoGqLdtN.js",
+    "bytes": 215
+  },
+  {
+    "file": "assets/trophy-Dk46V-3U.js",
+    "bytes": 465
+  },
+  {
+    "file": "assets/input-Dp7l6ODL.js",
+    "bytes": 1842
+  },
+  {
+    "file": "assets/NotFound-BbqOrzuw.js",
+    "bytes": 770
+  },
+  {
+    "file": "assets/triangle-alert-B1tfZn1J.js",
+    "bytes": 264
+  },
+  {
+    "file": "assets/Admin-C6JNOjo2.js",
+    "bytes": 26314
+  },
+  {
+    "file": "assets/select-BhaEqgj1.js",
+    "bytes": 22671
+  },
+  {
+    "file": "assets/AppLayout-DziuV5dB.js",
+    "bytes": 32487
+  },
+  {
+    "file": "assets/proxy-BX34sGtL.js",
+    "bytes": 121119
+  },
+  {
+    "file": "assets/accordion-Bkx76uUR.js",
+    "bytes": 5156
+  },
+  {
+    "file": "assets/purify.es-Dqk5qvad.js",
+    "bytes": 29023
+  },
+  {
+    "file": "assets/chart-column-CCnAO6IA.js",
+    "bytes": 250
+  },
+  {
+    "file": "assets/CodeHealthGauge-kCw89g6d.js",
+    "bytes": 6915
+  },
+  {
+    "file": "assets/Login-CeMsNB1F.js",
+    "bytes": 4639
+  },
+  {
+    "file": "assets/AnimatePresence-BkFKuxRg.js",
+    "bytes": 4236
+  },
+  {
+    "file": "assets/badge-Ds8DS-OM.js",
+    "bytes": 1350
+  },
+  {
+    "file": "assets/PricingWaitlistDialog-CWsf-1As.js",
+    "bytes": 1675
+  },
+  {
+    "file": "assets/Portfolio-DNOussdk.js",
+    "bytes": 56906
+  },
+  {
+    "file": "assets/createLucideIcon-D-oo0qSu.js",
+    "bytes": 955
+  },
+  {
+    "file": "assets/switch-C3aObrMe.js",
+    "bytes": 4467
+  },
+  {
+    "file": "assets/Billing-QS53UNfW.js",
+    "bytes": 2568
+  },
+  {
+    "file": "assets/dist-IliDPEmo.js",
+    "bytes": 6073
+  },
+  {
+    "file": "assets/Market-DMS3gkdv.js",
+    "bytes": 11704
+  },
+  {
+    "file": "assets/card-DaI9bIY-.js",
+    "bytes": 1087
+  },
+  {
+    "file": "assets/Docs-BJdVlcW0.js",
+    "bytes": 17897
+  },
+  {
+    "file": "assets/index.es-CfyCylOl.js",
+    "bytes": 151419
+  },
+  {
+    "file": "assets/globe-Cb2d-1OB.js",
+    "bytes": 242
+  },
+  {
+    "file": "assets/Landing-HUkNXzWE.js",
+    "bytes": 16194
+  },
+  {
+    "file": "assets/index-CJvtRAag.js",
+    "bytes": 205892
+  },
+  {
+    "file": "assets/Settings-Bs4gsq9g.js",
+    "bytes": 14132
+  },
+  {
+    "file": "assets/CRM-_sF1TVR4.js",
+    "bytes": 19565
+  },
+  {
+    "file": "assets/animate-BU0_--Y5.js",
+    "bytes": 8062
+  },
+  {
+    "file": "assets/dist-CWHcsYQn.js",
+    "bytes": 718
+  },
+  {
+    "file": "assets/brain-DD9U4OMv.js",
+    "bytes": 734
+  },
+  {
+    "file": "assets/building-2-C-bE8x0p.js",
+    "bytes": 438
+  },
+  {
+    "file": "assets/index-DzwAiQ4w.css",
+    "bytes": 86659
+  },
+  {
+    "file": "assets/dist-q4yTLaiA.js",
+    "bytes": 276
+  },
+  {
+    "file": "assets/zap-Ci9BQVOF.js",
+    "bytes": 262
+  },
+  {
+    "file": "assets/Index-yU1VOS7O.js",
+    "bytes": 34006
+  },
+  {
+    "file": "assets/dist-Cqg-JJCp.js",
+    "bytes": 2468
+  },
+  {
+    "file": "assets/ellipsis-DmbuBpHp.js",
+    "bytes": 226
+  },
+  {
+    "file": "assets/textarea-DPcooQih.js",
+    "bytes": 593
+  },
+  {
+    "file": "assets/shield-check-CGmkUd8t.js",
+    "bytes": 866
+  },
+  {
+    "file": "assets/rubberduck-logo-CtuoSF1n.png",
+    "bytes": 1803814
+  }
+]

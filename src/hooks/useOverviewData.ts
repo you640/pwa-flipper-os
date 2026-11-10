@@ -38,10 +38,13 @@ export function useOverviewData(): OverviewData {
   const fetchAll = useCallback(async () => {
     setLoading(true);
     setError(null);
+    const { data: auth } = await supabase.auth.getSession();
+    if (!auth.session) { setPortfolio([]); setMarket([]); setLeads([]); setLoading(false); return; }
     const [pRes, mRes, lRes] = await Promise.all([
       supabase
         .from("portfolio")
         .select("id, name, asking_price, mrr, expenses, status, created_at")
+        .eq("user_id", auth.session.user.id)
         .order("created_at", { ascending: false }),
       supabase
         .from("market_intel")

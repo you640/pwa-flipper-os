@@ -1,0 +1,35 @@
+name: Quality checks
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --global npm@11.20.0
+      - run: npm ci --ignore-scripts
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx playwright install --with-deps chromium
+      - run: npm run test:e2e
+  database-policies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Start isolated PostgreSQL and test migrations
+        run: |
+          PG_BIN=$(pg_config --bindir)
+          "$PG_BIN/initdb" -D /tmp/pwa-policy-pg -A trust -U postgres
+          "$PG_BIN/pg_ctl" -D /tmp/pwa-policy-pg -l /tmp/pwa-policy-pg.log -o "-F -k /tmp -c listen_addresses='' -p 55439" start
+          python3 scripts/database/test-policies.py --socket-dir /tmp
+      - name: Stop test database
+        if: always()
+        run: |
+          PG_BIN=$(pg_config --bindir)
+          "$PG_BIN/pg_ctl" -D /tmp/pwa-policy-pg stop

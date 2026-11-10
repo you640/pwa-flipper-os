@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { z } from "https://esm.sh/zod@3.23.8";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.119.0";
+import { z } from "https://esm.sh/zod@4.6.7";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -101,7 +101,7 @@ async function fetchRepoSnapshot(
     const tree = treeRes.ok ? await treeRes.json() : { tree: [] };
     const commits = commitsRes.ok ? await commitsRes.json() : [];
 
-    const paths: string[] = (tree.tree ?? []).map((n: any) =>
+    const paths: string[] = (tree.tree ?? []).map((n: { path: string }) =>
       String(n.path).toLowerCase(),
     );
     const has = (re: RegExp) => paths.some((p) => re.test(p));
@@ -171,15 +171,16 @@ async function fetchRepoSnapshot(
       recent_commits_30d: Array.isArray(commits) ? commits.length : 0,
     };
   } catch (e) {
-    return { fetch_error: e instanceof Error ? e.message : "unknown" };
+    return { fetch_error: "internal_error" };
   }
 }
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (req.method !== "POST") return new Response(JSON.stringify({ error: "method_not_allowed" }), { status: 405, headers: { ...corsHeaders, Allow: "POST, OPTIONS", "Content-Type": "application/json" } });
 
   try {
-    const parsed = BodySchema.safeParse(await req.json());
+    const parsed = BodySchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) {
       return new Response(
         JSON.stringify({
@@ -207,46 +208,30 @@ Deno.serve(async (req) => {
         Deno.env.get("SUPABASE_ANON_KEY")!,
         { global: { headers: { Authorization: authHeader } } },
       );
-      const { data: claims } = await supabase.auth.getClaims(
+      const { data: identity, error: identityError } = await supabase.auth.getUser(
         authHeader.replace("Bearer ", ""),
       );
-      if (!claims?.claims) {
+      if (identityError || !identity?.user) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      userId = (claims.claims as any).sub ?? null;
-    } else {
-      // Server-side IP rate limit: 1 audit / IP / 24h.
-      const fwd = req.headers.get("x-forwarded-for") || "";
-      const ip = fwd.split(",")[0].trim() || "unknown";
-      const ipHash = await sha256(`rd-anon-${ip}`);
-      const admin = createClient(
-        Deno.env.get("SUPABASE_URL")!,
-        Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-      );
-      const since = new Date(Date.now() - 24 * 3600 * 1000).toISOString();
-      const { count } = await admin
-        .from("anon_audit_attempts")
-        .select("id", { count: "exact", head: true })
-        .eq("ip_hash", ipHash)
-        .gte("created_at", since);
-      if ((count ?? 0) >= 1) {
-        return new Response(
-          JSON.stringify({ error: "anon_limit", message: "Free audit already used" }),
-          {
-            status: 429,
-            headers: { ...corsHeaders, "Content-Type": "application/json" },
-          },
-        );
-      }
-      // Record attempt up-front so retries don't bypass.
-      await admin.from("anon_audit_attempts").insert({
-        ip_hash: ipHash,
-        github_url: input.github_url,
-      });
+      userId = identity.user.id;
     }
+    // No guessed trust in x-forwarded-for. Anonymous access remains unavailable
+    // unless deployment supplies the name of an IP header overwritten by its gateway.
+    let quotaKey = `valuation:user:${userId}`;
+    if (isAnonymous) {
+      const ipHeader = Deno.env.get("TRUSTED_CLIENT_IP_HEADER");
+      const ip = ipHeader ? req.headers.get(ipHeader)?.trim() : null;
+      if (!ip || ip.length > 100 || ip.includes(",")) return new Response(JSON.stringify({ error: "anonymous_unavailable" }), { status: 503, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      quotaKey = `valuation:ip:${await sha256(ip)}`;
+    }
+    const admin = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+    const { data: reserved, error: quotaError } = await admin.rpc("reserve_ai_audit", { _key: quotaKey, _limit: isAnonymous ? 1 : 10 });
+    if (quotaError) throw new Error("Quota unavailable");
+    if (!reserved) return new Response(JSON.stringify({ error: isAnonymous ? "anon_limit" : "rate_limit" }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
 
     const repo = await fetchRepoSnapshot(input.github_url);
 
@@ -288,6 +273,7 @@ ${JSON.stringify(repo, null, 2)}`;
 
     const aiRes = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
+      signal: AbortSignal.timeout(40_000),
       headers: {
         Authorization: `Bearer ${LOVABLE_API_KEY}`,
         "Content-Type": "application/json",
@@ -412,7 +398,7 @@ ${JSON.stringify(repo, null, 2)}`;
         });
       }
       const t = await aiRes.text();
-      console.error("AI error", aiRes.status, t);
+      console.error("AI upstream status", aiRes.status);
       return new Response(JSON.stringify({ error: "ai_error" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -422,13 +408,23 @@ ${JSON.stringify(repo, null, 2)}`;
     const aiJson = await aiRes.json();
     const toolCall = aiJson.choices?.[0]?.message?.tool_calls?.[0];
     if (!toolCall?.function?.arguments) {
-      console.error("No tool call", JSON.stringify(aiJson));
+      console.error("AI response missing tool call");
       return new Response(JSON.stringify({ error: "no_tool_call" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
-    const report = JSON.parse(toolCall.function.arguments);
+    const tipSchema = z.object({ title: z.string().max(500), impact: z.enum(["high", "medium", "low"]), detail: z.string().max(5000) });
+    const reportSchema = z.object({
+      estimated_valuation: z.object({ low: z.number().finite().nonnegative(), mid: z.number().finite().nonnegative(), high: z.number().finite().nonnegative() }).refine(v => v.low <= v.mid && v.mid <= v.high),
+      multiple: z.number().finite().nonnegative(), risk_score: z.number().int().min(1).max(10),
+      code_quality_score: z.number().int().min(0).max(100), code_quality_label: z.enum(["Clean as Glass", "Solid", "Mixed", "Rubberdebt", "Toxic"]),
+      tech_stack_audit: z.object({ summary: z.string().max(5000), excellence: z.array(z.string().max(2000)).max(5), tech_debt: z.array(z.string().max(2000)).max(5), detected_stack: z.array(z.string().max(300)).max(50) }),
+      refactor_tips: z.array(tipSchema).length(3), value_up_tips: z.array(tipSchema).length(3), summary: z.string().max(10000),
+    });
+    const validated = reportSchema.safeParse(JSON.parse(toolCall.function.arguments));
+    if (!validated.success) return new Response(JSON.stringify({ error: "invalid_ai_response" }), { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    const report = validated.data;
 
     return new Response(
       JSON.stringify({ report, inputs: input, repo_snapshot: repo, anonymous: isAnonymous }),
@@ -437,7 +433,7 @@ ${JSON.stringify(repo, null, 2)}`;
   } catch (e) {
     console.error("valuate-pwa error", e);
     return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "unknown" }),
+      JSON.stringify({ error: "internal_error" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

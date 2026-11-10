@@ -64,7 +64,8 @@ export default function Profile() {
       if (updErr) throw updErr;
       toast.success(t("profile.avatarUpdated"));
       refresh();
-    } catch (err: any) {
+    } catch (caught: unknown) {
+      const err: Error & { statusCode?: number; status?: number } = caught instanceof Error ? caught as Error & { statusCode?: number; status?: number } : new Error("Unknown error");
       console.error("Avatar upload error:", err);
       const msg = (err?.message || "").toLowerCase();
       const status = err?.statusCode || err?.status;
