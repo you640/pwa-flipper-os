@@ -66,6 +66,8 @@ const sk: Translations = {
     welcomeBack: "Vitajte späť",
     accountCreated: "Účet vytvorený",
     authFailed: "Autentifikácia zlyhala",
+    continueWithGoogle: "Pokračovať cez Google",
+    googleFailed: "Prihlásenie cez Google zlyhalo. Skúste to znova.",
     securedBy: "Zabezpečené cez Lovable Cloud",
   },
   dashboard: {

@@ -65,6 +65,8 @@ const en = {
     welcomeBack: "Welcome back",
     accountCreated: "Account created",
     authFailed: "Authentication failed",
+    continueWithGoogle: "Continue with Google",
+    googleFailed: "Google sign-in failed. Please try again.",
     securedBy: "Secured by Lovable Cloud",
   },
   dashboard: {

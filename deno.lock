@@ -12,6 +12,7 @@
         "npm:@dnd-kit/utilities@^3.2.2",
         "npm:@eslint/js@^9.32.0",
         "npm:@hookform/resolvers@5.2.2",
+        "npm:@playwright/test@1.65.0",
         "npm:@radix-ui/react-accordion@^1.2.11",
         "npm:@radix-ui/react-alert-dialog@^1.1.14",
         "npm:@radix-ui/react-aspect-ratio@^1.1.7",

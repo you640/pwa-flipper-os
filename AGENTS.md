@@ -1,5 +1,7 @@
 # FLIPPER
 
+- Use the managed Lovable OAuth helper for Google sign-in with a public same-origin callback; validate the session before restoring the intended page to keep preview and standalone sign-in consistent.
+
 ## Overovanie zmien
 
 - Testy spúšťaj v lokálnom prostredí alebo v sandboxe. GitHub-hosted CI/CD je vypnuté kvôli rozpočtu. Bez výslovného pokynu používateľa nezapínaj workflow, nespúšťaj GitHub Actions ani nasadenie.
